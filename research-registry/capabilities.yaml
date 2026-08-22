@@ -1,0 +1,69 @@
+# What each skill owns, what it does not, and the words that select it.
+#
+# `not:` is the only place a boundary is written. Putting boundaries in
+# descriptions means every skill added rewrites its neighbours, and the
+# marginal cost of an addition stops being O(1).
+#
+# `signals` are the words a request actually uses. Each must appear literally
+# in that skill's description: the listing carries name and description only,
+# so a signal that lives here and nowhere else never reaches the engine.
+
+research-route:
+  class: route
+  does: [classify, depth-tier, chain-selection, budget, assembly]
+  not:
+    - what: "a request whose phase is already obvious"
+      go: "that phase directly"
+    - what: "a question answerable from what is already known"
+      go: "answering it"
+  signals: [classifies the request, depth tier, minimum chain, researching end to end]
+
+research-scope:
+  class: doc-write
+  does: [question-design, answer-shape, decomposition, evidence-bar, stopping-rule, prior, falsification]
+  not:
+    - what: "retrieving anything"
+      go: research-source
+    - what: "deciding what a retrieved source is worth"
+      go: research-appraise
+  signals: [research brief, primary question, answer shape, sub-questions, evidence bar, stopping rule, falsification condition]
+
+research-source:
+  class: retrieve
+  does: [search-strategy, channels, disconfirming-queries, primary-chasing, dedupe, provenance, search-log]
+  not:
+    - what: "grading what was retrieved"
+      go: research-appraise
+    - what: "deciding what to look for"
+      go: research-scope
+  signals: [corpus, search strategy, disconfirming queries, primary source, deduplication, provenance, search log]
+
+research-appraise:
+  class: doc-write
+  does: [tiering, method-appraisal, interests, currency, red-flags, include-exclude]
+  not:
+    - what: "assigning the confidence label"
+      go: research-synthesize
+    - what: "finding more sources to fill a gap"
+      go: research-source
+  signals: [grading, provenance tier, interests, claim currency, red flags, include or exclude]
+
+research-synthesize:
+  class: doc-write
+  does: [claim-ledger, extraction, contradiction-diagnosis, weighing, confidence]
+  not:
+    - what: "writing the deliverable"
+      go: research-report
+    - what: "re-grading a source"
+      go: research-appraise
+  signals: [graded corpus, claim ledger, contradiction diagnosis, weighing, independence, confidence label]
+
+research-report:
+  class: doc-write
+  does: [structure, drafting, citation, qualification, verification]
+  not:
+    - what: "reaching a conclusion the ledger does not carry"
+      go: research-synthesize
+    - what: "filling a gap the draft exposes"
+      go: research-source
+  signals: [writing up, answer first, citations, hedges, remains unknown]

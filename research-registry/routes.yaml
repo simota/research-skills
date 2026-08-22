@@ -1,0 +1,47 @@
+# Chains that recur, as control structure rather than prose.
+#
+# The canonical order is scope → source → appraise → synthesize → report. A
+# chain takes the shortest path through it that the depth tier needs, and a
+# skipped phase is recorded rather than silent.
+
+deep:
+  pattern: linear
+  when: "contested, consequential, and the answer must survive challenge"
+  chain: [research-scope, research-source, research-appraise, research-synthesize, research-report]
+  gate: "the brief carries both round caps before any retrieval is dispatched"
+
+standard:
+  pattern: linear
+  when: "a real question with a decision behind it"
+  chain: [research-scope, research-source, research-appraise, research-synthesize]
+
+quick:
+  pattern: linear
+  when: "a settled fact that still needs a source"
+  chain: [research-source, research-appraise, research-report]
+  gate: "the report says no synthesis pass ran, and caps confidence accordingly"
+
+vet:
+  pattern: linear
+  when: "somebody handed you a claim and you need to know if it holds"
+  chain: [research-source, research-appraise, research-report]
+
+frame-only:
+  pattern: report-only
+  when: "nobody can say what the question is yet"
+  chain: [research-scope]
+  stops_at: "the brief: question, answer shape, sub-questions, bar, stopping rule, prior, falsification. Nothing is retrieved"
+
+corpus-only:
+  pattern: report-only
+  when: "gather the material, judgement comes later"
+  chain: [research-source]
+  stops_at: "the manifest and the search log. Nothing is graded"
+
+fill-the-gap:
+  pattern: loop
+  when: "synthesis found a claim nothing supports"
+  chain: [research-source, research-appraise]
+  oracle: "every load-bearing claim reaches its evidence bar, or is recorded as unsupported"
+  checker: other-engine          # resolved at run time to one that is not running this
+  max_cycles: 3

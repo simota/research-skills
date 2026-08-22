@@ -1,0 +1,30 @@
+# A record of misroutes.
+#
+# This does not reproduce how a model chooses. It is a proxy for finding
+# missing and duplicated signals, and "fixtures pass" does not mean "nothing
+# will be misrouted".
+
+- ask: "I have a research request and want it researching end to end"
+  expect: research-route
+- ask: "what depth tier does this need and what is the minimum chain"
+  expect: research-route
+- ask: "write the research brief with sub-questions and a stopping rule"
+  expect: research-scope
+- ask: "what is the answer shape and the falsification condition here"
+  expect: research-scope
+- ask: "build the corpus, and run disconfirming queries too"
+  expect: research-source
+- ask: "chase this back to the primary source and capture provenance"
+  expect: research-source
+- ask: "grading these by evidence tier and interests"
+  expect: research-appraise
+- ask: "check claim currency and give me include or exclude per source"
+  expect: research-appraise
+- ask: "build the claim ledger and do the contradiction diagnosis"
+  expect: research-synthesize
+- ask: "weighing by independence, what confidence label does this get"
+  expect: research-synthesize
+- ask: "writing up the findings, answer first"
+  expect: research-report
+- ask: "draft it with citations and say what remains unknown"
+  expect: research-report

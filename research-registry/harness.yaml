@@ -1,0 +1,156 @@
+# Budgets and vocabulary. The validator reads thresholds from here and nowhere
+# else: a number copied into prose becomes a second definition that drifts.
+
+# One declaration. Every namespaced name derives from it, and a rule checks
+# that they still agree.
+set: research
+prefix: research-           # <set>-
+shared_dir: _research       # _<set>
+
+skills_dir: skills
+platform_dirs: [.git, .github, .claude, skills, docs]
+
+limits:
+  skill_md_lines: 130         # measured at adoption: 233-244, all over. Raised from 120
+                              # when the reach block was delivered into every skill: the
+                              # state is assigned while a source is open, and nothing is
+                              # recoverable about it afterwards
+  description_chars: 200      # the listing truncates past this
+  playbook_lines: 300
+  playbooks_per_skill: 8
+  shared_file_lines: 136     # CONTRACT carries the ladder, confidence, independence,
+                             # recency and the completion contract in one file. Raised from
+                             # 130 (which was the file's own measured size) for the rule
+                             # naming the `P<n>` namespace: `E<n>` means the opposite in a
+                             # sibling contract, and one letter with two polarities in one
+                             # roster is a defect that cost a design review to find.
+                             # Two compression passes over the file yielded no net line.
+  shared_lines_total: 660     # measured: 560 before REACH.md, 626 after. Eight contracts: this family carries source hygiene and
+                              # an evidence ladder the sibling sets do not need
+  skills_max: 8               # 6 in use, 2 spare for demand found in use
+  routes_max: 12
+  route_stages_max: 6
+  repo_md_lines_total: 5000
+
+listing:
+  packs_needed_above: 20
+
+# Only one skill reaches the open web, and it is the only one that needs to.
+# Everything downstream works from the corpus it captured, which is what makes
+# provenance checkable at all.
+permission_classes:
+  route:
+    tools: "Read, Grep, Glob, Skill"
+    writes: false
+  retrieve:
+    tools: "Read, Grep, Glob, WebSearch, WebFetch, Write"
+    writes: true
+  doc-write:
+    tools: "Read, Grep, Glob, Write, Edit"
+    writes: true
+
+forbidden_description_terms:
+  - "Not for"
+  - "not for"
+  - "instead of"
+  - "rather than"
+
+# All three CLIs read the same SKILL.md, so any of them may be the one running
+# — the producing engine is a property of the run, not of this file. An earlier
+# version pinned `produced_by: claude` here, which quietly approved `checker:
+# codex` on a run that was itself codex.
+#
+# Detection was tried and does not work: codex launched from inside Claude Code
+# inherits `CLAUDECODE` and `CLAUDE_CODE_*`, so a nested run reads as its parent.
+# The caller states which engine is running; when it does not, the runner stops.
+engines:
+  runs_on: [claude, codex, agy]     # two or more, or no run can check itself out
+
+# What a refuting engine attacks in this domain, and what counts as having broken
+# the claim. The tool is the same in every set (`research-tools/refute.py`); the lens is
+# not, and a refuter with no domain framing is a second opinion rather than an
+# adversary.
+refutation:
+  lens: |
+    A claimed conclusion drawn from sources. Attack independence first: three citations
+    deriving from one upstream are one source, and a document plus its summary is one.
+    Then check that the conclusion does not outrun the cited passage — hedges get lost
+    in the retelling — and ask which disconfirming query would have found the opposite,
+    and whether anyone ran it.
+  refuted_when: >-
+    the sources trace to one upstream, the conclusion says more than the cited
+    passage does, or no disconfirming query was run
+
+vocabulary:
+  patterns: [linear, loop, report-only]
+  checkers: [other-engine]
+  evidence_levels: [P1, P2, P3, P4, P5]
+  residual_classes: [BLOCKED, OUT-OF-SCOPE, DEFERRED, UNSUPPORTED]
+  statuses: [DONE, PARTIAL, BLOCKED]
+  tiers: [quick, standard, deep]
+  reach_states: [primary, one-hop, chain, blocked, no-primary]
+  # Weakest first. The composition table in
+  # research-synthesize/reference/confidence-calibration.md is checked against
+  # this order; the checker used to carry its own copy, which meant a page that
+  # renamed or reordered the ladder was graded against the old one.
+  confidence_labels: [Unknown, Low, Medium, High]
+
+
+label_by_path:
+  "skills/_research/ROUTING.md": guidance
+  "skills/_research/*.md": contract
+  "skills/*/SKILL.md": contract
+  "skills/*/playbooks/*.md": guidance
+  "skills/*/reference/*.md": deferred
+document_labels: [contract, guidance, deferred]
+
+rot_patterns:
+  - '\b(19|20)\d{2}-\d{2}\b'
+  - '\bv\d+\.\d+(\.\d+)?\b'
+
+reference_headers: ["Purpose:", "Read when:", "Verified:"]
+# A `Verified:` date records that someone looked once, and a date has no failure
+# mode. V31 requires the line to name what re-checks it — or to say plainly that
+# nothing does. An unchecked page is fine; an unchecked page that reads like a
+# checked one is not.
+verified_markers:
+  - "no automated check"      # the honest admission, and the common case
+  - "by running"
+  - "produced by running"
+  - "confirmed by running"
+  - "performing the operation"
+  - "quoted from"
+  - "recomputed"
+  - "re-run by"
+  - "re-runs"
+  - "re-derives"
+  - "re-checked"
+  - "re-verified"
+  - "make figures"
+  - "holds every"
+  - "holds the two"
+  - "holds them to"
+
+
+external_paths: [".agents/", ".research/", "research/", "CLAUDE.md", "AGENTS.md", "GEMINI.md", "settings.json"]
+
+# The one mechanism this set has that its siblings do not. The rule that checks
+# it is identical in all six sets; this block is the whole difference, which is
+# what keeps six copies of the validator from becoming six dialects.
+#
+# `required_of` names every skill that touches a claim. The router picks the
+# chain and the budget; it never holds a claim, so it owes nothing here.
+# `own_word` is the substring each must carry outside the delivered block — the
+# rule is stated for all, and owned in each skill's own words.
+signature:
+  name: reach
+  contract: REACH.md
+  vocabulary: reach_states
+  required_of: [research-scope, research-source, research-appraise, research-synthesize, research-report]
+  own_word: unopened
+
+delivered:
+  sizing:  { section: "Before starting" }
+  reach:   { section: "Verify with" }
+  values:  { section: "Decide first" }
+  report:  { section: "Verify with" }
