@@ -290,6 +290,27 @@ def _(r): sub(r / f"{S}research-report/SKILL.md", "an unopened record and an ope
               "a second-hand record and a first-hand one")
 
 
+@case("V36")
+def _(r):
+    """An empty required_of has to say why, or the absence is an oversight."""
+    h = r / "research-registry/harness.yaml"
+    lines = h.read_text(encoding="utf-8").splitlines(keepends=True)
+    out, drop = [], False
+    for l in lines:
+        if l.startswith("  why:"):
+            drop = True
+            continue
+        if drop and (l.startswith("    ") or not l.strip()):
+            continue
+        drop = False
+        out.append(l)
+    h.write_text("".join(out), encoding="utf-8")
+
+
+@case("V36-none-declared")
+def _(r): sub(r / "research-registry/harness.yaml", "finding_visuals:", "unused_visuals:")
+
+
 def main() -> int:
     baseline = run(ROOT)
     if "green" not in baseline:
