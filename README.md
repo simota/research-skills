@@ -123,6 +123,7 @@ quietly.
 | [`skills/_research/HANDOFF.md`](skills/_research/HANDOFF.md) | What passes between phases, including loop-back triggers |
 | [`skills/_research/OPERATIONAL.md`](skills/_research/OPERATIONAL.md) | Output language, density, and length envelopes |
 | [`skills/_research/ROUTING.md`](skills/_research/ROUTING.md) | Guidance. Which phase owns the call, and the family invariants |
+| [`skills/_research/REPORT.md`](skills/_research/REPORT.md) | What a person reads: the order, the ceiling per tier, and why the write-up is separate |
 
 ## Layout
 

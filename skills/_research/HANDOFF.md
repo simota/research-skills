@@ -2,7 +2,9 @@
 # Handoff Contract
 
 The `research-*` family runs as a pipeline. Each skill emits a handoff block that the next skill
-consumes verbatim. Handoffs are cumulative — later blocks carry earlier IDs unchanged.
+consumes verbatim. Handoffs are cumulative — later blocks carry earlier IDs unchanged. **A handoff
+is the record, not the report**: what a person reads is a bounded view over it
+(`_research/REPORT.md`), never a handoff rendered field by field.
 
 ## Envelope
 

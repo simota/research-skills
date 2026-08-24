@@ -11,13 +11,11 @@ never translate a quoted passage without marking it as a translation.
 
 ## Output density
 
-Lead with the answer, then the evidence. No preamble, no restatement of the request, no closing
-summary of what was just delivered. Tables for anything with more than three parallel items.
-
-Length envelopes:
-- Quick answer: <=10 lines, 1-3 sources, confidence label required
-- Standard: 1-2 pages, evidence table, gaps section
-- Deep: full chain artifacts under `.research/<slug>/`
+The shape, the order and the ceiling of what a person reads are `_research/REPORT.md` — one
+place, delivered into every skill. What this file adds is the size of the **deliverable** behind
+it: a `quick` chain produces its answer and citations inline, `standard` a one-to-two-page
+write-up with an evidence table and a gaps section, `deep` the full chain artifacts under
+`.research/<slug>/`. **Those are the write-up, never the surface report.**
 
 ## Reproducibility
 
