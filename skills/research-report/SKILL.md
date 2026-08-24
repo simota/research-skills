@@ -136,4 +136,7 @@ that did not run is disclosed.
 - **Ceiling: `quick` one line · `standard` six · `deep` ten**, plus the write-up — named, never
   reproduced. Over it means cutting whole claims, never hedges: no restatement of the question,
   no closing summary, no query log (`_research/REPORT.md`)
+- **Not bigger than it is.** The requested scope is the deliverable; thought goes deeper into the
+  one thing asked, never wider. **A real problem is the exception** — something that would break,
+  is unsafe, or rests on a false premise is explained in full (`_research/REPORT.md`)
 <!-- /deliver:surface -->
