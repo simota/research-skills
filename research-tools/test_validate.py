@@ -311,6 +311,17 @@ def _(r):
 def _(r): sub(r / "research-registry/harness.yaml", "finding_visuals:", "unused_visuals:")
 
 
+@case("V37")
+def _(r):
+    """Neither a source nor the admission that there is none."""
+    sub(r / f"{S}research-scope/reference/question-design.md",
+        "Source: none — nothing outside this page can move what it states.", "Source:")
+
+
+@case("V37-none-declared")
+def _(r): sub(r / "research-registry/harness.yaml", "source_authorities:", "unused_authorities:")
+
+
 def main() -> int:
     baseline = run(ROOT)
     if "green" not in baseline:

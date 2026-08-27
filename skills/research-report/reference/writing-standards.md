@@ -3,6 +3,7 @@
 
 Purpose: Uncertainty language, citation mechanics, traceability sweep.
 Read when: uncertainty language, citation mechanics, traceability sweep
+Source: none — nothing outside this page can move what it states.
 Verified: 2026-08-21 — no automated check.
 
 ## Uncertainty language

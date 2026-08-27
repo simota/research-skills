@@ -3,6 +3,7 @@
 
 Purpose: Extracting claims, building the matrix, tracing consensus to origins.
 Read when: extracting claims, building the matrix, tracing consensus to origins
+Source: none — nothing outside this page can move what it states.
 Verified: 2026-08-21 — no automated check.
 
 Summarising is describing what each source says. Synthesis is establishing what is true across

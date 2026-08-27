@@ -3,6 +3,7 @@
 
 Purpose: Sources disagree and the disagreement needs diagnosis.
 Read when: sources disagree and the disagreement needs diagnosis
+Source: none — nothing outside this page can move what it states.
 Verified: 2026-08-21 — no automated check.
 
 Most apparent contradictions are not disagreements about the world. Diagnose the type before

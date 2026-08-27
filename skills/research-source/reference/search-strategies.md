@@ -3,6 +3,7 @@
 
 Purpose: Building query sets, chaining, adversarial search, stall recovery.
 Read when: building query sets, chaining, adversarial search, stall recovery
+Source: none — nothing outside this page can move what it states.
 Verified: 2026-08-21 — no automated check.
 
 ## Query set construction

@@ -3,6 +3,7 @@
 
 Purpose: Deduplicating, testing independence, writing the manifest and search log.
 Read when: deduplicating, testing independence, writing the manifest and search log
+Source: none — nothing outside this page can move what it states.
 Verified: 2026-08-21 — no automated check.
 
 ## Deduplication

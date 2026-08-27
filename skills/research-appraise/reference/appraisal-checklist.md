@@ -3,6 +3,7 @@
 
 Purpose: Running the per-source pass, or issuing the corpus verdict.
 Read when: running the per-source pass, or issuing the corpus verdict
+Source: none — nothing outside this page can move what it states.
 Verified: 2026-08-21 — no automated check.
 
 Run per source, against a **named claim**. A source is adequate *for a claim*, never in general.

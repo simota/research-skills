@@ -3,6 +3,7 @@
 
 Purpose: Setting saturation conditions, evidence bars, and budgets.
 Read when: setting saturation conditions, evidence bars, and budgets
+Source: none — nothing outside this page can move what it states.
 Verified: 2026-08-21 — no automated check.
 
 Open-ended research does not end on its own. The rule that ends it must be written before the

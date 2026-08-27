@@ -3,6 +3,7 @@
 
 Purpose: Framing the primary question, answer shapes, presupposition stripping.
 Read when: framing the primary question, answer shapes, presupposition stripping
+Source: none — nothing outside this page can move what it states.
 Verified: 2026-08-21 — no automated check.
 
 ## Recovering the real question

@@ -3,6 +3,7 @@
 
 Purpose: Splitting into sub-questions — comparative, causal, landscape, claim-check patterns.
 Read when: splitting into sub-questions — comparative, causal, landscape, claim-check patterns
+Source: none — nothing outside this page can move what it states.
 Verified: 2026-08-21 — no automated check.
 
 Sub-questions must be **independently answerable** (answering one does not require assuming

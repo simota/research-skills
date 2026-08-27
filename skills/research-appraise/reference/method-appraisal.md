@@ -3,6 +3,7 @@
 
 Purpose: Assessing studies, benchmarks, surveys, and statistical claims.
 Read when: assessing studies, benchmarks, surveys, and statistical claims
+Source: none — nothing outside this page can move what it states.
 Verified: 2026-08-21 — no automated check.
 
 How a source knows determines what its claim is worth. Read the method section before the

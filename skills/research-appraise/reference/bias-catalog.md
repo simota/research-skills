@@ -3,6 +3,7 @@
 
 Purpose: Naming interests, selection effects, and framing distortions.
 Read when: naming interests, selection effects, and framing distortions
+Source: none — nothing outside this page can move what it states.
 Verified: 2026-08-21 — no automated check.
 
 Bias is not dishonesty. Most of these operate on careful, sincere people — including the

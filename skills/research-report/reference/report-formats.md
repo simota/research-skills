@@ -3,6 +3,7 @@
 
 Purpose: Choosing and structuring the deliverable format.
 Read when: choosing and structuring the deliverable format
+Source: none — nothing outside this page can move what it states.
 Verified: 2026-08-21 — no automated check.
 
 Format follows the decision, not the effort spent. A week of research answering a yes/no question

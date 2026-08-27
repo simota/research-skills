@@ -3,6 +3,7 @@
 
 Purpose: Classifying depth, answer shape, and whether it is research.
 Read when: classifying depth, answer shape, and whether it is research
+Source: none — nothing outside this page can move what it states.
 Verified: 2026-08-21 — no automated check.
 
 Classify on three axes before choosing a chain. Getting depth wrong is the most expensive routing

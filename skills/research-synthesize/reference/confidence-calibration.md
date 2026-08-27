@@ -3,6 +3,7 @@
 
 Purpose: Assigning confidence, running sensitivity, writing gaps.
 Read when: assigning confidence, running sensitivity, writing gaps
+Source: none — nothing outside this page can move what it states.
 Verified: 2026-08-21 — the composition table below is re-checked by `make figures` on every run:
 all 16 pairs defined, all 64 triples associative, monotone, never-rising, `Unknown` absorbing, and
 agreeing with this page's own `Medium` x `Medium` = `Low`. The ceiling table above it is a

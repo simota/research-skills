@@ -3,6 +3,7 @@
 
 Purpose: Choosing the chain, handling loops, managing partials.
 Read when: choosing the chain, handling loops, managing partials
+Source: none — nothing outside this page can move what it states.
 Verified: 2026-08-21 — no automated check.
 
 ## Standard chains

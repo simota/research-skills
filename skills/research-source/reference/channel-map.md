@@ -3,6 +3,7 @@
 
 Purpose: Choosing where to look for a given question type.
 Read when: choosing where to look for a given question type
+Source: none — nothing outside this page can move what it states.
 Verified: 2026-08-21 — no automated check.
 
 Pick the channel before the keywords. Most failed searches are right-keyword/wrong-channel.
