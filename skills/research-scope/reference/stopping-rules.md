@@ -67,7 +67,7 @@ Rough calibration:
 
 | Mode | Sources | Query rounds | Output |
 |------|---------|--------------|--------|
-| Quick answer | 1-3 | 1 per sub-question, 2 total | <=10 lines with confidence label |
+| Quick answer | 1-3 | 1 per sub-question, 2 total | Answer with its confidence label and citations, inline |
 | Standard | 5-12 | 2-3 per sub-question, 8 total | 1-2 pages with evidence table |
 | Deep | 15-40 | until saturation, capped | Full chain artifacts |
 

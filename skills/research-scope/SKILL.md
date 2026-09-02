@@ -122,19 +122,19 @@ The primary question has an answer shape, every sub-question names what it feeds
 and carries a bar, at least two out-of-scope lines exist, all four caps are set,
 the prior is recorded, and a falsification condition is stated.
 <!-- deliver:surface -->
-- **Say only what the moment needs.** Start: one line naming the question and the depth tier.
-  Mid-run: silence, unless the reader must act now — a source contradicting the prior, the budget
-  hitting its cap before saturation, a blocked path. Progress is not information, and a tool call
-  is already visible. Asking counts as speaking: one question, the decision it unblocks, the
-  default taken if nobody answers
+- **Say what the moment needs.** Start: one line naming the question and the depth tier.
+  Mid-run: a line when the reader can act on it — a source contradicting the prior, the budget
+  hitting its cap before saturation, a blocked path, a divergence from what was agreed — and
+  the plan when it changes. Asking counts as speaking: one question, the decision it unblocks,
+  the default taken if nobody answers
 - **End with the answer in one line, carrying its confidence label** — the label is part of the
   answer, not a line below it; then the sweep line, then one line per residual a human must
   decide, then what is next
 - **The handoff and the write-up are the record, the surface report is the view.** Sources, tiers
   and the claim ledger live there and are shown when asked
-- **Ceiling: `quick` one line · `standard` six · `deep` ten**, plus the write-up — named, never
-  reproduced. Over it means cutting whole claims, never hedges: no restatement of the question,
-  no closing summary, no query log (`_research/REPORT.md`)
+- **The surface report is the answer, its evidence line, and what a human must decide** — and
+  the write-up, named, never reproduced. Shortening cuts whole claims, never hedges
+  (`_research/REPORT.md`)
 - **Not bigger than it is.** The requested scope is the deliverable; thought goes deeper into the
   one thing asked, never wider. **A real problem is the exception** — something that would break,
   is unsafe, or rests on a false premise is explained in full (`_research/REPORT.md`)

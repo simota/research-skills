@@ -33,8 +33,9 @@ All four arrive as `next_action: LOOP_BACK` with `trigger.kind` set (`_research/
 | `GAP_FILL` / `UNSUPPORTED_CLAIM` | `research-synthesize` | `research-source` |
 | `REVISE_SCOPE` | `research-synthesize` | `research-scope` |
 
-**One global counter: 2 loops per chain, of which at most 1 may be `REVISE_SCOPE`.** There are no
-per-trigger allowances — three counters would license five loops inside a "cap at two" rule.
+**One global counter, capped by `max_cycles` in `registry/routes.yaml`, of which at most 1 may be
+`REVISE_SCOPE`.** There are no per-trigger allowances — three counters would license three times
+the cap inside a single rule.
 
 A second loop that returns the same sources means the evidence does not exist. Stop and report
 `Unknown` — that is the finding, and looping a third time only spends budget confirming it.

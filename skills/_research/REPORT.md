@@ -18,20 +18,17 @@ handoff rendered field by field is how a one-sentence answer arrives as a page.
 
 ## The moments a run speaks
 
-Four, and no others. Each owes something different, and **what is right at one moment is
-noise at the next.**
+Four. Each owes something different, and **what is right at one moment is noise at the next.**
 
 | Moment | What it owes | Ceiling |
 |---|---|---|
 | **Start** | What will be done and what is excluded, with the tier if it is not obvious | one line |
 | **A question** | The one decision that is blocked, and the default taken if nobody answers | one question, one line |
-| **Mid-run** | Nothing — unless the reader must act now: a divergence from what was agreed, a path found blocked, work that would grow the scope, a source that contradicts the prior, or the budget hitting its cap before saturation | one line each, or silence |
+| **Mid-run** | What the reader can act on: a divergence from what was agreed, a path found blocked, work that would grow the scope, a source that contradicts the prior, the budget hitting its cap before saturation, or a change of plan | one line each |
 | **End** | The surface report below | the ceiling below |
 
-**Progress is not information.** "searching now", "reading the third paper", "still looking" tell
-the reader nothing they can act on, and they cost the same attention as the line that matters. A
-tool call is already visible; narrating it a second time is the commonest way a run fills a screen
-while saying nothing.
+A mid-run line carries something the reader would decide or do differently for knowing it. The
+tool call itself is already visible, so the line says what it changed, not that it happened.
 
 **A question is not a status update.** Ask when guessing wrong would be expensive to undo, ask one
 thing, and say what happens if the answer never comes.
@@ -52,14 +49,14 @@ A run with nothing unresolved reports lines 1 and 2 and stops.
 
 ## Ceiling
 
-| Tier (`_research/SIZING.md`) | The whole surface report |
-|---|---|
-| `quick` | one line, plus its citation |
-| `standard` | six lines, plus the write-up |
-| `deep` | ten lines, plus the write-up |
+The surface report is the four items above and nothing that is already in the write-up. A
+`quick` chain has no write-up, so its citation rides on the answer line. A `standard` or `deep`
+chain names where the write-up is and stops: the reader who wants the evidence table opens it
+(`_research/SIZING.md`).
 
-**Over the ceiling means cutting content, not reformatting it.** A table, a nested list, and a
-heading per sub-question are the three ways a report grows while appearing to have been tightened.
+**Too long means cutting content, not reformatting it.** A table earns its place when it makes
+the answer faster to read than the sentences it replaces, never as a container for claims that
+should have been cut.
 
 **Cutting never touches a hedge.** Shortening is dropping whole claims, not qualifiers: "may
 reduce" surviving as "reduces" is the one compression this family may not make (`_research/CONTRACT.md`).
@@ -84,14 +81,12 @@ to make.
 a false premise, say what is wrong, why, and the options, at whatever length that takes. **Cut
 noise, never risk.**
 
-## Never in a surface report
+## What the surface report leaves to the record
 
-- A restatement of the question, or of what the run was about to search
-- A closing summary of what was just said
-- The source list, the query log, or a walk through each tier awarded
-- Narration of process: which channels ran, what was tried first, which tool
-- Confidence language that is not the label — "fairly solid", "pretty clear" replace a defined
-  word with an undefined one
+The surface report opens on the answer and ends on what is next; the question, the source list,
+the query log, the tiers awarded and the path the run took live in the handoff and the write-up
+and are answered from there. Confidence is stated as the label and only the label — "fairly
+solid" and "pretty clear" replace a defined word with an undefined one (`_research/CONTRACT.md`).
 
 ## Asked for more
 
