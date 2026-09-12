@@ -83,7 +83,7 @@ Assembling the deliverable, verify:
 4. Excluded sources are not cited anywhere in the body
 5. Budget consumed vs. allotted is reported, in scope's units
 6. `research-report` emitted a terminal handoff — the chain's status comes from it, not from inference
-7. Status is `COMPLETE` only if every sub-question met its bar; otherwise `PARTIAL` with specifics
+7. Status is `DONE` only if every sub-question met its bar; otherwise `PARTIAL` with specifics
 
 ## Failure modes
 

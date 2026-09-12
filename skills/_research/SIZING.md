@@ -45,10 +45,29 @@ Before executing, any of these makes the dialogue mandatory:
   a tier is
 - The request carries a word with no achievement condition — "look into",
   "get a sense of", "see what is out there"
+- A term in the question or the field carries two meanings, or one concept goes
+  by two names, and the host's glossary does not settle it
 
 **Reading to find out is not executing**, and neither is retrieval: a search run
 to work out what the question is has already spent budget on a question nobody
 settled. Never open a dialogue over a single settled fact.
+
+## Terms — one name per concept, one concept per name
+
+The host's glossary is `.agents/glossary.md` when it exists. Read it before the
+brief is settled and write with its names only — sub-questions, claims, report
+alike. A term the work has to coin goes into the brief's `terms`, and at
+`standard` or above it is proposed in the dialogue rather than invented on the
+way.
+
+**An ambiguous or inconsistent term is never resolved by a silent choice.**
+Two meanings for one word, or two names for one concept, is a question
+(`_research/REPORT.md`): one question, with the default named — the spelling
+the sources and the host already use most. The answer lands in `terms`, travels
+in `carried`, and is appended to the glossary as `term · means · not to be
+called`, so the next chain inherits the decision rather than the ambiguity. A
+`standard` run may create the glossary for its first settled term; a `quick`
+one never does — it marks what it found `OUT-OF-SCOPE` and moves on.
 
 ## Constraints do not loosen mid-run
 

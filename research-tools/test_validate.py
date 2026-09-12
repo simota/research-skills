@@ -146,8 +146,8 @@ def _(r): sub(r / f"{S}_research/CONTRACT.md", "`_research/SOURCE_HYGIENE.md`", 
 
 @case("V20")
 def _(r):
-    f = r / f"{S}_research/CONTRACT.md"
-    f.write_text(f.read_text(encoding="utf-8").replace("UNSUPPORTED", "OPEN"), encoding="utf-8")
+    """The definition row becomes a mention; the word is still on the page."""
+    sub(r / f"{S}_research/CONTRACT.md", "| `UNSUPPORTED` |", "| UNSUPPORTED |")
 
 
 @case("V21")
@@ -309,6 +309,11 @@ def _(r):
 
 @case("V36-none-declared")
 def _(r): sub(r / "research-registry/harness.yaml", "finding_visuals:", "unused_visuals:")
+
+
+@case("V38")
+def _(r): sub(r / f"{S}research-source/playbooks/traps.md", "<!-- research:guidance -->\n",
+              "<!-- research:guidance -->\nverdict: KEEP | DROP\n")
 
 
 @case("V37")
