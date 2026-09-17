@@ -54,6 +54,7 @@ Name these explicitly; the prior recorded by `research-scope` exists for this.
 3. Two interest-aligned sources on the same side are one source for confidence purposes.
 4. A source that discloses its own funding and limitations earns a small upgrade in trust; one that
    conceals a discoverable interest earns a downgrade and a note.
-5. When every available source is interest-aligned, say so and record `CEILING: Low` for synthesis —
+5. For empirical/comparative/promotional claims, when every source is interest-aligned,
+   say so and record `CEILING: Low` for synthesis —
    that state of the evidence is itself the most useful thing to report. Recommend the ceiling;
    do not assign the label.

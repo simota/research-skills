@@ -18,7 +18,9 @@ conclusion — reading in the other order anchors the assessment to the finding.
 5. Could the result have been produced by something other than the stated cause?
 6. Has anyone reproduced it?
 
-A source that cannot answer 1-3 is `P4` regardless of its presentation.
+An empirical measurement that cannot answer 1-3 is `P4` regardless of presentation. A literal
+authoritative-record claim is checked by the bounded case in `_research/CONTRACT.md`, not by
+inventing an experimental method for a specification or published term.
 
 ## Benchmarks and performance claims
 

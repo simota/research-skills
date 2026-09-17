@@ -266,10 +266,19 @@ def v16_sections():
 
 def v17_delivery():
     for key, spec in H["delivered"].items():
+        only = spec.get("only")
+        if only not in (None, "signature"):
+            fail("V17", f"{key} declares unknown delivery scope {only!r}")
+            continue
+        wanted = set(SIGNATURE["required_of"]) if only == "signature" else set(SKILLS)
         want = read(ROOT / "research-registry" / "delivered" / f"{key}.md").rstrip("\n")
         open_m, close_m = f"<!-- deliver:{key} -->", f"<!-- /deliver:{key} -->"
         for d in SKILL_DIRS:
             text = read(d / "SKILL.md")
+            if d.name not in wanted:
+                if open_m in text or close_m in text:
+                    fail("V17", f"{d.name}/SKILL.md carries out-of-scope {key} delivery")
+                continue
             if open_m not in text or close_m not in text:
                 fail("V17", f"{d.name}/SKILL.md is missing the {key} delivery block")
                 continue
@@ -647,6 +656,8 @@ def v35_signature():
     the mechanism also names its own half of it, because a rule stated
     everywhere and owned nowhere is a ritual.
     """
+    if H["delivered"].get(SIGNATURE["name"], {}).get("only") != "signature":
+        fail("V35", "signature delivery must follow signature.required_of")
     contract = f"{SHARED}/{SIGNATURE['contract']}"
     path = SKILLS_ROOT / contract
     if not path.exists():

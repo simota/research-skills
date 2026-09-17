@@ -3,7 +3,7 @@
 
 Every deliverable above the one-liner carries these, in this order:
 
-1. **Answer** — the finding, its confidence, its as-of date, in the first three lines
+1. **Answer** — the finding, its assigned confidence (or no-synthesis limitation), its as-of date, in the first three lines
 2. **Conditions** — when it holds, when it does not
 3. **Evidence** — the claims that support it, cited, strongest first
 4. **Contradictions** — where sources disagreed and how it was diagnosed

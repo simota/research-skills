@@ -1,18 +1,17 @@
-- **Every source carries its tier against a named claim** (`_research/CONTRACT.md`):
-  `P1` primary record · `P2` rigorous secondary · `P3` credible reported ·
-  `P4` attributed opinion · `P5` unattributed or derivative. The tier belongs to
-  the **(source, claim) pair**, never to a source in the abstract
-- **Weigh by tier, independence and directness — never by source count.** One
-  `P1` outweighs four `P4`s that share an origin, and five sources repeating one
-  primary are one source
-- **Preserve hedges exactly.** Paraphrase never upgrades hedged language: "may
-  reduce" does not become "reduces". Hedge-stripping during editing is how an
-  honest chain produces a dishonest deliverable
-- **Report `status`**: `DONE` (every load-bearing claim at its bar, every source
-  with provenance, zero `UNSUPPORTED`) / `PARTIAL` / `BLOCKED`
-- **Every residual is `BLOCKED` / `OUT-OF-SCOPE` / `DEFERRED` / `UNSUPPORTED`**
-  and appears in the handoff's `open`. `UNSUPPORTED` is the class this family
-  turns on: every other residual is visible as an absence, while **an unsupported
-  claim reads exactly like a supported one** once it is in a sentence
-- **Never omit the sweep** — markers against `open`, load-bearing claims against
-  claims at their bar: `swept, 0 markers; 18 claims / 18 at bar`
+- **Preserve phase ownership.** Scope sets the brief; source captures provenance and read
+  depth without grading; appraise assigns tiers to **(source, claim) pairs** and recommends
+  ceilings; synthesize weighs by tier, independence and directness and assigns confidence.
+  Report and route preserve these decisions, not redo them (`_research/CONTRACT.md`)
+- **Source count is not strength.** Derivatives of one upstream do not add independent
+  corroboration. Preserve source IDs, claim IDs, exclusions and contradictory evidence
+- **Preserve semantic strength.** Paraphrase may change wording, not modality, causality,
+  population, time or attribution. Keep each qualifier close to its claim: "may reduce"
+  never becomes "reduces", nor "the company states" an unqualified assertion
+- **Report phase completion, not invented downstream work.** `DONE` / `PARTIAL` / `BLOCKED`
+  follow `_research/CONTRACT.md`. Scope and source do not invent claim ledgers or grades.
+  In a findings answer, unmet evidence bars and `UNSUPPORTED` prevent overall `DONE`
+- **Carry residuals** as `BLOCKED` / `OUT-OF-SCOPE` / `DEFERRED` / `UNSUPPORTED`; keep them
+  in the handoff. A skill holding `Write` leaves the classified marker where a reader will look
+- **Sweep what this phase owns.** Check markers and gaps; for claim-bearing findings, also
+  check support against the bar. Report counts only when measured and applicable; source
+  checks capture/coverage, scope checks the brief. Missing upstream artifacts are not zero gaps

@@ -197,20 +197,20 @@ external_paths: [".agents/", ".research/", "research/", "CLAUDE.md", "AGENTS.md"
 # it is identical in all six sets; this block is the whole difference, which is
 # what keeps six copies of the validator from becoming six dialects.
 #
-# `required_of` names every skill that touches a claim. The router picks the
-# chain and the budget; it never holds a claim, so it owes nothing here.
+# `required_of` names owners of observed reach. Scope sets a future target;
+# neither scope nor route has observed reach to report.
 # `own_word` is the substring each must carry outside the delivered block — the
 # rule is stated for all, and owned in each skill's own words.
 signature:
   name: reach
   contract: REACH.md
   vocabulary: reach_states
-  required_of: [research-scope, research-source, research-appraise, research-synthesize, research-report]
+  required_of: [research-source, research-appraise, research-synthesize, research-report]
   own_word: unopened
 
 delivered:
   sizing:  { section: "Before starting" }
-  reach:   { section: "Verify with" }
+  reach:   { section: "Verify with", only: signature }
   values:  { section: "Decide first" }
   report:  { section: "Verify with" }
   # The sixth axis. The other five bind what has to be true; this one binds what

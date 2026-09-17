@@ -13,10 +13,9 @@ comfort, so the tier is read off the question and declared before any retrieval.
 | `standard` | Real, with a decision behind it | scope → source → appraise → synthesize | Bounded rounds per sub-question |
 | `deep` | Contested, consequential, must survive challenge | the full chain, ending in a report | Caps set explicitly in the brief |
 
-**A `quick` chain caps its confidence.** No cross-source reconciliation ran, so
-independence was never tested and the top label is unavailable to it by
-construction — not as a penalty, but because the chain did not do the work the
-label claims.
+**A no-synthesis chain assigns no confidence label.** `quick` and `vet` report a
+source-bound answer and "no synthesis pass; confidence unassigned". An appraisal
+ceiling is advice, not a label. New reconciliation or inference belongs to synthesis.
 
 ## One budget, held across the chain
 
@@ -24,19 +23,29 @@ Not one per phase. The four caps — total sources, total query rounds, rounds p
 sub-question, full reads — are named identically everywhere and consumption is
 reported at every handoff.
 
-**Never dispatch retrieval on a brief that omits either round cap.** A search
-with no round cap does not end; it is abandoned, and what it abandoned is
-invisible in the output.
+**Never begin retrieval without both round caps.** Use the brief when present; do not
+silently repair or relax its limits. Without one, source first records an inline retrieval plan:
+exact requested target(s) as sub-questions, required version/date or source type, observable
+capture/coverage condition, and all four caps. Default to the existing quick envelope: at most
+3 sources, 3 full reads, 1 round per sub-question, 2 rounds total; tighter supplied caps prevail.
+These are maxima, not quotas. A multi-question request can exhaust this small default and return
+`PARTIAL`; it does not gain a bigger budget automatically. Unsettled question/criteria need scope,
+not invented priors, exclusions or evidence grades. No search is needed to invent this plan.
 
 ## Stop when the rule says so, not when it feels done
 
-The brief carries a stopping rule, and it is the thing that ends retrieval. The
-alternative — stopping when the answer feels supported — stops earliest exactly
-where the prior was strongest, which is where research is least useful.
+The brief or source's bounded entry plan carries an observable stopping rule. For a record
+lookup, capture the relevant passage at the requested version/as-of, including applicable
+conditions or amendments. Corpus-only uses the requested coverage/read-depth condition; source
+does not certify truth or assign tiers. Appraisal checks the evidence bar for a findings answer.
+Sufficiency may stop retrieval before a cap; a cap stops it even when insufficient. Unmet coverage
+or evidence remains `PARTIAL` (or `BLOCKED` if no work could proceed), never `DONE` merely at a cap.
 
 ## When a dialogue is required first
 
-Before executing, any of these makes the dialogue mandatory:
+For an unsettled question, these require dialogue when they change the decision or corpus.
+An exact record or corpus request uses the bounded entry plan above; an unstated downstream
+evidence grade alone is not a reason to invent a framing interview.
 
 - The **answer shape** is not determined — a number, a ranked list, a yes/no with
   conditions, a mechanism, a landscape map. Get it wrong and the corpus is wrong

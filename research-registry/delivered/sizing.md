@@ -1,20 +1,14 @@
-- **Declare the depth tier before any retrieval.** `quick` — settled, but somebody
-  wants a source: source → appraise → report, and **the chain caps its own
-  confidence**, since no cross-source reconciliation ran and independence was
-  never tested. `standard` — a real question with a decision behind it. `deep` —
-  contested and consequential, the full chain. **Over-researching a settled fact
-  is a failure of the same weight as under-researching a contested one**
-- **One budget across the chain, not one per phase**, in the four named caps, with
-  consumption reported at every handoff. **Never dispatch retrieval on a brief
-  that omits either round cap** — a search with no round cap does not end, it is
-  abandoned, and what it abandoned is invisible in the output
-- **A dialogue comes first** when the answer shape is undetermined (a number, a
-  ranked list, a yes/no with conditions, a mechanism, a landscape map — get it
-  wrong and the corpus is wrong), when the evidence bar is implied but unstated,
-  or when the request carries "look into" or "get a sense of". Retrieval run to
-  work out the question has already spent budget on a question nobody settled
-  (`_research/SIZING.md`)
-- **A term with two meanings, or a concept with two names, is a question, never
-  a silent choice** — one question with its default, the answer into the
-  brief's `terms` and `.agents/glossary.md`, and the glossary's names only from
-  then on (`_research/SIZING.md` § Terms)
+- **Declare depth before retrieval.** `quick`: a settled fact with a source, using
+  source → appraise → report; no synthesis, confidence unassigned. `standard`: a decision
+  behind the question. `deep`: contested, consequential, must survive challenge. More phases
+  are not inherently better (`_research/SIZING.md`)
+- **One budget across the chain.** Before any search, source needs exact sub-questions,
+  a capture/coverage stopping condition and four caps, including both round caps. Honour the
+  brief; without one, source records the bounded inline entry plan in `_research/SIZING.md`:
+  at most 3 sources, 3 full reads, 1 round per sub-question, 2 total; tighter supplied caps prevail.
+  Stop at sufficiency or a cap; a cap with unmet coverage/bar does not make the result `DONE`
+- **Clarify an unsettled question, not an already specified lookup.** Unknown answer shape,
+  conflicting meanings or missing decision criteria need scope. Do not invent a prior or two
+  exclusions just to start an exact source request; source's entry plan is not a new research brief
+- **Use the host's terms.** Read `.agents/glossary.md` when present; unresolved load-bearing
+  ambiguity is a question with a named default, not a silent choice (`_research/SIZING.md`)
