@@ -7,6 +7,9 @@ Source: none — nothing outside this page can move what it states.
 Verified: 2026-08-21 — no automated check.
 
 Run per source, against a **named claim**. A source is adequate *for a claim*, never in general.
+For the bounded authoritative-record case in `_research/CONTRACT.md`, establish authority and
+version/applicability: an absent page date, empirical method or independent sponsor alone does not
+cap a literal record claim. This exception never upgrades a promotional or empirical truth claim.
 
 ## 1. Provenance
 

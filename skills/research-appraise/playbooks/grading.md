@@ -1,6 +1,9 @@
 <!-- research:guidance -->
 # Grading Quick Table
 
+Apply the bounded authoritative-record case in `_research/CONTRACT.md` before generic metadata
+or interest ceilings; this does not upgrade promotional truth. Recommend a ceiling, never a label.
+
 | Question about the source | Pushes toward |
 |---------------------------|---------------|
 | Did it observe the thing directly, with data you could re-check? | `P1` |
@@ -12,4 +15,4 @@
 | Is it undated but attributed, or attributed but methodless? | Cap at `P4` |
 | Does it disclose no method at all? | Cap at `P4` |
 | Do its own citations fail to resolve? | `P5`, exclude |
-| Is it the only source, and interest-aligned? | Keep; record `CEILING: Low` as advice to synthesis |
+| Is it the only source, and interest-aligned on an empirical/comparative/promotional claim? | Keep; record `CEILING: Low` as advice to synthesis |

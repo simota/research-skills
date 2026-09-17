@@ -18,7 +18,7 @@ one owner; a skill that finds itself doing another's job hands off instead of ab
 | Skill | Owns | Does NOT own |
 |-------|------|--------------|
 | `research-scope` | The question. Decomposition, out-of-scope lines, success criteria, the stopping **rule** and the caps it sets, effort budget. | Running searches, judging whether the rule has been met, judging sources, writing prose. |
-| `research-source` | Retrieval. Query design, source-type selection, snowballing, dedup, the search log, and **judging whether scope's saturation condition has been met**. | Setting the rule or the caps (→ scope), assigning provenance tiers or excluding sources (→ appraise), deciding what sources *mean* (→ synthesize). |
+| `research-source` | Retrieval. Query design, source-type selection, snowballing, dedup, the search log, and **judging whether the capture/saturation condition has been met**; bounded entry plan when no brief exists (`_research/SIZING.md`). | Reframing an unsettled question or relaxing supplied caps (→ scope), assigning provenance tiers or excluding sources (→ appraise), deciding what sources *mean* (→ synthesize). |
 | `research-appraise` | Per-source judgment. Provenance, method quality, bias, recency, independence, evidence grade, include/exclude. May **recommend** a confidence ceiling. | Assigning confidence labels (→ synthesize), cross-source reconciliation (→ synthesize), finding more sources (→ source). |
 | `research-synthesize` | Cross-source claims. Claim extraction, agreement/contradiction matrix, weight of evidence, gaps, confidence. | Grading individual sources (→ appraise), audience-shaped prose (→ report). |
 | `research-report` | Communication. Audience shaping, structure, citation rendering, limitations, executive summary. | Forming new claims not present in the synthesis ledger. |
@@ -31,20 +31,20 @@ one owner; a skill that finds itself doing another's job hands off instead of ab
    (`C-001`).
 2. **No skill invents evidence.** If a needed source does not exist, that is a *gap* — report it,
    do not reason around it.
-3. **Confidence is stated, never implied.** Use the vocabulary in `_research/CONTRACT.md` §Confidence; those
-   four labels are the whole vocabulary.
+3. **Assigned confidence is stated, never implied.** The four labels in `_research/CONTRACT.md`
+   are the whole vocabulary; an unassigned label is not `Unknown` or an advisory ceiling.
 4. **Only `research-synthesize` assigns a confidence label.** `research-appraise` may recommend a
    ceiling (`CEILING: Low`); it does not set the label, because a label set before cross-source
    reconciliation becomes an unremovable floor under invariant 5.
-   *One exception, narrow and named:* on a chain that runs no synthesis (`quick`, `vet`),
-   `research-report` assigns the label itself under `_research/CONTRACT.md`, capped at `Medium` and marked
-   "no synthesis pass". A chain that never tested independence cannot reach `High`.
+   On a chain with no synthesis (`quick`, `vet`), no skill assigns a confidence label. Report
+   the source-bound answer and "no synthesis pass; confidence unassigned". Reconciliation or
+   inference not established upstream must go to synthesis, not to an implicit report verdict.
 5. **Uncertainty flows forward undiluted.** A `Low`-confidence claim in synthesis must still read
    as `Low`-confidence in the report. Downstream skills may not upgrade confidence.
 6. **Evidence tiers belong to `research-appraise`.** `research-source` records what a document *is*
    (type, provenance, read depth, red flags); it does not grade or exclude.
-7. **The stopping rule is set before searching, not after.** `research-scope` writes it; every
-   downstream skill honours it.
+7. **The stopping rule is set before searching, not after.** Scope writes the brief; without
+   one, source records the bounded entry plan in `_research/SIZING.md`. Hard caps are not sufficiency.
 
 ## Outside the family
 

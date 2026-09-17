@@ -10,12 +10,12 @@ Verified: 2026-08-21 — no automated check.
 
 | Pattern | Chain | Use |
 |---------|-------|-----|
-| Lookup | `source -> appraise -> report` | Documented fact, primary source exists, low error cost. No ledger: report traces to `S-nnn` and cannot exceed `Medium` |
-| Vet | `appraise -> report` | A supplied source to check |
+| Lookup | `source -> appraise -> report` | Documented fact, primary source exists, low error cost. No ledger: report traces to `S-nnn`; no synthesis, confidence unassigned |
+| Vet | `source -> appraise -> report` | Bounded record/source check; a supplied retrieval handoff permits a stated source skip |
 | Trace | `source -> appraise` | "Where did this source come from and is it sound" |
 | Verify | `source -> appraise -> synthesize -> report` | "Is this claim true" — claim truth needs cross-source reconciliation, not just source quality |
-| Standard | `scope -> source -> appraise -> synthesize -> report` | The default for real questions |
-| Deep | Standard + gap-fill loops to saturation | High error cost, contested field |
+| Standard | `scope -> source -> appraise -> synthesize` | Terminal synthesis supplies the supported answer; add report for audience-shaped writing |
+| Deep | Standard + report, with bounded gap-fill loops | High error cost, contested field |
 | Reconcile | `appraise -> synthesize -> report` | A corpus already exists |
 | Write-up | `report` | The ledger already exists |
 
@@ -82,7 +82,7 @@ Assembling the deliverable, verify:
 3. Every phase's `gaps` appear in the final output (this is the one that silently fails)
 4. Excluded sources are not cited anywhere in the body
 5. Budget consumed vs. allotted is reported, in scope's units
-6. `research-report` emitted a terminal handoff — the chain's status comes from it, not from inference
+6. The terminal phase emitted a handoff — the chain's status comes from it, not from inference
 7. Status is `DONE` only if every sub-question met its bar; otherwise `PARTIAL` with specifics
 
 ## Failure modes

@@ -127,8 +127,8 @@ def _(r): sub(r / f"{S}research-source/SKILL.md", "## Done when", "## Finished w
 
 
 @case("V17")
-def _(r): sub(r / f"{S}research-source/SKILL.md", "- **Weigh by tier, independence",
-              "- **Weigh loosely by tier, independence")
+def _(r): sub(r / f"{S}research-source/SKILL.md", "- **Preserve phase ownership.**",
+              "- **Ignore phase ownership.**")
 
 
 @case("V18")
@@ -152,8 +152,8 @@ def _(r):
 
 @case("V21")
 def _(r): sub(r / f"{S}research-source/SKILL.md",
-              "Provenance is the evidence, captured at retrieval and therefore `P1` about the\nsource itself:",
-              "Provenance is the evidence:")
+              "Capture provenance without grading: appraisal will decide whether a named claim\nhas a `P1` primary record.",
+              "Capture provenance without grading.")
 
 
 @case("V22")
@@ -325,6 +325,27 @@ def _(r):
 
 @case("V37-none-declared")
 def _(r): sub(r / "research-registry/harness.yaml", "source_authorities:", "unused_authorities:")
+
+
+@case("V17-unexpected")
+def _(r):
+    src = (r / f"{S}research-source/SKILL.md").read_text()
+    block = re.search(r"<!-- deliver:reach -->.*?<!-- /deliver:reach -->", src, re.S).group()
+    sub(r / f"{S}research-scope/SKILL.md", "## Verify with", "## Verify with\n" + block)
+
+
+@case("V17-unknown-scope")
+def _(r): sub(r / "research-registry/harness.yaml", "only: signature", "only: nowhere")
+
+
+@case("V17-missing-target")
+def _(r):
+    p = r / f"{S}research-source/SKILL.md"
+    p.write_text(re.sub(r"<!-- deliver:reach -->.*?<!-- /deliver:reach -->", "", p.read_text(), flags=re.S))
+
+
+@case("V35-delivery-scope")
+def _(r): sub(r / "research-registry/harness.yaml", ", only: signature", "")
 
 
 def main() -> int:

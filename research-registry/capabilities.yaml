@@ -34,7 +34,7 @@ research-source:
   not:
     - what: "grading what was retrieved"
       go: research-appraise
-    - what: "deciding what to look for"
+    - what: "framing an unsettled question or changing its criteria"
       go: research-scope
   signals: [corpus, search strategy, disconfirming queries, primary source, deduplication, provenance, search log]
 
@@ -52,7 +52,7 @@ research-synthesize:
   class: doc-write
   does: [claim-ledger, extraction, contradiction-diagnosis, weighing, confidence]
   not:
-    - what: "writing the deliverable"
+    - what: "audience-shaped writing beyond the synthesis answer"
       go: research-report
     - what: "re-grading a source"
       go: research-appraise

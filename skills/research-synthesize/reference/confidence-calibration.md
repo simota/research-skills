@@ -29,7 +29,8 @@ Per claim:
 | Support | Contradiction | Ceiling |
 |---------|---------------|---------|
 | >=2 independent `P1`/`P2` | none | `High` |
-| 1 `P1`/`P2` | none | `Medium` |
+| 1 `P1` authoritative record defining the bounded claim (see below) | none | `High` eligible |
+| Other 1 `P1`/`P2` | none | `Medium` |
 | >=2 independent `P3` | none | `Medium` |
 | 1 `P3` | none | `Low` — `Medium` needs a second independent `P3`, or one `P1`/`P2` |
 | Any volume of `P4`/`P5` | none | `Low` |
@@ -38,6 +39,19 @@ Per claim:
 
 Supporting `P3`s alongside an `P1`/`P2` do not raise the ceiling; contradicting ones must be
 explained before `Medium` stands.
+
+## Authoritative-record case
+
+Apply `_research/CONTRACT.md` narrowly: the record defines the proposition being checked, rather
+than being one interested observer asserting a claim about the world. Verify the relevant passage,
+authority, exact version/jurisdiction, as-of applicability and absence of unexplained contradiction.
+Examples: literal enacted wording (not its application to a case), documented API signature (not
+runtime conformity), published price/terms (not a customer's final bill), certified tally (not
+absence of fraud), normative wording, pinned parent-relative diff (not proof the fix works).
+A second authority is not required for those exact record claims. `High` is eligible, not automatic;
+keep the record's scope and hedges. A company saying its product is best is not a constitutive
+record of being best, even when quoted. Empirical, causal, generalized and promotional claims
+still need the ordinary ladder and independent evidence. Quick/vet issue no confidence label.
 
 ## Chained inference
 
@@ -90,8 +104,9 @@ both fall. Nothing else in the corpus independently measures this.
 Robustness: one independent replication would move C-002 from Medium to High.
 ```
 
-If a single source can overturn the conclusion, the conclusion is `Medium` at best regardless of
-that source's tier. Naming the load-bearing source tells the reader exactly where to push.
+Outside the bounded authoritative-record case, a single source that can overturn the conclusion
+caps it at `Medium`. Inside that case, name the record and version that define the claim; a
+different record may answer a different question. Keep access/authenticity gaps explicit.
 
 ## Gaps
 
@@ -122,7 +137,7 @@ because the prior was written down before searching.
 ## Calibration self-check
 
 - Would I bet on this claim at the odds my label implies?
-- Have I labelled anything `High` that rests on a single source?
+- Does any single-source `High` actually meet every authoritative-record condition?
 - Have I labelled anything `Low` merely because it contradicts what I expected?
 - Is every `Unknown` genuinely unresolved, rather than unresearched? If unresearched, say so.
 - Does any claim in the ledger lack a source ID? If so, it is inference — label it.

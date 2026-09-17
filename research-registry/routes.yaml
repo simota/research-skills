@@ -14,17 +14,19 @@ standard:
   pattern: linear
   when: "a real question with a decision behind it"
   chain: [research-scope, research-source, research-appraise, research-synthesize]
+  gate: "terminal synthesis returns the supported answer, conditions and gaps, not only a ledger"
 
 quick:
   pattern: linear
   when: "a settled fact that still needs a source"
   chain: [research-source, research-appraise, research-report]
-  gate: "the report says no synthesis pass ran, and caps confidence accordingly"
+  gate: "no synthesis pass; confidence unassigned. Report source-bound findings, not an inferred verdict"
 
 vet:
   pattern: linear
-  when: "somebody handed you a claim and you need to know if it holds"
+  when: "a bounded check against a record or supplied source; cross-source truth adjudication needs synthesis"
   chain: [research-source, research-appraise, research-report]
+  gate: "no synthesis pass; confidence unassigned. If reconciliation is needed, return it for synthesis"
 
 frame-only:
   pattern: report-only

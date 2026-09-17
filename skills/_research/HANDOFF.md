@@ -45,10 +45,11 @@ destination — `BELOW_BAR` / `GAP_FILL` / `UNSUPPORTED_CLAIM` go to `research-s
 - `REVISE_SCOPE` returns control to `research-scope`. Only that skill rewrites the question —
   a downstream skill that finds the question unanswerable says so; it does not silently
   substitute an easier one.
-- Confidence never rises across a handoff. A downstream skill may lower it, never raise it.
+- Carry confidence labels unchanged. Only synthesis assigns or revises them; downstream
+  objections go back to the owner, not into a silent upgrade or downgrade. Ceilings are advisory.
 - A blocking open question halts the chain and surfaces to the user. Non-blocking ones ride along
   and land in the report's Limitations.
-- **Every phase emits a handoff, including the last.** `research-report` closes the chain with
+- **Every phase emits a handoff, including the last.** The terminal phase closes the chain with
   `to: research-route` (or `to: DONE` when unrouted) carrying the final status, surviving gaps,
   and budget consumed. Without it the chain's completion status is reconstructed by guesswork,
   which is how a `PARTIAL` becomes a `DONE`.

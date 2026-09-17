@@ -13,7 +13,7 @@ delivers a yes/no answer with citations — the method appendix carries the rest
 
 | Reader needs | Format | Length | Must include |
 |--------------|--------|--------|--------------|
-| A fact, now | Quick answer | 1-5 lines | Answer, confidence, 1-3 citations, as-of date |
+| A fact, now | Quick answer | 1-5 lines | Source-bound answer, no-synthesis limitation, citations, as-of date |
 | To make a call this week | Decision memo | 1-2 pages | Answer, conditions, evidence, unknowns, what would change it |
 | To choose among options | Comparison matrix | 1 page + notes | Criteria as rows, options as columns, per-cell citations, "not compared" cells marked |
 | To brief others | Executive summary + appendix | 1 page + full | Summary safe to read alone; body carries the conditions |
@@ -24,7 +24,8 @@ delivers a yes/no answer with citations — the method appendix carries the rest
 ## Quick answer
 
 ```
-Yes — X has supported Y since v3.2 (released 2025-11). Confidence: Medium (no synthesis pass).
+The documentation states that X supports Y since v3.2 (released 2025-11).
+No synthesis pass; confidence unassigned.
 Caveat: not available in the managed offering [S-004].
 
 [S-001] Acme. "Changelog v3.2." Acme Docs, 2025-11-04. <https://…> (accessed 2026-08-21) — P1
@@ -35,7 +36,8 @@ Even at four lines the sources resolve in full per `_research/CONTRACT.md` §Cit
 bare `[S-001] changelog` is not a citation. Where the full entries would dominate a very short
 answer, point at the corpus artifact instead (`.research/<slug>/corpus.md`).
 
-Confidence and caveat are not optional at any length. A bare "yes" is an unlabelled claim.
+Keep caveats at any length. Preserve confidence only when synthesis assigned it; no synthesis
+means no label. This is not permission for an unattributed or unqualified "yes".
 
 ## Decision memo
 
@@ -77,7 +79,7 @@ criterion no source measured.
 
 It will be read alone and forwarded without the body. Therefore:
 
-- The confidence label goes in the summary, not only in the body
+- An assigned confidence label goes in the summary; a no-synthesis limitation stays visible too
 - Conditions travel with the claim, in the same sentence
 - No claim appears in the summary that is not in the body, at the same strength
 - Unknowns get one line in the summary, not only in the gaps section

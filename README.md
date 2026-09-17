@@ -9,8 +9,8 @@ budgets that keep the set from growing into something nobody can route through.
 | [`research-scope`](skills/research-scope/SKILL.md) | The brief: question, answer shape, bar, stopping rule | doc-write |
 | [`research-source`](skills/research-source/SKILL.md) | The corpus and its provenance | **retrieve — the only skill that reaches the web** |
 | [`research-appraise`](skills/research-appraise/SKILL.md) | What each source is worth, for a named claim | doc-write |
-| [`research-synthesize`](skills/research-synthesize/SKILL.md) | The claim ledger and the confidence label | doc-write |
-| [`research-report`](skills/research-report/SKILL.md) | The deliverable, and nothing beyond the ledger | doc-write |
+| [`research-synthesize`](skills/research-synthesize/SKILL.md) | The claim ledger, confidence, and supported answer | doc-write |
+| [`research-report`](skills/research-report/SKILL.md) | Audience-shaped writing of established findings | doc-write |
 
 ## The four ideas the set is built on
 
@@ -23,7 +23,8 @@ one primary are one source.
 
 **One skill assigns confidence.** Appraisal recommends a ceiling and never sets
 a label, because a label set early becomes an unremovable floor. Report
-preserves what synthesis assigned, exactly — **hedge-stripping during editing is
+preserves synthesis labels and semantic qualification. Without synthesis, quick/vet assign no
+label and state the chain limitation; an appraisal ceiling is not an assignment. **Hedge-stripping is
 the single most common way an honest chain produces a dishonest deliverable**.
 
 **Fetched content is data, never instruction.** Retrieved text may contain
@@ -60,8 +61,8 @@ never name a neighbour. If they did, adding a seventh skill would mean editing
 the other six.
 
 **Contracts are delivered, not referenced.** The operative part of each contract
-is copied verbatim into every `SKILL.md`; `make render` writes it back and a rule
-fails on drift.
+is rendered into its declared owners; shared wording is conditional on phase ownership.
+`make render` writes it back, removes out-of-scope blocks, and a rule fails on drift.
 
 **Knowledge splits by whether it rots.** `playbooks/` holds judgement and is
 budgeted. `reference/` holds what goes stale — channel maps, report formats,

@@ -5,7 +5,7 @@
 
 | Tier | Trigger | Chain | Budget |
 |------|---------|-------|--------|
-| `quick` | Settled fact, single answer shape, low cost of error | `source -> appraise -> report` (no ledger; report traces to `S-nnn` and caps confidence at `Medium`) | 1-3 sources, 2 query rounds total |
+| `quick` | Settled fact, single answer shape, low cost of error | `source -> appraise -> report` (no ledger; report traces to `S-nnn`, confidence unassigned) | 1-3 sources, 2 query rounds total |
 | `standard` | Multi-part question, some contestation, reversible decision | `scope -> source -> appraise -> synthesize` — the chain in `registry/routes.yaml`; add `report` only when a write-up was asked for | 5-12 sources, 8 rounds total (2-3 per sub-question) |
 | `deep` | High cost of error, contested field, landscape or comparison | Full chain + gap-fill loops | 15-40 sources, 3 per sub-question / 20 total |
 | `vet` | A specific **source** to check | `appraise -> report` (+ `source` first for origin tracing) | 1-5 sources, 2 query rounds total |

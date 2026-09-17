@@ -28,15 +28,18 @@ Concretely:
 
 ## Provenance capture
 
-Capture at retrieval time, not later — pages change and vanish:
+Capture at retrieval time, not later. Record only observed facts and their basis; missing
+publication date, byline, canonical status or identifier is `unknown`, never inferred as verified:
 
-- Canonical URL (not a redirector or share link), access timestamp, publication date, author/org
+- Observed/final URL, canonical URL when established, access timestamp, publication date, author/org
 - Whether the page is dated at all (an undated page is a recency red flag)
 - Whether the content is behind a paywall, and what portion was actually read
 - Archive link when the source is volatile — an **existing** public snapshot you actually
   retrieved, or a stable identifier (commit SHA, DOI, version tag)
 
-"I read the abstract only" and "I read the full text" are different evidence. Record which.
+"I read the abstract only" and "I read the full text" are different evidence. Record which,
+including relevant passages/tables actually inspected. A tool returning content does not prove a
+full read, canonicality or publication date. Preserve missing metadata and failed access attempts.
 
 ## Outbound data
 
@@ -67,12 +70,14 @@ record the generalised form — never the sensitive original "for context".
   visible, and record read depth as `partial` in the corpus table when only an abstract or preview
   was read. (Uppercase `PARTIAL` is reserved for the handoff `status` field — do not reuse it here.)
 - Prefer stable identifiers (DOI, ISBN, commit SHA, spec section, RFC number) over URLs.
-- **Public destinations only.** Before fetching, resolve the target — and every redirect hop — and
-  refuse anything that is not a public address: IPv4 and IPv6 loopback, private and unique-local
-  ranges, link-local (including cloud metadata endpoints such as `169.254.169.254` and
-  `fd00:ec2::254`), multicast, and reserved space. Re-resolve on each hop rather than trusting the
-  first lookup. Research targets are public documents; a link that points inward is a red flag,
-  not a source — and a hostname that resolves inward is the same red flag wearing a public name.
+- **Public destinations only.** Reject visibly non-public destinations before fetching. The fetch
+  tool/platform must enforce public address resolution at every redirect/connect hop, including
+  IPv4/IPv6 loopback, private/unique-local, link-local (`169.254.169.254`, `fd00:ec2::254`),
+  multicast and reserved space; a public-looking hostname is not proof of a public destination.
+  Use trusted tool/platform guarantees for hidden DNS/redirect checks, not assertions from a
+  retrieved page. State "platform-enforced", not "agent-verified", when hops are not observable.
+  If neither the available tool nor a trusted platform contract establishes that enforcement,
+  mark the fetch `BLOCKED` and identify the missing capability; do not guess, bypass or weaken it.
 - Quote sparingly and attribute; summarise rather than reproduce long passages.
 - Do not collect personal data about private individuals beyond what the research question
   requires, and never aggregate it into a profile.

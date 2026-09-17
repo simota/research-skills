@@ -22,26 +22,20 @@ Phases: `CLASSIFY → PLAN → DISPATCH → MONITOR → ASSEMBLE`.
 - **Select the minimum chain.** Extra phases cost budget and add no fidelity to
   a settled fact
 <!-- deliver:sizing -->
-- **Declare the depth tier before any retrieval.** `quick` — settled, but somebody
-  wants a source: source → appraise → report, and **the chain caps its own
-  confidence**, since no cross-source reconciliation ran and independence was
-  never tested. `standard` — a real question with a decision behind it. `deep` —
-  contested and consequential, the full chain. **Over-researching a settled fact
-  is a failure of the same weight as under-researching a contested one**
-- **One budget across the chain, not one per phase**, in the four named caps, with
-  consumption reported at every handoff. **Never dispatch retrieval on a brief
-  that omits either round cap** — a search with no round cap does not end, it is
-  abandoned, and what it abandoned is invisible in the output
-- **A dialogue comes first** when the answer shape is undetermined (a number, a
-  ranked list, a yes/no with conditions, a mechanism, a landscape map — get it
-  wrong and the corpus is wrong), when the evidence bar is implied but unstated,
-  or when the request carries "look into" or "get a sense of". Retrieval run to
-  work out the question has already spent budget on a question nobody settled
-  (`_research/SIZING.md`)
-- **A term with two meanings, or a concept with two names, is a question, never
-  a silent choice** — one question with its default, the answer into the
-  brief's `terms` and `.agents/glossary.md`, and the glossary's names only from
-  then on (`_research/SIZING.md` § Terms)
+- **Declare depth before retrieval.** `quick`: a settled fact with a source, using
+  source → appraise → report; no synthesis, confidence unassigned. `standard`: a decision
+  behind the question. `deep`: contested, consequential, must survive challenge. More phases
+  are not inherently better (`_research/SIZING.md`)
+- **One budget across the chain.** Before any search, source needs exact sub-questions,
+  a capture/coverage stopping condition and four caps, including both round caps. Honour the
+  brief; without one, source records the bounded inline entry plan in `_research/SIZING.md`:
+  at most 3 sources, 3 full reads, 1 round per sub-question, 2 total; tighter supplied caps prevail.
+  Stop at sufficiency or a cap; a cap with unmet coverage/bar does not make the result `DONE`
+- **Clarify an unsettled question, not an already specified lookup.** Unknown answer shape,
+  conflicting meanings or missing decision criteria need scope. Do not invent a prior or two
+  exclusions just to start an exact source request; source's entry plan is not a new research brief
+- **Use the host's terms.** Read `.agents/glossary.md` when present; unresolved load-bearing
+  ambiguity is a question with a named default, not a silent choice (`_research/SIZING.md`)
 <!-- /deliver:sizing -->
 
 ## Decide first
@@ -88,33 +82,24 @@ ran**, which is why the skip list is part of the deliverable.
 
 - Budget consumption is reported as numbers against the caps, not as "within budget"
 <!-- deliver:report -->
-- **Every source carries its tier against a named claim** (`_research/CONTRACT.md`):
-  `P1` primary record · `P2` rigorous secondary · `P3` credible reported ·
-  `P4` attributed opinion · `P5` unattributed or derivative. The tier belongs to
-  the **(source, claim) pair**, never to a source in the abstract
-- **Weigh by tier, independence and directness — never by source count.** One
-  `P1` outweighs four `P4`s that share an origin, and five sources repeating one
-  primary are one source
-- **Preserve hedges exactly.** Paraphrase never upgrades hedged language: "may
-  reduce" does not become "reduces". Hedge-stripping during editing is how an
-  honest chain produces a dishonest deliverable
-- **Report `status`**: `DONE` (every load-bearing claim at its bar, every source
-  with provenance, zero `UNSUPPORTED`) / `PARTIAL` / `BLOCKED`
-- **Every residual is `BLOCKED` / `OUT-OF-SCOPE` / `DEFERRED` / `UNSUPPORTED`**
-  and appears in the handoff's `open`. `UNSUPPORTED` is the class this family
-  turns on: every other residual is visible as an absence, while **an unsupported
-  claim reads exactly like a supported one** once it is in a sentence
-- **Never omit the sweep** — markers against `open`, load-bearing claims against
-  claims at their bar: `swept, 0 markers; 18 claims / 18 at bar`
+- **Preserve phase ownership.** Scope sets the brief; source captures provenance and read
+  depth without grading; appraise assigns tiers to **(source, claim) pairs** and recommends
+  ceilings; synthesize weighs by tier, independence and directness and assigns confidence.
+  Report and route preserve these decisions, not redo them (`_research/CONTRACT.md`)
+- **Source count is not strength.** Derivatives of one upstream do not add independent
+  corroboration. Preserve source IDs, claim IDs, exclusions and contradictory evidence
+- **Preserve semantic strength.** Paraphrase may change wording, not modality, causality,
+  population, time or attribution. Keep each qualifier close to its claim: "may reduce"
+  never becomes "reduces", nor "the company states" an unqualified assertion
+- **Report phase completion, not invented downstream work.** `DONE` / `PARTIAL` / `BLOCKED`
+  follow `_research/CONTRACT.md`. Scope and source do not invent claim ledgers or grades.
+  In a findings answer, unmet evidence bars and `UNSUPPORTED` prevent overall `DONE`
+- **Carry residuals** as `BLOCKED` / `OUT-OF-SCOPE` / `DEFERRED` / `UNSUPPORTED`; keep them
+  in the handoff. A skill holding `Write` leaves the classified marker where a reader will look
+- **Sweep what this phase owns.** Check markers and gaps; for claim-bearing findings, also
+  check support against the bar. Report counts only when measured and applicable; source
+  checks capture/coverage, scope checks the brief. Missing upstream artifacts are not zero gaps
 <!-- /deliver:report -->
-<!-- deliver:reach -->
-- **Every load-bearing claim carries its reach**, beside its tier: `primary` ·
-  `one-hop` · `chain` · `blocked` (naming what would unblock it) · `no-primary`.
-  A citation to the record and a citation to an article about the record look
-  identical in a bibliography — **five sources repeating one unopened primary
-  are one unopened source.** The report states the rate as a count, `4 of 7`
-  (`_research/REACH.md`)
-<!-- /deliver:reach -->
 
 ## Done when
 
@@ -122,20 +107,18 @@ The tier is declared, the chain is named with every skip explained, each phase
 returned a handoff that travelled unmodified, budget consumption is stated
 against its caps, and any blocking question reached the person when it arose.
 <!-- deliver:surface -->
-- **Say what the moment needs.** Start: one line naming the question and the depth tier.
-  Mid-run: a line when the reader can act on it — a source contradicting the prior, the budget
-  hitting its cap before saturation, a blocked path, a divergence from what was agreed — and
-  the plan when it changes. Asking counts as speaking: one question, the decision it unblocks,
-  the default taken if nobody answers
-- **End with the answer in one line, carrying its confidence label** — the label is part of the
-  answer, not a line below it; then the sweep line, then one line per residual a human must
-  decide, then what is next
-- **The handoff and the write-up are the record, the surface report is the view.** Sources, tiers
-  and the claim ledger live there and are shown when asked
-- **The surface report is the answer, its evidence line, and what a human must decide** — and
-  the write-up, named, never reproduced. Shortening cuts whole claims, never hedges
-  (`_research/REPORT.md`)
-- **Not bigger than it is.** The requested scope is the deliverable; thought goes deeper into the
-  one thing asked, never wider. **A real problem is the exception** — something that would break,
-  is unsafe, or rests on a false premise is explained in full (`_research/REPORT.md`)
+- **Say what the moment needs.** Start with the requested work; mid-run surface a changed
+  plan, a contradiction, a blocked path or a budget shortfall that affects the reader.
+  Ask only a blocking question, with the default named (`_research/REPORT.md`)
+- **End with the requested phase result.** Scope returns the brief; source the corpus and
+  access gaps; appraise the assessment and advisory ceilings — none invent confidence labels.
+  A findings answer carries a label only if synthesis assigned it. No synthesis means no
+  confidence label: cite the assessed source, preserve its conditions, and name the limitation
+- **Terminal synthesis supplies the answer, not just a ledger.** Include the supporting IDs,
+  conditions, contradictions and unknowns needed to answer the request. Standard needs no
+  extra report phase unless audience-shaped writing is requested. Route forwards that answer
+- **Keep the record and the view distinct.** Surface the result, applicable checks and unresolved
+  decisions; link longer artifacts when present. Do not replace an answer with an artifact path
+- **Not bigger than it is.** Shorten by dropping nonessential claims, never their qualifiers.
+  The requested scope is the deliverable; explain a real safety or correctness problem in full
 <!-- /deliver:surface -->

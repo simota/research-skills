@@ -21,7 +21,9 @@ The primary stopping condition. Saturation is reached when new sources stop chan
 | Each new source adds a claim but from a new domain/community | **Not** saturated; the corpus was too narrow |
 | New sources contradict the emerging answer | Not saturated; contradiction must be resolved, not outvoted |
 
-Saturation can never be declared below the sub-question's own corroboration requirement in the
+For a bounded authoritative-record lookup, sufficient capture of its relevant passage can end
+retrieval without a literature saturation claim. Source uses `_research/SIZING.md` when no brief
+exists. Otherwise, saturation cannot be declared below the sub-question's corroboration requirement in the
 evidence bar: three agreeing sources that collapse to one origin are one source, and one source is
 not saturation.
 
@@ -38,6 +40,10 @@ Set per sub-question from the cost of being wrong:
 | Reversible but expensive to unwind | `P2`-`P3` | >=2 independent | Medium |
 | Cheap to reverse, or directional input only | `P3`-`P4` | 1 acceptable | `Low` — `Medium` requires one `P1`/`P2` or two independent `P3` |
 | Background colour | any | none | Low, labelled |
+
+For a literal authoritative-record claim, use the narrow `_research/CONTRACT.md` case rather
+than demanding two records merely because consequences are high. This does not relax bars for
+application, empirical effects or comparisons.
 
 The target-confidence column is a **ceiling derived from `_research/CONTRACT.md`**, not an
 independent setting. A bar that admits only `P4` sources cannot target above `Low`, whatever the
@@ -67,7 +73,7 @@ Rough calibration:
 
 | Mode | Sources | Query rounds | Output |
 |------|---------|--------------|--------|
-| Quick answer | 1-3 | 1 per sub-question, 2 total | Answer with its confidence label and citations, inline |
+| Quick answer | 1-3 | 1 per sub-question, 2 total | Source-bound answer, citations and no-synthesis limitation, inline |
 | Standard | 5-12 | 2-3 per sub-question, 8 total | 1-2 pages with evidence table |
 | Deep | 15-40 | until saturation, capped | Full chain artifacts |
 

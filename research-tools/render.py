@@ -9,6 +9,7 @@ Idempotent: run it, commit the diff.
 """
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 
@@ -24,6 +25,13 @@ def render(path: Path) -> bool:
     text = path.read_text(encoding="utf-8")
     original = text
     for key, spec in H["delivered"].items():
+        only = spec.get("only")
+        if only not in (None, "signature"):
+            raise ValueError(f"unknown delivery scope {only!r} for {key}")
+        if only == "signature" and path.parent.name not in H["signature"]["required_of"]:
+            text = re.sub(rf"<!-- deliver:{key} -->.*?<!-- /deliver:{key} -->\n?",
+                          "", text, flags=re.S)
+            continue
         block = (ROOT / "research-registry" / "delivered" / f"{key}.md").read_text(
             encoding="utf-8").rstrip("\n")
         open_m, close_m = f"<!-- deliver:{key} -->", f"<!-- /deliver:{key} -->"

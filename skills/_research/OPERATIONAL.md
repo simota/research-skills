@@ -11,11 +11,11 @@ never translate a quoted passage without marking it as a translation.
 
 ## Output density
 
-The shape, the order and the ceiling of what a person reads are `_research/REPORT.md` — one
-place, delivered into every skill. What this file adds is the size of the **deliverable** behind
-it: a `quick` chain produces its answer and citations inline, `standard` a one-to-two-page
-write-up with an evidence table and a gaps section, `deep` the full chain artifacts under
-`.research/<slug>/`. **Those are the write-up, never the surface report.**
+The result's shape follows `_research/REPORT.md`. A `quick` chain answers with citations
+inline and no assigned confidence label. A `standard` chain may finish with synthesis's
+supported answer, conditions and gaps; it does not require a separate write-up. Audience-shaped
+writing belongs to report, at the size requested. `deep` keeps the full chain artifacts under
+`.research/<slug>/` when a workspace is authorised. A path alone is not the requested answer.
 
 ## Reproducibility
 
@@ -29,9 +29,10 @@ on. Never synthesise an empty search log to satisfy this rule.
 
 ## Effort budget
 
-`research-scope` sets a budget (source count ceiling, iteration ceiling, stopping rule). Honour
-it. When the budget is hit before saturation, stop and report `PARTIAL` with what a further pass
-would target — do not quietly overspend, and do not quietly under-deliver.
+Honour the brief's budget or, without a brief, source's bounded entry plan (`_research/SIZING.md`).
+Caps limit cost; the observable coverage/sufficiency rule determines whether retrieval is enough.
+A cap hit with unmet coverage or evidence produces `PARTIAL`, with the next useful target named;
+never quietly overspend, lower the bar, or treat budget exhaustion as success.
 
 ## Journal
 
