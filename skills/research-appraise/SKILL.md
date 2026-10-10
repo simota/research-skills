@@ -49,7 +49,7 @@ Phases: `VERIFY → INTERROGATE → SITUATE → GRADE → VERDICT`.
 | Working through a source | [appraisal-checklist](reference/appraisal-checklist.md) |
 | Judging the method behind a claim | [method-appraisal](reference/method-appraisal.md) |
 | Something feels off and you cannot name it | [bias-catalog](reference/bias-catalog.md) |
-| The evidence caps what a claim can support | Record a ceiling. **Recommend, never assign** — the label belongs to synthesis, and one set here cannot be raised later |
+| The evidence caps what a claim can support | Record a ceiling and the condition that would lift it. **Recommend, never assign** — the label belongs to synthesis: a label set here could never be raised, while a ceiling lifts once its named condition is met |
 | The source is interest-aligned | Name the interest as a fact — who funded it, who benefits if it is believed, what the author is selling — and grade on method anyway. Interest is context, not a verdict |
 | A gap in the corpus becomes obvious, or a `Q` cannot reach its bar | Emit `next_action: LOOP_BACK`, `trigger.kind: BELOW_BAR`, with the `Q` targets and what would meet the bar (`_research/HANDOFF.md`). Finding more sources is a different phase |
 | Grading a source against a claim | Reach and tier are separate axes: a `P1` nobody opened is `one-hop`, and grading it as if it were read is how an unopened record becomes the ledger's foundation |
