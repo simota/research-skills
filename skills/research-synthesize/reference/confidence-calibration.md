@@ -10,8 +10,9 @@ agreeing with this page's own `Medium` x `Medium` = `Low`. The ceiling table abo
 convention and carries no check.
 
 Confidence attaches to a claim, not to a source, and never exceeds what tier x independence x
-directness permits. Labels are defined in `_research/CONTRACT.md` — those four and no others; this
-file is how to apply them, and is the single authority on the ceiling table.
+directness permits. Labels and their requirements are defined in `_research/CONTRACT.md` — those
+four and no others; this file is how to apply them, and the ceiling table below refines that
+definition without loosening it.
 
 ## Assignment procedure
 
@@ -24,7 +25,8 @@ Per claim:
 5. Lower it for: unresolved contradiction, abstract-only reads, extrapolation beyond measured
    range, single-origin corroboration, staleness
 6. Never raise it for: intuitive plausibility, volume of weak agreement, alignment with the prior
-7. Never exceed a `CEILING` recommended by `research-appraise`
+7. Never exceed a `CEILING` recommended by `research-appraise` unless the lifting condition it names
+   is met in the corpus — then cite the source that met it
 
 | Support | Contradiction | Ceiling |
 |---------|---------------|---------|
@@ -37,7 +39,7 @@ Per claim:
 | Anything | unresolved genuine contradiction | `Low` or `Unknown` |
 | Nothing addresses it | — | `Unknown` |
 
-Supporting `P3`s alongside an `P1`/`P2` do not raise the ceiling; contradicting ones must be
+Supporting `P3`s alongside a `P1`/`P2` do not raise the ceiling; contradicting ones must be
 explained before `Medium` stands.
 
 ## Authoritative-record case

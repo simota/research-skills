@@ -46,8 +46,8 @@ Missing any of these makes the number unusable — say which is missing rather t
 | Effect | Statistically significant but tiny | Effect size reported with intervals, practically meaningful |
 | Replication | One study, novel finding | Independently replicated |
 
-A novel, surprising, single-study finding is the profile most likely not to replicate. Treat it as
-`Medium` at best regardless of the venue.
+A novel, surprising, single-study finding is the profile most likely not to replicate. Record
+`CEILING: Medium` for synthesis regardless of the venue.
 
 ## Surveys
 

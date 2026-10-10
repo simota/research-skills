@@ -4,7 +4,9 @@
 # individually into every installed CLI's skills directory (claude, codex,
 # agy), so each of those directories keeps whatever else it already carries.
 
-REPO       := $(CURDIR)
+# The directory holding this Makefile, not the one make was started in, so
+# `make -f /path/to/Makefile status` links the repo rather than the cwd.
+REPO       := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 CLAUDE_DIR ?= $(HOME)/.claude/skills
 CODEX_DIR  ?= $(HOME)/.codex/skills
 AGY_DIR    ?= $(HOME)/.gemini/antigravity-cli/skills
@@ -23,7 +25,7 @@ help:
 	@echo "make validate  static rules over the corpus"
 	@echo "make test      prove every rule still fires"
 	@echo "make figures   re-derive what the corpus claims about itself"
-	@echo "make refute CLAIMS=f.json RUNNING=claude   put each claim to the engines that did not make it"
+	@echo "make refute CLAIMS=f.json RUNNING=<engine>   put each claim to the engines that did not make it"
 	@echo "make engines  ask each checker engine for one object; reports what is unreachable"
 	@echo "make render    write the delivered blocks back into every SKILL.md"
 	@echo "make hooks     install the pre-commit hook"
@@ -34,34 +36,41 @@ help:
 check: validate test figures
 
 validate:
-	@python3 research-tools/validate.py
+	@python3 "$(REPO)/research-tools/validate.py"
 
 test:
-	@python3 research-tools/test_validate.py
+	@python3 "$(REPO)/research-tools/test_validate.py"
 
 figures:
-	@python3 research-tools/figures_check.py
+	@python3 "$(REPO)/research-tools/figures_check.py"
 
 engines:
-	@python3 research-tools/engine.py --selftest
+	@python3 "$(REPO)/research-tools/engine.py" --selftest
 
+# RUNNING is stated, never defaulted: a default of claude on a codex run would
+# exclude the wrong engine and let the maker refute its own claim.
 refute:
-	@test -n "$(CLAIMS)" || { echo "usage: make refute CLAIMS=claims.json RUNNING=claude"; exit 2; }
-	@python3 research-tools/refute.py --running "$(or $(RUNNING),claude)" "$(CLAIMS)"
+	@test -n "$(CLAIMS)" && test -n "$(RUNNING)" || { \
+		echo "usage: make refute CLAIMS=claims.json RUNNING=<claude|codex|agy>"; exit 2; }
+	@python3 "$(REPO)/research-tools/refute.py" --running "$(RUNNING)" "$(CLAIMS)"
 
 render:
-	@python3 research-tools/render.py
+	@python3 "$(REPO)/research-tools/render.py"
 
+# git says where hooks live: `.git` is a file in a worktree, and core.hooksPath
+# can move them anywhere.
 hooks:
-	@mkdir -p .git/hooks
-	@cp research-tools/githooks/pre-commit .git/hooks/pre-commit
-	@chmod +x .git/hooks/pre-commit
-	@echo "pre-commit installed"
+	@hooks=$$(cd "$(REPO)" && git rev-parse --git-path hooks) && \
+		case "$$hooks" in /*) ;; *) hooks="$(REPO)/$$hooks";; esac && \
+		mkdir -p "$$hooks" && \
+		cp "$(REPO)/research-tools/githooks/pre-commit" "$$hooks/pre-commit" && \
+		chmod +x "$$hooks/pre-commit" && \
+		echo "pre-commit installed in $$hooks"
 
 # A skill is a directory holding a SKILL.md, under skills/ where the plugin
 # format expects it. The prefix alone is not the test: research-registry/ and
 # research-tools/ share it and must never be installed.
-SKILL_DIRS := $(patsubst %/SKILL.md,%,$(wildcard skills/research-*/SKILL.md))
+SKILL_DIRS := $(patsubst $(REPO)/%/SKILL.md,%,$(wildcard $(REPO)/skills/research-*/SKILL.md))
 
 link:
 	@for dir in $(HOST_DIRS); do \
@@ -70,7 +79,9 @@ link:
 		echo "$$dir"; \
 		for path in $(SKILL_DIRS); do \
 			name=$$(basename "$$path"); target="$$dir/$$name"; \
-			if [ -e "$$target" ] && [ ! -L "$$target" ]; then \
+			if [ -L "$$target" ] && [ "$$(readlink "$$target")" != "$(REPO)/$$path" ]; then \
+				echo "  skip $$name (linked elsewhere: $$(readlink "$$target"))"; \
+			elif [ -e "$$target" ] && [ ! -L "$$target" ]; then \
 				echo "  skip $$name (a real path is already there)"; \
 			else \
 				ln -sfn "$(REPO)/$$path" "$$target"; echo "  link $$name"; \
@@ -78,13 +89,17 @@ link:
 		done; \
 	done
 
+# Only links this checkout made: a same-named skill linked from another
+# checkout belongs to whoever put it there.
 unlink:
 	@for dir in $(HOST_DIRS); do \
 		[ -d "$$dir" ] || continue; \
 		echo "$$dir"; \
 		for path in $(SKILL_DIRS); do \
 			name=$$(basename "$$path"); target="$$dir/$$name"; \
-			if [ -L "$$target" ]; then rm "$$target"; echo "  unlink $$name"; fi; \
+			if [ -L "$$target" ] && [ "$$(readlink "$$target")" = "$(REPO)/$$path" ]; then \
+				rm "$$target"; echo "  unlink $$name"; \
+			elif [ -L "$$target" ]; then echo "  keep $$name (linked elsewhere)"; fi; \
 		done; \
 	done
 
@@ -93,7 +108,10 @@ status:
 		echo "$$dir"; \
 		for path in $(SKILL_DIRS); do \
 			name=$$(basename "$$path"); target="$$dir/$$name"; \
-			if [ -L "$$target" ]; then echo "  linked   $$name"; \
+			if [ -L "$$target" ] && [ "$$(readlink "$$target")" = "$(REPO)/$$path" ]; then \
+				echo "  linked   $$name"; \
+			elif [ -L "$$target" ]; then echo "  elsewhere $$name -> $$(readlink "$$target")"; \
+			elif [ -e "$$target" ]; then echo "  occupied $$name (a real path)"; \
 			else echo "  unlinked $$name"; fi; \
 		done; \
 	done

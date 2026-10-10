@@ -22,7 +22,7 @@ independence and directness — never by source count**: five sources repeating
 one primary are one source.
 
 **One skill assigns confidence.** Appraisal recommends a ceiling and never sets
-a label, because a label set early becomes an unremovable floor. Report
+a label, because a label set early becomes an unremovable cap. Report
 preserves synthesis labels and semantic qualification. Without synthesis, quick/vet assign no
 label and state the chain limitation; an appraisal ceiling is not an assignment. **Hedge-stripping is
 the single most common way an honest chain produces a dishonest deliverable**.
@@ -70,13 +70,13 @@ appraisal checklists — carries no line budget, and states its purpose and a
 checked-on date instead.
 
 **A rule stated in prose is a rule nobody can fail.** `make figures` re-derives
-what the corpus claims about itself, and runs in `make check` and the pre-commit
-hook. It found two things a reader could not.
+what the corpus claims about itself, and runs in `make check`, CI and the
+pre-commit hook. It found two things a reader could not.
 
 The `Low` and `Unknown` rows of the confidence table in `_research/CONTRACT.md`
 sat outside it: a sentence about undated pages had been inserted between the
 rows, which splits a markdown table silently. The source reads fine; the render
-does not. That file is delivered verbatim into every `SKILL.md`, and the rows
+does not. Every skill reads that table through the shared directory, and the rows
 that fell out were the two labels the set most wants used.
 
 And "multiply, do not maintain" was not an operation anyone could perform. The
@@ -122,9 +122,9 @@ quietly.
 | [`skills/_research/SIZING.md`](skills/_research/SIZING.md) | Depth tiers, one budget across the chain, when a dialogue is mandatory |
 | [`skills/_research/VALUES.md`](skills/_research/VALUES.md) | The order when two goods conflict, and the escape hatch |
 | [`skills/_research/HANDOFF.md`](skills/_research/HANDOFF.md) | What passes between phases, including loop-back triggers |
-| [`skills/_research/OPERATIONAL.md`](skills/_research/OPERATIONAL.md) | Output language, density, and length envelopes |
+| [`skills/_research/OPERATIONAL.md`](skills/_research/OPERATIONAL.md) | Output language, density, reproducibility, the effort budget, and the journal |
 | [`skills/_research/ROUTING.md`](skills/_research/ROUTING.md) | Guidance. Which phase owns the call, and the family invariants |
-| [`skills/_research/REPORT.md`](skills/_research/REPORT.md) | What a person reads: the order, the ceiling per tier, and why the write-up is separate |
+| [`skills/_research/REPORT.md`](skills/_research/REPORT.md) | What a person reads: when a run speaks, what ends it, who owns the terminal answer, size and strength |
 
 ## Layout
 
@@ -133,7 +133,8 @@ research-skills/
 ├── README.md
 ├── Makefile
 ├── research-registry/            # budgets, boundaries, routes, delivered blocks
-├── research-tools/               # validate · test_validate · render · pre-commit
+├── research-tools/               # validate · test_validate · figures_check · render ·
+│                                 # refute · engine · githooks/pre-commit
 └── skills/
     ├── _research/                # contracts in force on every run
     └── research-<phase>/
@@ -151,7 +152,7 @@ external so the path checker does not read them as references into this repo.
 ## Working on it
 
 ```sh
-make check      # what CI runs: the rules, then proof the rules still fire
+make check      # what CI runs: the rules, proof the rules still fire, the figures
 make render     # after editing anything in research-registry/delivered/
 make hooks      # run the rules on every commit
 ```
@@ -177,6 +178,9 @@ shared link silently removes every binding contract with no error**.
   every skill and stated again in the retrieval one
 - **The fixtures do not model how a model chooses.** They catch a missing or
   duplicated signal, not a misroute
+- **No skill can run the other-engine checker.** No permission class grants a
+  shell, so the `fill-the-gap` loop's `checker: other-engine` is run by a person
+  with `make refute`; a check nobody ran is unchecked, not passed
 - **`Verified:` dates are not checked against anything.** A stale reference file
   with a fresh date passes
 - **No rule checks that a tier was honestly assigned, or that a label matches its

@@ -18,9 +18,9 @@ than on the evidence.
 | `Low` | "one source reports X; unverified", "suggestive but thin" | "X may do Y" without saying how thin |
 | `Unknown` | "no source addresses this", "nobody appears to have measured this" | Silence, or an inferred answer |
 
-Two `Unknown` phrasings that mean different things — keep them distinct:
-- "No evidence was found that X" — we looked, nothing turned up (say where you looked)
-- "Evidence indicates X is not the case" — we found disconfirming evidence
+One `Unknown` phrasing, and one that must never be confused with it:
+- "No evidence was found that X" — `Unknown`: we looked, nothing turned up (say where you looked)
+- "Evidence indicates X is not the case" — not `Unknown`: a supported negative claim, with its own label
 
 Attribute contested claims: "S-002 reports 12k rps; S-008 reports 4k" beats "reports vary".
 Naming the sources lets the reader weigh them; "varies" asks them to trust your averaging.
@@ -29,7 +29,8 @@ Naming the sources lets the reader weigh them; "varies" asks them to trust your 
 
 - Inline marker at the claim, not at the end of the paragraph. A paragraph-terminal citation leaves
   the reader guessing which sentence it covers.
-- Multiple sources: `[S-001, S-004]` — and if they are not independent, say so once in the text.
+- Multiple sources: `[S-001 · P1 · primary, S-004 · P2 · one-hop]` — and if they are not
+  independent, say so once in the text.
 - Quote when wording is load-bearing (a spec requirement, a hedge, a definition). Keep it short,
   mark it, and cite the section or page.
 - Paraphrase must not strengthen: "may reduce under some conditions" -> "may reduce under some
@@ -87,13 +88,15 @@ the underlying support is thin.
 
 The single definition; `_research/CONTRACT.md` carries the rule, this carries the shape.
 
-Inline marker `[S-007]`, resolved in a Sources section:
+Inline marker at the claim, `[S-007 · P2 · one-hop]` — tier and reach belong to the (source, claim)
+pair, so they sit where the claim is. Resolved in a Sources section:
 
 ```
-[S-007] Author/Org. "Title." Publication, YYYY-MM-DD. <URL> (accessed YYYY-MM-DD) — P2
+[S-007] Author/Org. "Title." Publication, YYYY-MM-DD. <URL> (accessed YYYY-MM-DD) — P2 for C-002; P4 for C-005
 ```
 
-Include the access date for anything web-hosted, and the provenance tier. Quote directly when
-wording matters; keep quotes short and marked. Paraphrase must not upgrade hedged language:
-"may reduce" never becomes "reduces".
+Include the access date for anything web-hosted. A source cited for one claim may end its entry
+with that one tier; a source cited for several lists each pair, because one page can sit at two
+tiers. Quote directly when wording matters; keep quotes short and marked. Paraphrase must not
+upgrade hedged language: "may reduce" never becomes "reduces".
 

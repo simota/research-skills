@@ -36,6 +36,11 @@ def render(path: Path) -> bool:
             encoding="utf-8").rstrip("\n")
         open_m, close_m = f"<!-- deliver:{key} -->", f"<!-- /deliver:{key} -->"
         payload = f"{open_m}\n{block}\n{close_m}"
+        # Rewriting the first copy and leaving a second untouched would report
+        # a clean render over a stale block. Which one is meant is a person's call.
+        if text.count(open_m) > 1 or text.count(close_m) > 1:
+            raise ValueError(f"{path.parent.name}/SKILL.md carries the {key} block "
+                             "more than once; remove the extra copy, then render")
         if open_m in text and close_m in text:
             head, rest = text.split(open_m, 1)
             _, tail = rest.split(close_m, 1)

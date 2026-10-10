@@ -94,7 +94,7 @@ Stop early — before the cap — when any of these hold:
 Watch for these; each means the stopping rule is not being honoured:
 
 - **Scope creep by discovery**: an interesting adjacent finding becomes a new sub-question. Log it
-  in `gaps` as a future question; do not research it now.
+  in `gaps` as `OUT-OF-SCOPE`, named as a future question; do not research it now.
 - **Corroboration hoarding**: adding a 9th source for an already-`High` claim while another
   sub-question still sits at `Unknown`. Reallocate to the weakest sub-question, always.
 - **Depth substitution**: reading one source exhaustively instead of finding a second independent

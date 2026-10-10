@@ -19,14 +19,14 @@ delivers a yes/no answer with citations — the method appendix carries the rest
 | To brief others | Executive summary + appendix | 1 page + full | Summary safe to read alone; body carries the conditions |
 | To continue the research | Annotated bibliography | Per source | Tier, method, relevance, what it does and does not settle |
 | To understand a field | Literature review | Long-form | Structure by claim or theme, never source-by-source |
-| To act on a risk | Findings list | Ranked | Each with confidence, impact, and the evidence behind it |
+| To act on a risk | Findings list | Ranked | Each with its assigned confidence (or the no-synthesis limitation), impact, and evidence |
 
 ## Quick answer
 
 ```
-The documentation states that X supports Y since v3.2 (released 2025-11).
+The documentation states that X supports Y since v3.2 (released 2025-11) [S-001 · P1 · primary].
 No synthesis pass; confidence unassigned.
-Caveat: not available in the managed offering [S-004].
+Caveat: not available in the managed offering [S-004 · P2 · primary].
 
 [S-001] Acme. "Changelog v3.2." Acme Docs, 2025-11-04. <https://…> (accessed 2026-08-21) — P1
 [S-004] Ruiz, T. "Testing X's Y support." <https://…> (accessed 2026-08-21) — P2

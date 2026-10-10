@@ -19,7 +19,9 @@ Verified: 2026-08-21 — no automated check.
 | Reconcile | `appraise -> synthesize -> report` | A corpus already exists |
 | Write-up | `report` | The ledger already exists |
 
-Never insert a phase because the chain looks short. Insert it because its contract is needed.
+Lookup, Vet, Standard and Deep are routes in `registry/routes.yaml`; the rest are ad hoc, and the
+phases they omit are stated as skips. Never insert a phase because the chain looks short. Insert it
+because its contract is needed.
 
 ## Loop triggers
 
@@ -30,15 +32,16 @@ All four arrive as `next_action: LOOP_BACK` with `trigger.kind` set (`_research/
 | `trigger.kind` | Raised by | Goes to |
 |----------------|-----------|---------|
 | `BELOW_BAR` | `research-appraise` | `research-source` |
-| `GAP_FILL` / `UNSUPPORTED_CLAIM` | `research-synthesize` | `research-source` |
-| `REVISE_SCOPE` | `research-synthesize` | `research-scope` |
+| `GAP_FILL` / `UNSUPPORTED_CLAIM` | `research-synthesize`, or `research-report` for a sentence nothing supports | `research-source` |
+| `REVISE_SCOPE` | Any downstream phase that finds the question unanswerable as asked — usually synthesize | `research-scope` |
 
 **One global counter, capped by `max_cycles` in `registry/routes.yaml`, of which at most 1 may be
 `REVISE_SCOPE`.** There are no per-trigger allowances — three counters would license three times
 the cap inside a single rule.
 
-A second loop that returns the same sources means the evidence does not exist. Stop and report
-`Unknown` — that is the finding, and looping a third time only spends budget confirming it.
+A second loop that returns the same sources means the evidence does not exist. Stop: the claims
+stay `UNSUPPORTED` in `gaps` and go to synthesis, which alone may call them `Unknown` — that is the
+finding, and looping a third time only spends budget confirming it.
 
 A `REVISE_SCOPE` loop rewrites the question. Confirm with the user first: they asked the original
 question for a reason, and substituting an easier one without saying so is the quiet failure this
@@ -56,8 +59,8 @@ After source: 9 retrieved, 5 rounds. After GAP_FILL loop 1: 12 retrieved, 8 roun
 Both round caps bind. Per-sub-question alone lets seven sub-questions run 21 rounds inside a
 "2-3 rounds" budget; total alone starves whichever sub-question is searched last.
 
-At the cap: stop retrieval, synthesize what exists, and report `PARTIAL` with the next query that
-would have run. Do not silently overspend, and do not silently under-deliver by stopping early
+At the cap: stop retrieval, synthesize what exists (where the chain has synthesis), and report
+`PARTIAL` with the next query that would have run. Do not silently overspend, and do not silently under-deliver by stopping early
 without saying so.
 
 ## Parallelism
