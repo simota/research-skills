@@ -20,7 +20,7 @@ researcher running this appraisal.
 | Publication | Null and negative results go unpublished | Literature is uniformly positive | Discount consensus built from positive results only |
 | Framing | Wording steers the conclusion | Leading questions, loaded terms | Re-read the raw data past the narrative |
 | Recency | The latest development is treated as the trend | Trend claimed from one data point | Ask for the series |
-| Anchoring on the first number | An early estimate propagates uncorrected | The same figure everywhere, one origin | Trace to origin (`research-source/reference/search-strategies.md` §Origin tracing) |
+| Anchoring on the first number | An early estimate propagates uncorrected | The same figure everywhere, one origin | Trace to origin — or hand back to research-source, whose search strategies cover origin tracing |
 | Cherry-picked baseline | Comparison chosen after seeing results | Odd version, unusual config, unnamed baseline | Demand the baseline; otherwise unusable |
 | Citation circularity | A repeats B repeats C repeats A | Follow every reference chain | Collapse to the primary; recount corroboration |
 

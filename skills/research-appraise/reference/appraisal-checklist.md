@@ -30,7 +30,7 @@ Unresolvable citations mean `P5` and usually exclusion, whatever else the source
 - [ ] Raw data, code, or methodology is available or at least described
 - [ ] Limitations are acknowledged by the source itself
 
-No disclosed method caps the tier at `P4`. Details -> `method-appraisal.md`.
+No disclosed method caps the tier at `P4`. Details -> `reference/method-appraisal.md`.
 
 ## 3. Interests
 
@@ -40,7 +40,7 @@ No disclosed method caps the tier at `P4`. Details -> `method-appraisal.md`.
 - [ ] Whether the source discloses this itself (disclosure raises trust; concealment lowers it)
 
 Interest does not disqualify. It sets a ceiling and requires independent corroboration.
-Details -> `bias-catalog.md`.
+Details -> `reference/bias-catalog.md`.
 
 ## 4. Currency
 
