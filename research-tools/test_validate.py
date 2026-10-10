@@ -22,10 +22,10 @@ sys.dont_write_bytecode = True                     # no __pycache__ in the tools
 import validate                                    # noqa: E402  — for RULES only
 
 
-def run(root: Path) -> str:
+def run(root: Path) -> tuple[int, str]:
     r = subprocess.run([sys.executable, str(root / "research-tools" / "validate.py")],
                        capture_output=True, text=True)
-    return r.stdout + r.stderr
+    return r.returncode, r.stdout + r.stderr
 
 
 def sub(path: Path, old: str, new: str) -> None:
@@ -34,15 +34,30 @@ def sub(path: Path, old: str, new: str) -> None:
     path.write_text(t.replace(old, new, 1), encoding="utf-8")
 
 
-# Each case mutates a copy, then expects that rule id in the output.
+# Each case mutates a copy, then expects that rule id in the output — and, where
+# it names one, that text in the rule's message, so a case cannot pass on some
+# other failure the same rule happens to report.
 S = "skills/"
 
 CASES: dict[str, callable] = {}
+EXPECT: dict[str, str] = {}
+# Mutations the validator must stay quiet about: a fix that makes a rule fire
+# on everything passes every case above.
+QUIET: dict[str, callable] = {}
 
 
-def case(rule):
+def case(rule, says: str | None = None):
     def deco(fn):
         CASES[rule] = fn
+        if says:
+            EXPECT[rule] = says
+        return fn
+    return deco
+
+
+def quiet(name):
+    def deco(fn):
+        QUIET[name] = fn
         return fn
     return deco
 
@@ -72,13 +87,41 @@ def _(r): (r / f"{S}research-source/playbooks/traps.md").write_text("y\n" * 400)
 def _(r): sub(r / f"{S}_research/VALUES.md", "## 1. Calibration", "z\n" * 200 + "## 1. Calibration")
 
 
+@case("V2-case", says="'instead of'")
+def _(r): sub(r / f"{S}research-source/SKILL.md", "Building the corpus",
+              "INSTEAD OF guessing. Building the corpus")
+
+
+@case("V4-resolved", says="playbooks/traps.md is not linked")
+def _(r):
+    """Same file name, other directory: a bare-name match counted it as linked."""
+    sub(r / f"{S}research-source/SKILL.md", "](playbooks/traps.md)", "](reference/traps.md)")
+
+
 @case("V7")
-def _(r): sub(r / "research-registry/routes.yaml", "chain: [research-source, research-appraise]",
-              "chain: [research-source, research-nonexistent]")
+def _(r): sub(r / "research-registry/routes.yaml", "chain: [research-scope]",
+              "chain: [research-nonexistent]")
 
 
 @case("V8")
 def _(r): sub(r / "README.md", "](skills/_research/CONTRACT.md)", "](skills/_research/GONE.md)")
+
+
+@case("V8-title", says="GONE.md")
+def _(r): sub(r / "README.md", "](skills/_research/CONTRACT.md)",
+              '](skills/_research/GONE.md "the contract")')
+
+
+@quiet("V8-title-resolves")
+def _(r): sub(r / "README.md", "](skills/_research/CONTRACT.md)",
+              '](skills/_research/CONTRACT.md "the contract")')
+
+
+@quiet("worktree-under-.claude")
+def _(r):
+    """A worktree of this repo sits under .claude/; it is not a second corpus."""
+    wt = r / ".claude/worktrees/w"
+    shutil.copytree(r, wt, symlinks=True, ignore=shutil.ignore_patterns(".claude"))
 
 
 @case("V9")
@@ -113,6 +156,11 @@ def _(r):
     (r / "research-registry/routes.yaml").write_text(t, encoding="utf-8")
 
 
+@case("V13-stages", says="stages (max")
+def _(r): sub(r / "research-registry/routes.yaml", "chain: [research-scope]",
+              "chain: [" + ", ".join(["research-scope"] * 9) + "]")
+
+
 @case("V14")
 def _(r): sub(r / "research-registry/routes.yaml", "  pattern: loop", "  pattern: spiral")
 
@@ -120,6 +168,12 @@ def _(r): sub(r / "research-registry/routes.yaml", "  pattern: loop", "  pattern
 @case("V15")
 def _(r): sub(r / f"{S}research-route/SKILL.md", "allowed-tools: Read, Grep, Glob, Skill",
               "allowed-tools: Read, Grep, Glob, Write, Edit")
+
+
+@case("V15-unclosed", says="allowed-tools is ''")
+def _(r):
+    """No closing `---` is no frontmatter, not frontmatter running to the end."""
+    sub(r / f"{S}research-route/SKILL.md", "\n---\n", "\n")
 
 
 @case("V16")
@@ -138,6 +192,18 @@ def _(r): sub(r / f"{S}research-source/SKILL.md", "search log", "query record")
 @case("V19")
 def _(r): sub(r / f"{S}research-scope/SKILL.md", "`_research/SIZING.md`",
               "`../_research/SIZING.md`")
+
+
+@case("V19-reference", says="channel-map.md references 'reference/gone.md'")
+def _(r): sub(r / f"{S}research-source/reference/channel-map.md", "Verified:",
+              "See `reference/gone.md`.\nVerified:")
+
+
+@case("V19-link", says="links to '../_research/CONTRACT.md'")
+def _(r):
+    """Resolves on disk, so V8 is quiet — and points at nothing once installed."""
+    sub(r / f"{S}research-source/playbooks/traps.md", "<!-- research:guidance -->\n",
+        "<!-- research:guidance -->\n[contract](../_research/CONTRACT.md)\n")
 
 
 @case("V19-shared")
@@ -161,12 +227,23 @@ def _(r): sub(r / f"{S}research-source/SKILL.md", "## Done when",
               "## Done when\n\n#" + "TODO(agent): tidy this up later\n")
 
 
+@case("V22-code-span", says="marker carries no residual class")
+def _(r):
+    """A backtick elsewhere on the line used to excuse the marker."""
+    sub(r / f"{S}research-source/SKILL.md", "## Done when",
+        "## Done when\n\nfix `x` #" + "TODO(agent): tidy this up later\n")
+
+
 @case("V23")
 def _(r): sub(r / f"{S}_research/CONTRACT.md", "<!-- research:contract -->", "<!-- research:guidance -->")
 
 
 @case("V24")
 def _(r): sub(r / f"{S}_research/ROUTING.md", "`research-synthesize`", "`research-combine`")
+
+
+@case("V24-hyphen", says="names research-synth-x")
+def _(r): sub(r / f"{S}_research/ROUTING.md", "`research-synthesize`", "`research-synth-x`")
 
 
 @case("V25")
@@ -211,6 +288,19 @@ def _(r):
         j = t.index("\n\n", i)
         f.write_text(t[:i] + "Verified: 2026-08-21" + t[j:])
         return
+
+
+@case("V30-resolved", says="channel-map.md is reachable from nothing")
+def _(r): sub(r / f"{S}research-source/SKILL.md", "](reference/channel-map.md)",
+              "](playbooks/channel-map.md)")
+
+
+@case("V31-leak", says="channel-map.md states a `Verified:` date")
+def _(r):
+    """The marker is in the next sentence, not on the header."""
+    sub(r / f"{S}research-source/reference/channel-map.md",
+        "Verified: 2026-08-21 — no automated check.\n",
+        "Verified: 2026-08-21.\nNothing here is re-checked by anyone.\n")
 
 
 @case("V32")
@@ -323,6 +413,14 @@ def _(r):
         "Source: none — nothing outside this page can move what it states.", "Source:")
 
 
+@case("V37-none-word", says="question-design.md names no source")
+def _(r):
+    """`none` inside another word is not the admission."""
+    sub(r / f"{S}research-scope/reference/question-design.md",
+        "Source: none — nothing outside this page can move what it states.",
+        "Source: nonexistent.")
+
+
 @case("V37-none-declared")
 def _(r): sub(r / "research-registry/harness.yaml", "source_authorities:", "unused_authorities:")
 
@@ -344,32 +442,55 @@ def _(r):
     p.write_text(re.sub(r"<!-- deliver:reach -->.*?<!-- /deliver:reach -->", "", p.read_text(), flags=re.S))
 
 
+@case("V17-duplicate", says="reach delivery block more than once")
+def _(r):
+    p = r / f"{S}research-source/SKILL.md"
+    block = re.search(r"<!-- deliver:reach -->.*?<!-- /deliver:reach -->", p.read_text(), re.S).group()
+    sub(p, "## Done when", block + "\n\n## Done when")
+
+
 @case("V35-delivery-scope")
 def _(r): sub(r / "research-registry/harness.yaml", ", only: signature", "")
 
 
 def main() -> int:
-    baseline = run(ROOT)
-    if "green" not in baseline:
+    code, baseline = run(ROOT)
+    if code != 0:
         print("the working tree is already failing; fix that first:\n" + baseline)
         return 1
 
-    bad: list[str] = []
-    for rule, mutate in CASES.items():
+    def mutated(mutate) -> tuple[int, str]:
         with tempfile.TemporaryDirectory() as tmp:
             copy = Path(tmp) / "repo"
             shutil.copytree(ROOT, copy, symlinks=True,
-                            ignore=shutil.ignore_patterns(".git", "__pycache__"))
+                            ignore=shutil.ignore_patterns(".git", ".claude", "__pycache__"))
             mutate(copy)
-            out = run(copy)
-            expect = rule.split("-")[0]
-            if not re.search(rf"^\s*{expect}: ", out, re.M):
-                bad.append(rule)
-                print(f"  {rule} did not fire\n{out}")
+            return run(copy)
 
-    print(f"{len(CASES)} rules exercised, {len(bad)} silent")
-    if bad:
-        print("silent: " + ", ".join(bad))
+    bad: list[str] = []
+    for rule, mutate in CASES.items():
+        code, out = mutated(mutate)
+        expect = rule.split("-")[0]
+        lines = re.findall(rf"^\s*{expect}: .*$", out, re.M)
+        says = EXPECT.get(rule)
+        if code == 0 or not lines or (says and not any(says in l for l in lines)):
+            bad.append(rule)
+            print(f"  {rule} did not fire" + (f" saying {says!r}" if says else "") + f"\n{out}")
+
+    loud: list[str] = []
+    for name, mutate in QUIET.items():
+        code, out = mutated(mutate)
+        if code != 0:
+            loud.append(name)
+            print(f"  {name} should pass and does not\n{out}")
+
+    print(f"{len(CASES)} rules exercised, {len(bad)} silent · "
+          f"{len(QUIET)} harmless edits, {len(loud)} flagged")
+    if bad or loud:
+        if bad:
+            print("silent: " + ", ".join(bad))
+        if loud:
+            print("flagged: " + ", ".join(loud))
         return 1
 
     # Counting the cases that exist says nothing about the rules that do. A rule
