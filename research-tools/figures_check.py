@@ -26,7 +26,10 @@ import sys
 import yaml
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-SEP = re.compile(r"^\|[\s:|-]+\|$")
+# At least one dash: `| |` or `|:|` is a row of empty cells, not a separator.
+SEP = re.compile(r"^\|[\s:|]*-[\s:|-]*\|$")
+# Not corpus: git's store, and `.claude/`, where a worktree of this repo lives.
+NOT_CORPUS = {".git", ".claude"}
 failures: list[str] = []
 
 
@@ -65,10 +68,10 @@ def orphan_rows(text: str) -> list[tuple[int, str]]:
 def check_tables() -> int:
     n = 0
     for f in sorted(ROOT.rglob("*.md")):
-        if ".git" in f.parts:
+        if NOT_CORPUS & set(f.relative_to(ROOT).parts):
             continue
         n += 1
-        for line, text in orphan_rows(f.read_text()):
+        for line, text in orphan_rows(f.read_text(encoding="utf-8")):
             fail(f"{f.relative_to(ROOT)}:{line}",
                  f"row sits outside any table — {text}")
     return n
@@ -89,7 +92,7 @@ CELL = re.compile(r"`([A-Za-z]+)`")
 
 def parse_composition() -> dict[tuple[str, str], str]:
     """Read the ∘ table out of the page rather than restating it here."""
-    lines = PAGE.read_text().splitlines()
+    lines = PAGE.read_text(encoding="utf-8").splitlines()
     start = next((i for i, l in enumerate(lines)
                   if l.strip().startswith("| ∘ ")), None)
     if start is None:

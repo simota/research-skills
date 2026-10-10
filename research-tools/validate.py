@@ -62,15 +62,51 @@ def read(p: Path) -> str:
     return p.read_text(encoding="utf-8")
 
 
+# Not corpus: git's own store, and `.claude/` — where a git worktree of this
+# very repo lives, which a bare rglob counted as a second copy of every page.
+# Judged on the path below ROOT, so a checkout that itself sits in one is fine.
+NOT_CORPUS = {".git", ".claude"}
+
+
+def corpus_md(base: Path = ROOT):
+    for f in sorted(base.rglob("*.md")):
+        if not NOT_CORPUS & set(f.relative_to(ROOT).parts):
+            yield f
+
+
 def frontmatter(text: str) -> dict:
-    if not text.startswith("---\n"):
+    """The YAML between the first two `---` lines; {} if either is missing.
+
+    Parsed, not split on colons: a description holding `: ` or a folded
+    scalar read as something other than what every CLI loading it sees.
+    """
+    lines = text.splitlines()
+    if not lines or lines[0].strip() != "---":
         return {}
-    body = text.split("---\n", 2)[1]
-    out = {}
-    for line in body.splitlines():
-        if ":" in line:
-            k, _, v = line.partition(":")
-            out[k.strip()] = v.strip().strip('"')
+    end = next((i for i, l in enumerate(lines[1:], 1) if l.strip() == "---"), None)
+    if end is None:
+        return {}
+    try:
+        got = yaml.safe_load("\n".join(lines[1:end]))
+    except yaml.YAMLError:
+        return {}
+    if not isinstance(got, dict):
+        return {}
+    return {k: "" if v is None else v for k, v in got.items()}   # `key:` alone is empty
+
+
+def link_target(raw: str) -> str:
+    """A markdown link's path: no `"title"`, no `#fragment`."""
+    return re.sub(r'\s+"[^"]*"\s*$', "", raw.strip()).split("#")[0]
+
+
+def links_to(base: Path, text: str) -> set[Path]:
+    """Every relative link in `text`, resolved against `base`."""
+    out = set()
+    for raw in LINK_RE.findall(text):
+        t = link_target(raw)
+        if t and not t.startswith(("http", "mailto:")):
+            out.add((base / t).resolve())
     return out
 
 
@@ -111,7 +147,7 @@ def v2_description_terms():
     for d in SKILL_DIRS:
         desc = frontmatter(read(d / "SKILL.md")).get("description", "")
         for term in H["forbidden_description_terms"]:
-            if term in desc:
+            if _norm(term) in _norm(desc):
                 fail("V2", f"{d.name} description contains {term!r}; "
                            "boundaries belong in capabilities.yaml `not:`")
         for name in others - {d.name}:
@@ -131,10 +167,11 @@ def v4_playbook_orphans():
         pb_dir = d / "playbooks"
         if not pb_dir.exists():
             continue
-        body = sections(read(d / "SKILL.md")).get("Decide first", "")
-        linked = {Path(m).name for m in LINK_RE.findall(body)}
+        # Resolved, not matched by name: `reference/traps.md` does not reach
+        # `playbooks/traps.md`, and a bare-name match said it did.
+        linked = links_to(d, sections(read(d / "SKILL.md")).get("Decide first", ""))
         for pb in sorted(pb_dir.glob("*.md")):
-            if pb.name not in linked:
+            if pb.resolve() not in linked:
                 fail("V4", f"{d.name}/playbooks/{pb.name} is not linked from Decide first")
 
 
@@ -158,8 +195,7 @@ def v6_budgets():
             fail("V6", f"{SHARED}/{f.name} is {n} lines (max {LIM['shared_file_lines']})")
     if total > LIM["shared_lines_total"]:
         fail("V6", f"{SHARED} totals {total} lines (max {LIM['shared_lines_total']})")
-    repo = sum(len(read(f).splitlines()) for f in ROOT.rglob("*.md")
-               if ".git" not in f.parts)
+    repo = sum(len(read(f).splitlines()) for f in corpus_md())
     if repo > LIM["repo_md_lines_total"]:
         fail("V6", f"repo markdown totals {repo} lines (max {LIM['repo_md_lines_total']})")
 
@@ -172,13 +208,11 @@ def v7_routes_real():
 
 
 def v8_links():
-    for f in ROOT.rglob("*.md"):
-        if ".git" in f.parts:
-            continue
+    for f in corpus_md():
         for target in LINK_RE.findall(read(f)):
             if target.startswith(("http", "#", "mailto:")):
                 continue
-            if not (f.parent / target.split("#")[0]).exists():
+            if not (f.parent / link_target(target)).exists():
                 fail("V8", f"{f.relative_to(ROOT)} links to missing {target}")
 
 
@@ -228,6 +262,10 @@ def v12_prefix():
 def v13_route_budget():
     if len(ROUTES) > LIM["routes_max"]:
         fail("V13", f"{len(ROUTES)} routes (max {LIM['routes_max']})")
+    for name, r in ROUTES.items():
+        n = len(r.get("chain") or [])
+        if n > LIM["route_stages_max"]:
+            fail("V13", f"route {name} chains {n} stages (max {LIM['route_stages_max']})")
 
 
 def v14_patterns():
@@ -282,6 +320,12 @@ def v17_delivery():
             if open_m not in text or close_m not in text:
                 fail("V17", f"{d.name}/SKILL.md is missing the {key} delivery block")
                 continue
+            # Only the first copy is compared and rendered; a second one is
+            # stale text wearing the marker of a checked block.
+            if text.count(open_m) > 1 or text.count(close_m) > 1:
+                fail("V17", f"{d.name}/SKILL.md carries the {key} delivery block "
+                            "more than once")
+                continue
             got = text.split(open_m, 1)[1].split(close_m, 1)[0].strip("\n")
             if got != want:
                 fail("V17", f"{d.name}/SKILL.md {key} block differs from "
@@ -311,8 +355,9 @@ def v19_paths_resolve():
     probe = SKILL_DIRS[0]
     shared = sorted((SKILLS_ROOT / SHARED).glob("*.md"))
     for d in SKILL_DIRS:
+        # reference/ is read by the skill as much as a playbook is.
         readable = [d / "SKILL.md"] + sorted((d / "playbooks").glob("*.md")) \
-            if (d / "playbooks").exists() else [d / "SKILL.md"]
+            + sorted((d / "reference").glob("*.md"))
         for f in readable:
             _check_paths(f, d, f"{d.name}/{f.relative_to(d)}")
     for f in shared:                      # checked once, against one skill dir
@@ -331,7 +376,15 @@ def _is_own_reference(p: str) -> bool:
 
 
 def _check_paths(f: Path, base: Path, label: str) -> None:
-    for p in TICK_PATH_RE.findall(read(f)):
+    text = read(f)
+    # A markdown link is followed by the same lexical normalisation as a
+    # backticked path. Only `..` is held against it here; V8 checks it exists.
+    for raw in LINK_RE.findall(text):
+        t = link_target(raw)
+        if not t.startswith(("http", "mailto:")) and ".." in Path(t).parts:
+            fail("V19", f"{label} links to {t!r}; paths are normalised lexically, "
+                        "so `..` does not traverse the install symlink")
+    for p in TICK_PATH_RE.findall(text):
         if p.startswith(("http", "~", "/")) or " " in p or not _is_own_reference(p):
             continue
         if ".." in p:
@@ -384,20 +437,20 @@ def v21_verify_names_a_grade():
 
 
 def v22_markers_classified():
-    for f in ROOT.rglob("*.md"):
-        if ".git" in f.parts or f.parts[-2:-1] == ("delivered",):
+    for f in corpus_md():
+        if f.parts[-2:-1] == ("delivered",):
             continue
         for i, line in enumerate(read(f).splitlines(), 1):
-            if MARKER_RE.search(line) and "`" not in line:
+            # A marker quoted in a code span is being described, not placed. Any
+            # backtick on the line used to excuse it, quoted or not.
+            if MARKER_RE.search(re.sub(r"`[^`]*`", "", line)):
                 if not any(c in line for c in VOCAB["residual_classes"]):
                     fail("V22", f"{f.relative_to(ROOT)}:{i} marker carries no residual class")
 
 
 def v23_labels():
     import fnmatch
-    for f in sorted(ROOT.rglob("*.md")):
-        if ".git" in f.parts:
-            continue
+    for f in corpus_md():
         rel = str(f.relative_to(ROOT))
         want = None
         for pat, label in H["label_by_path"].items():
@@ -424,7 +477,7 @@ def v24_rendered_tables():
         if name not in readme:
             fail("V24", f"README.md does not list {name}")
     for doc, text in ((SKILLS_ROOT / ROUTING_FILE, routing), (ROOT / "README.md", readme)):
-        for found in set(re.findall(rf"`({PREFIX}[a-z]+)`", text)):
+        for found in set(re.findall(rf"`({re.escape(PREFIX)}[a-z][a-z0-9-]*)`", text)):
             if found not in SKILLS:
                 fail("V24", f"{doc.relative_to(ROOT)} names {found}, which does not exist")
 
@@ -510,13 +563,14 @@ def v30_reference_orphans():
         ref_dir = d / "reference"
         if not ref_dir.exists():
             continue
-        body = sections(read(d / "SKILL.md")).get("Decide first", "")
-        linked = {Path(m).name for m in LINK_RE.findall(body)}
-        for pb in sorted((d / "playbooks").glob("*.md")) if (d / "playbooks").exists() else []:
-            linked |= {Path(m).name for m in LINK_RE.findall(read(pb))}
-            linked |= {Path(m).name for m in TICK_PATH_RE.findall(read(pb))}
+        # Every path resolved from the skill directory, which is the base a
+        # skill reads from (V19) — a bare-name match let `other/x.md` count.
+        linked = links_to(d, sections(read(d / "SKILL.md")).get("Decide first", ""))
+        for pb in sorted((d / "playbooks").glob("*.md")):
+            linked |= links_to(d, read(pb))
+            linked |= {(d / p).resolve() for p in TICK_PATH_RE.findall(read(pb))}
         for f in sorted(ref_dir.glob("*.md")):
-            if f.name not in linked:
+            if f.resolve() not in linked:
                 fail("V30", f"{f.relative_to(ROOT)} is reachable from nothing — "
                             "not the Decide first table, not a playbook")
 
@@ -538,12 +592,18 @@ def v31_verified_names_a_check():
             start = next((i for i, l in enumerate(lines) if l.startswith("Verified:")), None)
             if start is None:
                 continue                      # V29 already reports the missing header
-            block = []
-            for l in lines[start:]:
-                if not l.strip():
-                    break
-                block.append(l)
-            text = " ".join(block)
+            # The block is the `Verified:` line and the lines that continue its
+            # sentence. Reading to the next blank line let a marker in the prose
+            # below — "re-checked", "by running" — vouch for a bare date. It ends
+            # at a blank line, the next header, a markdown block, or after a line
+            # that finished its sentence. Same boundary V37 draws, and tighter.
+            end = start
+            while (end + 1 < len(lines) and lines[end + 1].strip()
+                   and not any(lines[end + 1].startswith(h) for h in H["reference_headers"])
+                   and not re.match(r"\s*(?:[#|>*<-]|\d+\.)", lines[end + 1])
+                   and not lines[end].rstrip().endswith((".", "!", "?"))):
+                end += 1
+            text = " ".join(lines[start:end + 1])
             if not any(m in text for m in markers):
                 fail("V31", f"{f.relative_to(ROOT)} states a `Verified:` date and nothing "
                             "else; name what re-checks it, or say `no automated check`")
@@ -788,7 +848,7 @@ def v37_source_pins_the_rot():
             head = " ".join(lines[start:end + 1])
             body = "\n".join(lines[:start] + lines[end + 1:])
             named = [a for a in declared if names(head, a)]
-            if not named and none_marker not in head:
+            if not named and not names(head, none_marker):
                 fail("V37", f"{f.relative_to(ROOT)} names no source and does not say "
                             f"{none_marker!r}; a page that depends on nothing says so, "
                             "because silence reads the same from a page that rots")
@@ -826,9 +886,7 @@ def v38_enumerations_declared():
     Declared words are what V20 and V22 reach; the rest is what drifts.
     """
     declared = {w for words in VOCAB.values() for w in words}
-    for f in sorted(SKILLS_ROOT.rglob("*.md")):
-        if ".git" in f.parts:
-            continue
+    for f in corpus_md(SKILLS_ROOT):
         for i, line in enumerate(read(f).splitlines(), 1):
             m = ENUM_RE.search(line)
             if not m:
@@ -858,10 +916,24 @@ RULES = [v1_sizes, v2_description_terms, v3_roster, v4_playbook_orphans,
          v38_enumerations_declared]
 
 
+def hook_installed() -> bool:
+    """Asks git where hooks live: `.git` is a file in a worktree, and
+    `core.hooksPath` can move them anywhere."""
+    import subprocess
+    try:
+        r = subprocess.run(["git", "rev-parse", "--git-path", "hooks"], cwd=ROOT,
+                           capture_output=True, text=True)
+    except OSError:
+        return False
+    if r.returncode != 0 or not r.stdout.strip():
+        return False
+    return (ROOT / r.stdout.strip() / "pre-commit").exists()
+
+
 def main() -> int:
     for rule in RULES:
         rule()
-    hooks = (ROOT / ".git" / "hooks" / "pre-commit").exists()
+    hooks = hook_installed()
     print(f"{len(RULES)} rules · {len(SKILLS)} skills · "
           f"hooks {'on' if hooks else 'off — run: make hooks'}")
     if FAILURES:

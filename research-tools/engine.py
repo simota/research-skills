@@ -28,12 +28,22 @@ Engine quirks, re-checked by `make engines` rather than dated:
 * `agy --print` returns an envelope; the validated object is `structured_output`.
 * `claude -p --json-schema` returns an envelope; the validated object is
   `structured_output`, the same field name `agy` uses.
+* The prompt reaches codex and claude on stdin, not argv: a long one overruns
+  the argument limit, and one starting with `-` reads as a flag. agy takes it as
+  `--print=<prompt>`, which no prompt text can turn into another option.
+
+Whatever an engine returns is held to the schema here — an object, required
+keys present, declared types right — before anyone reads a field of it. A shape
+the caller did not ask for is the engine not answering, never a verdict with a
+hole in it.
 """
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import pathlib
+import signal
 import subprocess
 import sys
 import tempfile
@@ -75,41 +85,87 @@ def run(engine: str, prompt: str, schema: dict) -> dict:
         s.write_text(json.dumps(strict(schema)), encoding="utf-8")
         if engine == "codex":
             out = d / "answer.json"
+            # `-` reads the instructions from stdin.
             argv = ["codex", "exec", "--output-schema", str(s), "-o", str(out),
-                    "--sandbox", "read-only", "--skip-git-repo-check", prompt]
-            r = _spawn(engine, argv)
+                    "--sandbox", "read-only", "--skip-git-repo-check", "-"]
+            r = _spawn(engine, argv, stdin=prompt)
             body = out.read_text(encoding="utf-8") if out.exists() else ""
             if not body.strip():
                 raise EngineError(f"codex wrote no answer.\n{_tail(r)}")
-            return _parse(engine, body)
+            return conform(engine, _parse(engine, body), schema)
         if engine == "claude":
-            argv = ["claude", "-p", prompt, "--output-format", "json",
+            # No positional prompt: `-p` reads it from stdin.
+            argv = ["claude", "-p", "--output-format", "json",
                     "--json-schema", json.dumps(schema)]
-            r = _spawn(engine, argv)
+            r = _spawn(engine, argv, stdin=prompt)
             envelope = _parse(engine, r.stdout)
             got = envelope.get("structured_output")
             if not isinstance(got, dict):
                 raise EngineError(f"claude returned no structured_output.\n{_tail(r)}")
-            return got
+            return conform(engine, got, schema)
         if engine == "agy":
             argv = ["agy", f"--print={prompt}", "--output-format", "json",
                     "--json-schema", str(s)]
             r = _spawn(engine, argv)
             envelope = _parse(engine, r.stdout)
-            if "structured_output" not in envelope:
-                raise EngineError(f"agy returned no structured_output "
+            got = envelope.get("structured_output")
+            if not isinstance(got, dict):
+                raise EngineError(f"agy returned no structured_output object "
                                   f"(status {envelope.get('status')!r}).\n{_tail(r)}")
-            return envelope["structured_output"]
+            return conform(engine, got, schema)
     raise EngineError(f"no invocation is known for {engine}")
 
 
-def _spawn(engine: str, argv: list[str]) -> subprocess.CompletedProcess:
+# JSON Schema `type` -> what json.loads produces for it. bool is an int to
+# Python, so a boolean where a number was asked for is refused explicitly.
+TYPES = {"boolean": bool, "string": str, "array": list, "object": dict,
+         "integer": int, "number": (int, float), "null": type(None)}
+
+
+def conform(engine: str, got, schema: dict, at: str = "answer"):
+    """`got` if it has the shape `schema` asks for, else EngineError.
+
+    Required keys and declared types, recursively — not the whole of JSON
+    Schema, but enough that a caller can read a field without a KeyError.
+    """
+    want = schema.get("type")
+    py = TYPES.get(want) if isinstance(want, str) else None
+    if py is not None:
+        if not isinstance(got, py) or (isinstance(got, bool) and want in ("integer", "number")):
+            raise EngineError(f"{engine}: {at} is {type(got).__name__}, the schema says {want}")
+    if isinstance(got, dict):
+        missing = [k for k in schema.get("required") or [] if k not in got]
+        if missing:
+            raise EngineError(f"{engine}: {at} lacks required {missing}")
+        for k, sub in (schema.get("properties") or {}).items():
+            if k in got and isinstance(sub, dict):
+                conform(engine, got[k], sub, f"{at}.{k}")
+    if isinstance(got, list) and isinstance(schema.get("items"), dict):
+        for i, item in enumerate(got):
+            conform(engine, item, schema["items"], f"{at}[{i}]")
+    return got
+
+
+def _spawn(engine: str, argv: list[str], stdin: str | None = None) -> subprocess.CompletedProcess:
+    """Run in a session of its own, so a timeout kills whatever it started too."""
     try:
-        return subprocess.run(argv, capture_output=True, text=True, timeout=TIMEOUT)
+        p = subprocess.Popen(argv, text=True, start_new_session=True,
+                             stdin=subprocess.DEVNULL if stdin is None else subprocess.PIPE,
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     except FileNotFoundError:
         raise EngineError(f"{engine} is not on PATH") from None
+    except OSError as e:                   # E2BIG, EACCES, ...: it never started
+        raise EngineError(f"{engine} could not be started: {e}") from None
+    try:
+        out, err = p.communicate(stdin, timeout=TIMEOUT)
     except subprocess.TimeoutExpired:
+        try:
+            os.killpg(p.pid, signal.SIGKILL)
+        except OSError:
+            pass
+        p.communicate()
         raise EngineError(f"{engine} did not answer within {TIMEOUT}s") from None
+    return subprocess.CompletedProcess(argv, p.returncode, out, err)
 
 
 def _parse(engine: str, body: str) -> dict:
@@ -177,8 +233,14 @@ def main() -> int:
     ap.add_argument("--schema")
     ap.add_argument("--selftest", action="store_true")
     a = ap.parse_args()
-    if a.selftest or not (a.engine or a.running):
+    if a.selftest:
         return selftest()
+    if not a.running:
+        # A bare run used to fall through to the selftest, which is a paid call
+        # to every engine. That is what --selftest is for; this says how to ask.
+        ap.print_usage(sys.stderr)
+        print("--running is required (or --selftest)", file=sys.stderr)
+        return 2
     if not (a.prompt_file and a.schema):
         print("need --prompt-file and --schema", file=sys.stderr)
         return 2
