@@ -12,4 +12,5 @@
 - **A prior recorded after the search is not a prior.** Write it down before any retrieval, or the
   work cannot distinguish learning from confirmation.
 - **Effort budget is set in sources and iterations, not in time.** "Spend 30 minutes" is
-  unmeasurable mid-chain; "at most 12 sources, 3 query rounds" is checkable at every step.
+  unmeasurable mid-chain; "at most 12 sources, 3 rounds per sub-question, 8 in total" is
+  checkable at every step.

@@ -71,7 +71,7 @@ in the terms of the thing being confirmed.
 
 Publication bias means failures are systematically under-published. A search that surfaces none is
 an audit record of where and how you looked — not evidence that none exist. The proposition stays
-`Unknown` until a retrieved source says otherwise; never read silence as endorsement.
+open in `gaps` until a retrieved source settles it; never read silence as endorsement.
 
 ## Origin tracing
 
@@ -94,4 +94,5 @@ Two dry rounds, then rotate — do not re-phrase a third time:
 4. **Language and region** — the work may exist only in another language or another market's press
 5. **Adjacency** — the answer may live in a neighbouring field that solved the same problem
 
-Still dry: report `Unknown` with the full query log. Documenting covered ground is a real result.
+Still dry: return the sub-question uncaptured (`PARTIAL`) with the full query log — the label,
+if any, is synthesis's. Documenting covered ground is a real result.

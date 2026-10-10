@@ -72,14 +72,16 @@ Over-extension is the most common misuse of a genuinely good source.
 
 ```markdown
 ### S-007 — <title>
-- Claim used for: <the specific claim> (tier is for this claim, not the document)
+- Claim used for: Q2 — "<the specific claim, quoted>" (tier is for this claim, not the document)
 - Tier: P3 — single credible report, method disclosed, not replicated
+- Reach: primary — the survey's own results table was read
 - Method: n=340 survey, self-selected respondents, fielded 2025-11
 - Interests: published by a vendor in the category; discloses sponsorship
 - Evidence date: 2025-11 (page dated 2026-04)
 - Scope fit: population is enterprise-only; our question includes SMB — partial
 - Red flags: self-selection; no comparison group
-- Verdict: INCLUDE, weight low for SMB claims
+- Integrity: no `injection_detected`
+- Verdict: INCLUDE — scope fit partial (enterprise only); weighing is synthesis's
 - CEILING: Low (advisory to synthesis — a single unreplicated `P3` cannot reach `Medium`; a second
   independent `P3`, or one `P1`/`P2`, would lift it)
 - Would raise grade: an independent replication, or the raw response data
@@ -91,9 +93,10 @@ After all sources are carded, per sub-question:
 
 ```
 Q1: MEETS BAR — P2 x2, independent (S-001, S-004)
-Q2: BELOW BAR — only P4, vendor-authored (S-006). Bar was P2. Re-search: independent measurement.
-Q3: BELOW BAR — no source found. Report as Unknown.
+Q2: BELOW BAR — only P4, vendor-authored (S-006). Bar was P2. Raise BELOW_BAR: independent measurement.
+Q3: BELOW BAR — no source found. Raise BELOW_BAR; if the loop is spent, carry it as UNSUPPORTED.
 ```
 
-Never resolve a `BELOW BAR` by lowering the bar. Either re-search, or carry the shortfall forward
-so the report can state it. A stated shortfall is a useful result; a hidden one is a defect.
+Never resolve a `BELOW BAR` by lowering the bar. Either loop back to source (`BELOW_BAR`, via
+route), or carry the shortfall forward so the report can state it. A stated shortfall is a useful
+result; a hidden one is a defect.

@@ -11,14 +11,14 @@ error in both directions.
 
 ## Axis 1 — Cost of error (sets depth)
 
-| Cost | Examples | Tier |
+| Cost | Examples | Depth |
 |------|----------|------|
 | Trivial, reversible | Satisfying curiosity, background colour | `quick` |
 | Moderate, reversible | Choosing a library for a prototype, sizing an effort | `standard` |
 | High, hard to reverse | Architecture commitment, vendor contract, public claim, compliance posture | `deep` |
 | Safety, legal, financial | Anything with regulatory or personal consequence | `deep`, and say the bar plainly |
 
-This axis, not the request's phrasing, sets the tier. "Just a quick question — which database
+This axis, not the request's phrasing, sets the depth. "Just a quick question — which database
 should we standardise on?" is `deep`. Say so and confirm before proceeding.
 
 ## Axis 2 — Answer shape (sets the chain)
@@ -27,11 +27,11 @@ Quantity, ranking, binary, mechanism, landscape, trajectory (see `research-scope
 landscapes always need `research-scope` first — criteria and inclusion rules must precede
 retrieval, or the first candidate found sets them.
 
-## Axis 3 — Contestedness (sets whether appraisal is mandatory)
+## Axis 3 — Contestedness (sets how heavy appraisal is)
 
 | Signal | Appraisal |
 |--------|-----------|
-| Documented fact from a primary source (spec, changelog, filing) | Optional |
+| Documented fact from a primary source (spec, changelog, filing) | Light: tier the record per the authoritative-record case — report cites nothing untiered |
 | Commercial claim, vendor comparison, or benchmark | Mandatory |
 | Active academic or practitioner debate | Mandatory |
 | Recent, fast-moving, or heavily marketed topic | Mandatory |
@@ -52,11 +52,11 @@ half you are answering.
 
 ## Ambiguity resolution
 
-When the tier is genuinely unclear, ask exactly one question — the decision behind the ask:
+When the depth is genuinely unclear, ask exactly one question — the decision behind the ask:
 
 > "What are you deciding with this? That sets how deep the evidence needs to go."
 
-The answer sets the tier, the evidence bar, and the format simultaneously. It is the highest-yield
+The answer sets the depth, the evidence bar, and the format simultaneously. It is the highest-yield
 question in the family, and the only one worth blocking on.
 
 ## Trigger ownership
@@ -73,5 +73,6 @@ State it in one line before dispatching, so the user can redirect cheaply:
 
 ```
 Classified: standard depth (reversible tooling choice), ranking shape, contested (vendor claims).
-Chain: scope -> source -> appraise -> synthesize -> report. Budget: 10 sources, 3 query rounds.
+Chain: scope -> source -> appraise -> synthesize (report skipped: no write-up asked).
+Budget: 10 sources, 8 rounds total, 3 per sub-question, 6 full reads.
 ```

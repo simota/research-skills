@@ -9,15 +9,17 @@ Minted once by `research-source`, stable forever: `S-001`, `S-002`, …
 Never renumber, never reuse. A source dropped during appraisal keeps its ID and is marked
 `EXCLUDED` with a reason — the excluded list is part of the deliverable.
 
-Claim IDs are minted by `research-synthesize`: `C-001`, `C-002`, … Each claim carries the
-source IDs supporting *and* contradicting it.
+Sub-question IDs `Q1`, `Q2`, … are minted by `research-scope`, or by source's entry plan when no
+brief exists. Claim IDs are minted by `research-synthesize`: `C-001`, `C-002`, … Each claim carries
+the source IDs supporting *and* contradicting it. A claim is **load-bearing** when a `Q` answer
+depends on it; synthesis marks which, and before synthesis the answer to each `Q` is the claim.
 
 ## Provenance Ladder
 
 Rank by how directly the source observed the thing, not by how authoritative it sounds.
 
-**`P<n>` is provenance, `P1` strongest; never substitute `E<n>`**, which runs the opposite way
-in a sibling verification ladder. `S-004` identifies a source; `P2` describes provenance.
+**`P<n>` is provenance, `P1` strongest; never substitute a sibling set's `E<n>`**, which runs
+the opposite way. `S-004` identifies a source; `P2` describes provenance.
 
 | Tier | Source type | Weight | Typical failure |
 |------|-------------|--------|-----------------|
@@ -28,7 +30,8 @@ in a sibling verification ladder. `S-004` identifies a source; `P2` describes pr
 | `P5` | Unattributed / derivative — undated **and** unattributed pages, content farms, unresolvably sourced material, AI-generated summaries of unknown provenance | Lowest | Circular sourcing; may be fabricated |
 
 **A tier is assigned to a (source, claim) pair, never to a source in the abstract.** The same
-document can sit at two tiers for two different claims, and usually does.
+document can sit at two tiers for two claims, and usually does. Before synthesis mints `C-` IDs,
+the pair is keyed by the `Q` it answers and the claim's quoted wording.
 
 Rules:
 - A claim resting only on `P4`/`P5` may not be reported above `Low` confidence.
@@ -88,15 +91,15 @@ Age is not weakness and newness is not currency: a 2026 post repeating 2021 benc
 
 ## Citation Format
 
-Every citation carries the source ID, the access date for anything web-hosted, and the
-provenance tier. **Paraphrase must not upgrade hedged language.** Layout lives in
-`research-report`'s writing standards — one copy, not two.
+Every citation carries the source ID, the access date for anything web-hosted, and — at the claim,
+since both belong to the pair — the provenance tier and reach: `[S-007 · P2 · one-hop]`.
+**Paraphrase must not upgrade hedged language.** Full layout: `research-report`'s writing standards.
 
 ## Status
 
 | Status | Condition |
 |---|---|
-| `DONE` | Requested phase complete; for findings, every load-bearing claim meets its bar, provenance present, zero `UNSUPPORTED` |
+| `DONE` | Requested phase complete; for findings, every load-bearing claim meets its bar (tier, and any reach target the brief set), provenance present, zero `UNSUPPORTED` |
 | `PARTIAL` | Everything else that produced work — a single `UNSUPPORTED` lands here |
 | `BLOCKED` | Could not proceed. State the attempted step and barrier; a successful sufficiency stop is not a blocker |
 
@@ -105,7 +108,7 @@ completion never certifies an unfinished chain. Never lower the bar to obtain `D
 
 ## Residuals
 
-Anything left behind is classified and appears in the handoff's `open` list.
+Anything left behind is classified and appears in the handoff's `gaps` list, class first.
 
 | Class | Means |
 |---|---|
@@ -122,10 +125,10 @@ A skill holding `Write` puts a `#TODO(agent): <class> — <action>` marker where
 
 Check the phase-owned work. For a findings answer, run and state both halves:
 
-1. **Markers introduced by this run** — every one appears in `open` with a class
+1. **Markers introduced by this run** — every one appears in `gaps` with a class
 2. **Support** — every load-bearing claim made, against every claim whose
    supporting IDs reach its bar
 
-Report it in one line: `swept, 1 marker / 1 in open; 18 claims / 17 at bar`.
+Report it in one line: `swept, 1 marker / 1 in gaps; 18 claims / 17 at bar`.
 **While either pair fails to match, the status is not `DONE`.**
 

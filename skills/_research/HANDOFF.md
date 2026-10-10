@@ -14,7 +14,8 @@ RESEARCH_HANDOFF:
   to: <next skill or DONE>
   status: DONE | PARTIAL | BLOCKED
   question: "<the current research question, verbatim from the brief>"
-  budget_used: "<sources retrieved / effort spent vs. the scope budget>"
+  budget_used: {sources: n/cap, rounds_total: n/cap, rounds_per_q: n/cap, full_reads: n/cap}
+  workspace: authorised | inline         # route records the user's answer; see Workspace
   artifacts:
     - path: <file path or "inline">
       type: chain-plan | brief | corpus | appraisal | synthesis | report
@@ -22,8 +23,8 @@ RESEARCH_HANDOFF:
     source_ids: [S-001, S-002]        # never renumbered
     terms: {}                          # the names this chain uses, as the glossary spells them
     claim_ids: [C-001]                 # present from synthesize onward
-  gaps:
-    - "<what could not be established, and why>"
+  gaps:                                  # residuals, class first (`_research/CONTRACT.md`)
+    - "<BLOCKED|OUT-OF-SCOPE|DEFERRED|UNSUPPORTED>: <what, why, and the action that would close it>"
   open_questions:
     - blocking: true | false
       question: "<question for the user>"
@@ -34,8 +35,10 @@ RESEARCH_HANDOFF:
     reason: "<what the loop must change, in one line>"
 ```
 
-`LOOP_BACK` replaces free-text signalling. `research-route` reads `trigger.kind` to pick the
-destination — `BELOW_BAR` / `GAP_FILL` / `UNSUPPORTED_CLAIM` go to `research-source`,
+`LOOP_BACK` replaces free-text signalling. The phase that finds the shortfall emits it: appraise
+raises `BELOW_BAR`; synthesize (or report, finding a sentence nothing supports) raises `GAP_FILL` /
+`UNSUPPORTED_CLAIM`; any phase may raise `REVISE_SCOPE`. `research-route` reads `trigger.kind` to
+pick the destination — `BELOW_BAR` / `GAP_FILL` / `UNSUPPORTED_CLAIM` go to `research-source`,
 `REVISE_SCOPE` goes to `research-scope` — and must never infer a loop from prose in `gaps`.
 
 ## Rules
@@ -46,7 +49,9 @@ destination — `BELOW_BAR` / `GAP_FILL` / `UNSUPPORTED_CLAIM` go to `research-s
   a downstream skill that finds the question unanswerable says so; it does not silently
   substitute an easier one.
 - Carry confidence labels unchanged. Only synthesis assigns or revises them; downstream
-  objections go back to the owner, not into a silent upgrade or downgrade. Ceilings are advisory.
+  objections go back to the owner, not into a silent upgrade or downgrade. A ceiling is never a
+  label: synthesis holds it as the claim's upper bound unless the lifting condition appraisal named
+  is met in the corpus, and then cites what met it.
 - A blocking open question halts the chain and surfaces to the user. Non-blocking ones ride along
   and land in the report's Limitations.
 - **Every phase emits a handoff, including the last.** The terminal phase closes the chain with
@@ -72,7 +77,6 @@ When the chain writes files, use `.research/<slug>/`:
 For short single-turn work, inline output is fine — say so in `artifacts[].path` as `inline`.
 
 **One asker.** When a repository has no `.research/` directory yet, `research-route` asks the user
-before creating one, and reports the answer in its dispatch handoff. Phases never create the
-directory themselves: they write into `.research/<slug>/` only when the dispatch handoff says the
-workspace exists, and emit inline otherwise. A phase invoked directly, with no route, asks for
-itself.
+once and records the answer as `workspace:` in its dispatch handoff (route holds no `Write`). The
+first writing phase creates `.research/<slug>/` only on `workspace: authorised`; otherwise every
+phase emits inline. A phase invoked directly, with no route, asks for itself.

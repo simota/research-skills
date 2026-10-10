@@ -85,8 +85,10 @@ Answer each explicitly before assembling the primary answer:
 
 ```
 Q1: Yes — X supports Y since v3.2. Confidence: High [S-001 P1, S-004 P2, independent].
-Q2: Unknown — no source measures this; the two that claim it trace to one vendor page [S-006].
-Q3: Contested — S-002 (P2) and S-008 (P2) disagree on measurement; see contradiction C-009.
+Q2: Not established. Confidence: Unknown — no source measures this; the two that claim it trace
+    to one vendor page [S-006].
+Q3: Contested. Confidence: Low — S-002 (P2) and S-008 (P2) disagree on measurement; both are in
+    C-009's ledger row, the dispute reported, not averaged.
 ```
 
 Then the primary answer, with the conditions under which it holds and the conditions under which

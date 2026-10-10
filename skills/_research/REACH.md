@@ -25,7 +25,7 @@ Every load-bearing claim carries one, next to its tier.
 | Reach | Means |
 |---|---|
 | `primary` | The `P1` record was opened and the claim read off it directly |
-| `one-hop` | A source that cites the primary was read; the primary itself was not opened |
+| `one-hop` | The primary's relevant passage was not read — a source citing it was, or the primary was opened without that passage |
 | `chain` | Only derivative sources were read — none of them cite a primary either |
 | `blocked` | The primary exists and could not be reached. **Names what would unblock it**: a paywall, a login, a library, a request, a fee |
 | `no-primary` | No primary record exists for this kind of claim — a prediction, an opinion, a synthesis |
@@ -59,8 +59,8 @@ understood.**
   the table was not found — is `one-hop`, and saying so costs nothing
 - **An archived or cached copy** is `primary` if it is the record itself. Note
   the retrieval date, because the live version may have moved
-- **`blocked` with nothing named** is `chain` wearing an excuse. The point of
-  the state is to price the missing certainty, and a price nobody wrote down is
-  not a price
+- **`blocked` with nothing named** is the reach of what was actually read,
+  wearing an excuse. The point of the state is to price the missing certainty,
+  and a price nobody wrote down is not a price
 - **A claim whose reach drops during the run** — the primary turns out to be a
   reprint — is downgraded where it stands. Reach never improves by argument

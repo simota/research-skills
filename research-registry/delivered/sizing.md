@@ -4,7 +4,7 @@
   are not inherently better (`_research/SIZING.md`)
 - **One budget across the chain.** Before any search, source needs exact sub-questions,
   a capture/coverage stopping condition and four caps, including both round caps. Honour the
-  brief; without one, source records the bounded inline entry plan in `_research/SIZING.md`:
+  brief; without one, source records the bounded inline entry plan per `_research/SIZING.md`:
   at most 3 sources, 3 full reads, 1 round per sub-question, 2 total; tighter supplied caps prevail.
   Stop at sufficiency or a cap; a cap with unmet coverage/bar does not make the result `DONE`
 - **Clarify an unsettled question, not an already specified lookup.** Unknown answer shape,

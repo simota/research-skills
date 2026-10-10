@@ -49,7 +49,7 @@ an evidence gap is not solved by writing an unlabelled but confident conclusion.
 ## Size and strength
 
 Use the shortest result that meets the request (`_research/SIZING.md`). Link extended evidence
-when present; never require a separate write-up merely because the tier is `standard`.
+when present; never require a separate write-up merely because the depth is `standard`.
 Shortening may change wording, but not semantic strength: preserve modality, causality,
 population, version, as-of date and attribution next to the assertion they qualify. A summary
 must be safe to read alone. "May", "associated with", "in this sample", "as of DATE", "the company

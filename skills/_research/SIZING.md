@@ -2,20 +2,22 @@
 # SIZING — how much research the question is worth
 
 **Over-researching a settled fact is a failure of the same weight as
-under-researching a contested one.** Both come from choosing the tier for
-comfort, so the tier is read off the question and declared before any retrieval.
+under-researching a contested one.** Both come from choosing the depth for
+comfort, so the depth is read off the question and declared before any retrieval.
+A bare "tier" means a provenance tier (`P1`–`P5`); the depth always says "depth".
 
-## Depth tiers
+## Depth
 
-| Tier | The question is | Chain | Budget shape |
+| Depth | The question is | Chain | Budget shape |
 |---|---|---|---|
-| `quick` | Settled, but somebody wants a source | source → appraise → report | A handful of sources, one round |
+| `quick` | Settled, but somebody wants a source | source → appraise → report | The entry-plan default below: ≤3 sources, ≤2 rounds |
 | `standard` | Real, with a decision behind it | scope → source → appraise → synthesize | Bounded rounds per sub-question |
 | `deep` | Contested, consequential, must survive challenge | the full chain, ending in a report | Caps set explicitly in the brief |
 
-**A no-synthesis chain assigns no confidence label.** `quick` and `vet` report a
-source-bound answer and "no synthesis pass; confidence unassigned". An appraisal
-ceiling is advice, not a label. New reconciliation or inference belongs to synthesis.
+**A no-synthesis chain assigns no confidence label.** `quick` and the `vet` route
+(`registry/routes.yaml`) report a source-bound answer and "no synthesis pass; confidence
+unassigned". An appraisal ceiling is advice, not a label. New reconciliation or inference
+belongs to synthesis.
 
 ## One budget, held across the chain
 
@@ -26,8 +28,9 @@ reported at every handoff.
 **Never begin retrieval without both round caps.** Use the brief when present; do not
 silently repair or relax its limits. Without one, source first records an inline retrieval plan:
 exact requested target(s) as sub-questions, required version/date or source type, observable
-capture/coverage condition, and all four caps. Default to the existing quick envelope: at most
-3 sources, 3 full reads, 1 round per sub-question, 2 rounds total; tighter supplied caps prevail.
+capture/coverage condition, the evidence bar (default: the requested record itself, at `P1`), and
+all four caps. Default to the existing quick envelope: at most 3 sources, 3 full reads, 1 round
+per sub-question, 2 rounds total; tighter supplied caps prevail.
 These are maxima, not quotas. A multi-question request can exhaust this small default and return
 `PARTIAL`; it does not gain a bigger budget automatically. Unsettled question/criteria need scope,
 not invented priors, exclusions or evidence grades. No search is needed to invent this plan.
@@ -76,7 +79,7 @@ the sources and the host already use most. The answer lands in `terms`, travels
 in `carried`, and is appended to the glossary as `term · means · not to be
 called`, so the next chain inherits the decision rather than the ambiguity. A
 `standard` run may create the glossary for its first settled term; a `quick`
-one never does — it marks what it found `OUT-OF-SCOPE` and moves on.
+one never does — it asks a blocking ambiguity and records any other as `DEFERRED`.
 
 ## Constraints do not loosen mid-run
 

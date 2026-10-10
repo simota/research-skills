@@ -1,8 +1,8 @@
 <!-- research:deferred -->
 # Corpus Hygiene
 
-Purpose: Deduplicating, testing independence, writing the manifest and search log.
-Read when: deduplicating, testing independence, writing the manifest and search log
+Purpose: Deduplicating, flagging shared origin, writing the manifest and search log.
+Read when: deduplicating, flagging shared origin, writing the manifest and search log
 Source: none — nothing outside this page can move what it states.
 Verified: 2026-08-21 — no automated check.
 
@@ -18,8 +18,10 @@ Signals that two entries are one source:
 - Publication dates within a day or two, with near-identical numbers and phrasing
 - Both trace to the same press release, dataset, benchmark run, or announcement post
 - One cites the other, or both cite the same single upstream
-- Shared author, shared organisation, shared funder
 - Translations, syndications, mirrors, and re-summaries of the same original
+
+Shared author, organisation or funder is **not** a duplicate: two studies by one team are two
+records with distinct claims. Keep both IDs and flag the shared origin for appraisal.
 
 Record the collapse rather than deleting it silently:
 
@@ -33,7 +35,8 @@ most useful thing the research learned.
 ## Independence test
 
 Ask: **could these two sources have been wrong separately?** If a single error upstream would
-propagate to both, they are one source for confidence purposes.
+propagate to both, they are one source for confidence purposes. Source flags what it observed;
+the independence judgement belongs to appraisal and synthesis.
 
 | Situation | Independent? |
 |-----------|--------------|
@@ -69,16 +72,16 @@ Red flags: S-009 (undated, citations do not resolve) — flagged for appraisal, 
 ```markdown
 ## Search Log
 
-| # | Sub-Q | Channel | Query | Seen | Kept |
-|---|-------|---------|-------|------|------|
-| 1 | Q1 | web | "<exact query>" | 10 | 3 |
-| 2 | Q1 | repo | site:... "<query>" | 4 | 1 |
-| 3 | Q2 | web | "<disconfirming query>" | 12 | 0 |
+| # | Date | Sub-Q | Channel | Query | Seen | Kept |
+|---|------|-------|---------|-------|------|------|
+| 1 | 2026-08-21 | Q1 | web | "<exact query>" | 10 | 3 |
+| 2 | 2026-08-21 | Q1 | repo | site:... "<query>" | 4 | 1 |
+| 3 | 2026-08-21 | Q2 | web | "<disconfirming query>" | 12 | 0 |
 ```
 
 Zero-yield rows stay. They tell the next pass which ground was covered — they are evidence about
-search coverage, not evidence about the proposition. An `Unknown` rests on them only in the sense
-that nothing was found to settle the question; they never count as disconfirmation.
+search coverage, not evidence about the proposition. A sub-question left open rests on them only in
+the sense that nothing was found to settle it; they never count as disconfirmation.
 
 ## Coverage statement
 
