@@ -19,9 +19,9 @@ Verified: 2026-08-21 — no automated check.
 | Reconcile | `appraise -> synthesize -> report` | A corpus already exists |
 | Write | `report` | The ledger already exists |
 
-Lookup (`quick`), Vet, Standard and Deep are routes in `registry/routes.yaml`; the rest are ad hoc, and the
-phases they omit are stated as skips. Never insert a phase because the chain looks short. Insert it
-because its contract is needed.
+Lookup (`quick`), Vet, Standard and Deep are routes in `registry/routes.yaml`; the rest are ad hoc,
+and the phases they omit are stated as skips. Never insert a phase because the chain looks short.
+Insert it because its contract is needed.
 
 ## Loop triggers
 
