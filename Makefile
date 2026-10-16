@@ -41,6 +41,7 @@ validate:
 test:
 	@python3 "$(REPO)/research-tools/test_validate.py"
 	@python3 "$(REPO)/research-tools/test_figures.py"
+	@python3 "$(REPO)/research-tools/test_hook.py"
 
 figures:
 	@python3 "$(REPO)/research-tools/figures_check.py"

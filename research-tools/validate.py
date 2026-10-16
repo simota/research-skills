@@ -916,17 +916,18 @@ RULES = [v1_sizes, v2_description_terms, v3_roster, v4_playbook_orphans,
          v38_enumerations_declared]
 
 
-def hook_installed() -> bool:
+def hook_installed() -> bool | None:
     """Asks git where hooks live: `.git` is a file in a worktree, and
-    `core.hooksPath` can move them anywhere."""
+    `core.hooksPath` can move them anywhere. None outside a checkout — the
+    pre-commit hook runs this on an exported index, where "hooks off" is false."""
     import subprocess
     try:
         r = subprocess.run(["git", "rev-parse", "--git-path", "hooks"], cwd=ROOT,
                            capture_output=True, text=True)
     except OSError:
-        return False
+        return None
     if r.returncode != 0 or not r.stdout.strip():
-        return False
+        return None
     return (ROOT / r.stdout.strip() / "pre-commit").exists()
 
 
@@ -934,8 +935,9 @@ def main() -> int:
     for rule in RULES:
         rule()
     hooks = hook_installed()
-    print(f"{len(RULES)} rules · {len(SKILLS)} skills · "
-          f"hooks {'on' if hooks else 'off — run: make hooks'}")
+    state = "" if hooks is None else \
+        f" · hooks {'on' if hooks else 'off — run: make hooks'}"
+    print(f"{len(RULES)} rules · {len(SKILLS)} skills{state}")
     if FAILURES:
         for f in sorted(FAILURES):
             print(f"  {f}")
