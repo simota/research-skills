@@ -4,9 +4,10 @@
 # individually into every installed CLI's skills directory (claude, codex,
 # agy), so each of those directories keeps whatever else it already carries.
 
-# The directory holding this Makefile, not the one make was started in, so
-# `make -f /path/to/Makefile status` links the repo rather than the cwd.
-REPO       := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
+# Run from the repo, or from anywhere with `make -C <repo>`. CURDIR is one
+# string, so a path with a space survives in quoted recipes; deriving the repo
+# from MAKEFILE_LIST split it into words and linked nonsense.
+REPO       := $(CURDIR)
 CLAUDE_DIR ?= $(HOME)/.claude/skills
 CODEX_DIR  ?= $(HOME)/.codex/skills
 AGY_DIR    ?= $(HOME)/.gemini/antigravity-cli/skills
@@ -42,6 +43,7 @@ test:
 	@python3 "$(REPO)/research-tools/test_validate.py"
 	@python3 "$(REPO)/research-tools/test_figures.py"
 	@python3 "$(REPO)/research-tools/test_hook.py"
+	@python3 "$(REPO)/research-tools/test_engine.py"
 
 figures:
 	@python3 "$(REPO)/research-tools/figures_check.py"
@@ -72,7 +74,7 @@ hooks:
 # A skill is a directory holding a SKILL.md, under skills/ where the plugin
 # format expects it. The prefix alone is not the test: research-registry/ and
 # research-tools/ share it and must never be installed.
-SKILL_DIRS := $(patsubst $(REPO)/%/SKILL.md,%,$(wildcard $(REPO)/skills/research-*/SKILL.md))
+SKILL_DIRS := $(patsubst %/SKILL.md,%,$(wildcard skills/research-*/SKILL.md))
 
 link:
 	@for dir in $(HOST_DIRS); do \
@@ -81,7 +83,7 @@ link:
 		echo "$$dir"; \
 		for path in $(SKILL_DIRS); do \
 			name=$$(basename "$$path"); target="$$dir/$$name"; \
-			if [ -L "$$target" ] && [ "$$(readlink "$$target")" != "$(REPO)/$$path" ]; then \
+			if [ -L "$$target" ] && ! [ "$$target" -ef "$(REPO)/$$path" ]; then \
 				echo "  skip $$name (linked elsewhere: $$(readlink "$$target"))"; \
 			elif [ -e "$$target" ] && [ ! -L "$$target" ]; then \
 				echo "  skip $$name (a real path is already there)"; \
@@ -92,14 +94,15 @@ link:
 	done
 
 # Only links this checkout made: a same-named skill linked from another
-# checkout belongs to whoever put it there.
+# checkout belongs to whoever put it there. `-ef` compares the files, so a link
+# made through a symlinked or differently spelled path to this repo still counts.
 unlink:
 	@for dir in $(HOST_DIRS); do \
 		[ -d "$$dir" ] || continue; \
 		echo "$$dir"; \
 		for path in $(SKILL_DIRS); do \
 			name=$$(basename "$$path"); target="$$dir/$$name"; \
-			if [ -L "$$target" ] && [ "$$(readlink "$$target")" = "$(REPO)/$$path" ]; then \
+			if [ -L "$$target" ] && [ "$$target" -ef "$(REPO)/$$path" ]; then \
 				rm "$$target"; echo "  unlink $$name"; \
 			elif [ -L "$$target" ]; then echo "  keep $$name (linked elsewhere)"; fi; \
 		done; \
@@ -110,7 +113,7 @@ status:
 		echo "$$dir"; \
 		for path in $(SKILL_DIRS); do \
 			name=$$(basename "$$path"); target="$$dir/$$name"; \
-			if [ -L "$$target" ] && [ "$$(readlink "$$target")" = "$(REPO)/$$path" ]; then \
+			if [ -L "$$target" ] && [ "$$target" -ef "$(REPO)/$$path" ]; then \
 				echo "  linked   $$name"; \
 			elif [ -L "$$target" ]; then echo "  elsewhere $$name -> $$(readlink "$$target")"; \
 			elif [ -e "$$target" ]; then echo "  occupied $$name (a real path)"; \

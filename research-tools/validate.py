@@ -9,6 +9,7 @@ belongs in a review, not in this file.
 """
 from __future__ import annotations
 
+import os
 import re
 import sys
 import unicodedata
@@ -74,25 +75,38 @@ def corpus_md(base: Path = ROOT):
             yield f
 
 
-def frontmatter(text: str) -> dict:
-    """The YAML between the first two `---` lines; {} if either is missing.
+STRING_KEYS = ("name", "description", "allowed-tools")
+
+
+def _frontmatter(text: str) -> tuple[dict, str | None]:
+    """The YAML between the first two `---` lines, and what is wrong with it.
 
     Parsed, not split on colons: a description holding `: ` or a folded
-    scalar read as something other than what every CLI loading it sees.
+    scalar read as something other than what every CLI loading it sees. The
+    closing `---` starts its line, so an indented one inside a block scalar
+    does not end the frontmatter early.
     """
     lines = text.splitlines()
-    if not lines or lines[0].strip() != "---":
-        return {}
-    end = next((i for i, l in enumerate(lines[1:], 1) if l.strip() == "---"), None)
+    if not lines or lines[0].rstrip() != "---":
+        return {}, "does not open with `---`"
+    end = next((i for i, l in enumerate(lines[1:], 1) if l.rstrip() == "---"), None)
     if end is None:
-        return {}
+        return {}, "is never closed with `---`"
     try:
         got = yaml.safe_load("\n".join(lines[1:end]))
-    except yaml.YAMLError:
-        return {}
+    except yaml.YAMLError as e:
+        return {}, f"does not parse as YAML ({str(e).splitlines()[0]})"
     if not isinstance(got, dict):
-        return {}
-    return {k: "" if v is None else v for k, v in got.items()}   # `key:` alone is empty
+        return {}, "is not a mapping"
+    out = {k: "" if v is None else v for k, v in got.items()}   # `key:` alone is empty
+    wrong = [k for k in STRING_KEYS if k in out and not isinstance(out[k], str)]
+    for k in wrong:
+        out[k] = ""                          # reported once below, never a crash later
+    return out, (f"gives {wrong} a non-string value" if wrong else None)
+
+
+def frontmatter(text: str) -> dict:
+    return _frontmatter(text)[0]
 
 
 def link_target(raw: str) -> str:
@@ -133,6 +147,11 @@ FIXED_SECTIONS = ["Owns", "Before starting", "Decide first",
 def v1_sizes():
     for d in SKILL_DIRS:
         t = read(d / "SKILL.md")
+        problem = _frontmatter(t)[1]
+        if problem:
+            # Said here, once: otherwise the run reports an empty allowed-tools
+            # and every signal missing, and never the reason.
+            fail("V1", f"{d.name}/SKILL.md frontmatter {problem}")
         n = len(t.splitlines())
         if n > LIM["skill_md_lines"]:
             fail("V1", f"{d.name}/SKILL.md is {n} lines (max {LIM['skill_md_lines']})")
@@ -359,9 +378,9 @@ def v19_paths_resolve():
         readable = [d / "SKILL.md"] + sorted((d / "playbooks").glob("*.md")) \
             + sorted((d / "reference").glob("*.md"))
         for f in readable:
-            _check_paths(f, d, f"{d.name}/{f.relative_to(d)}")
+            _check_paths(f, d, f.parent.relative_to(d), f"{d.name}/{f.relative_to(d)}")
     for f in shared:                      # checked once, against one skill dir
-        _check_paths(f, probe, f"{SHARED}/{f.name}")
+        _check_paths(f, probe, Path(SHARED), f"{SHARED}/{f.name}")
 
 
 # A backticked path is a reference to this set only if it names a file or sits
@@ -375,15 +394,21 @@ def _is_own_reference(p: str) -> bool:
     return p.startswith((f"{SHARED}/", "registry/", "playbooks/", "reference/"))
 
 
-def _check_paths(f: Path, base: Path, label: str) -> None:
+def _check_paths(f: Path, base: Path, where: Path, label: str) -> None:
+    """`where` is the file's directory as the skill sees it (`playbooks`,
+    `_research`, ...). A markdown link resolves from there, the way markdown
+    does, so `../reference/x.md` from a playbook stays inside the skill; only a
+    link that normalises out of the skill directory leaves it once installed.
+    V8 checks that the target exists."""
     text = read(f)
-    # A markdown link is followed by the same lexical normalisation as a
-    # backticked path. Only `..` is held against it here; V8 checks it exists.
     for raw in LINK_RE.findall(text):
         t = link_target(raw)
-        if not t.startswith(("http", "mailto:")) and ".." in Path(t).parts:
-            fail("V19", f"{label} links to {t!r}; paths are normalised lexically, "
-                        "so `..` does not traverse the install symlink")
+        if t.startswith(("http", "mailto:", "#")) or not t:
+            continue
+        if os.path.normpath(where / t).split(os.sep)[0] == "..":
+            fail("V19", f"{label} links to {t!r}, which leaves the skill directory; "
+                        "paths are normalised lexically, so `..` does not traverse "
+                        "the install symlink")
     for p in TICK_PATH_RE.findall(text):
         if p.startswith(("http", "~", "/")) or " " in p or not _is_own_reference(p):
             continue
@@ -478,7 +503,9 @@ def v24_rendered_tables():
             fail("V24", f"README.md does not list {name}")
     for doc, text in ((SKILLS_ROOT / ROUTING_FILE, routing), (ROOT / "README.md", readme)):
         for found in set(re.findall(rf"`({re.escape(PREFIX)}[a-z][a-z0-9-]*)`", text)):
-            if found not in SKILLS:
+            # The set's own non-skill directories (`research-tools`) carry the
+            # prefix too, and naming one is not naming a phantom skill.
+            if found not in SKILLS and not (ROOT / found).is_dir():
                 fail("V24", f"{doc.relative_to(ROOT)} names {found}, which does not exist")
 
 
@@ -567,7 +594,9 @@ def v30_reference_orphans():
         # skill reads from (V19) — a bare-name match let `other/x.md` count.
         linked = links_to(d, sections(read(d / "SKILL.md")).get("Decide first", ""))
         for pb in sorted((d / "playbooks").glob("*.md")):
-            linked |= links_to(d, read(pb))
+            # A link resolves from the playbook, as markdown does; a backticked
+            # path from the skill directory, as V19 reads it.
+            linked |= links_to(pb.parent, read(pb))
             linked |= {(d / p).resolve() for p in TICK_PATH_RE.findall(read(pb))}
         for f in sorted(ref_dir.glob("*.md")):
             if f.resolve() not in linked:
@@ -592,6 +621,13 @@ def v31_verified_names_a_check():
             start = next((i for i, l in enumerate(lines) if l.startswith("Verified:")), None)
             if start is None:
                 continue                      # V29 already reports the missing header
+            # A line holding only the date is the bare date itself, whatever
+            # follows it: no continuation rule can then let the body vouch.
+            if re.fullmatch(r"Verified:\s*\S*\s*", lines[start]):
+                fail("V31", f"{f.relative_to(ROOT)} states a `Verified:` date and nothing "
+                            "else on its line; name what re-checks it, or say "
+                            "`no automated check`")
+                continue
             # The block is the `Verified:` line and the lines that continue its
             # sentence. Reading to the next blank line let a marker in the prose
             # below — "re-checked", "by running" — vouch for a bare date. It ends
