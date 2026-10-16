@@ -42,7 +42,7 @@ corpus-only:
 
 fill-the-gap:
   pattern: loop
-  when: "synthesis found a claim nothing supports (a trigger raised elsewhere resumes at its raiser)"
+  when: "synthesis found a claim nothing supports (other raisers loop through their own chain's phases; HANDOFF.md)"
   # Synthesis closes each cycle: the oracle is about claims, and only synthesis
   # re-weighs them, so a loop ending at appraise leaves the ledger stale.
   chain: [research-source, research-appraise, research-synthesize]

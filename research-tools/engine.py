@@ -70,7 +70,8 @@ def strict(schema: dict) -> dict:
     if not isinstance(schema, dict):
         return schema
     out = {k: strict(v) if isinstance(v, dict) else v for k, v in schema.items()}
-    if out.get("type") == "object":
+    t = out.get("type")
+    if t == "object" or (isinstance(t, list) and "object" in t):
         optional = sorted(set(out.get("properties") or {}) - set(out.get("required") or []))
         if optional:
             raise EngineError(f"schema leaves {optional} optional; strict outputs require all")
@@ -160,8 +161,10 @@ def conform(engine: str, got, schema: dict, at: str = "answer"):
     wants = [want] if isinstance(want, str) else list(want or [])
     if wants and not any(_is(got, w) for w in wants):
         raise EngineError(f"{engine}: {at} is {type(got).__name__}, the schema says {want}")
-    # By value and by type: `True == 1` and `1.0 == 1` in Python, not in JSON.
-    if "enum" in schema and not any(type(got) is type(e) and got == e for e in schema["enum"]):
+    # By JSON value: `1.0` is the integer 1, but `true` is never 1 (Python says
+    # `True == 1`, so a boolean only matches a boolean).
+    if "enum" in schema and not any(isinstance(got, bool) == isinstance(e, bool) and got == e
+                                    for e in schema["enum"]):
         raise EngineError(f"{engine}: {at} is {got!r}, not one of {schema['enum']}")
     if isinstance(got, dict):
         missing = [k for k in schema.get("required") or [] if k not in got]

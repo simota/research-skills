@@ -178,6 +178,26 @@ def unknown_running_is_refused(b: Bench) -> str | None:
     return None
 
 
+def conform_reads_json_values(b: Bench) -> str | None:
+    """JSON equality for enums, and a nullable object still closed."""
+    sys.path.insert(0, str(ROOT / "research-tools"))
+    sys.dont_write_bytecode = True
+    import engine
+    nullable = engine.strict({"type": ["object", "null"], "properties": {"x": {"type": "string"}},
+                              "required": ["x"]})
+    checks = [(1.0, {"enum": [1]}, True), (True, {"enum": [1]}, False),
+              ({"x": "ok", "extra": True}, nullable, False), (None, nullable, True)]
+    for got, schema, ok in checks:
+        try:
+            engine.conform("t", got, schema)
+            passed = True
+        except engine.EngineError:
+            passed = False
+        if passed != ok:
+            return f"{got!r} against {schema} was {'accepted' if passed else 'refused'}"
+    return None
+
+
 def interrupt_kills_engine(b: Bench) -> str | None:
     """Ctrl-C on refute must not leave a paid engine call running."""
     p = subprocess.Popen([sys.executable, str(REFUTE), "--running", "codex", str(b.claims)],
@@ -207,6 +227,7 @@ def interrupt_kills_engine(b: Bench) -> str | None:
 CASES = [stands_exits_zero, refuted_exits_one, extra_key_is_no_verdict, malformed_is_no_verdict,
          failed_exit_is_no_verdict, maker_is_excluded, prompt_on_stdin_tools_off,
          claim_is_fenced, bad_claims_file_is_usage, unknown_running_is_refused,
+         conform_reads_json_values,
          interrupt_kills_engine]
 
 
