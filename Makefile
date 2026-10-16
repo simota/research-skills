@@ -23,7 +23,7 @@ HOST_DIRS  := $(CLAUDE_DIR) $(CODEX_DIR) $(AGY_DIR)
 help:
 	@echo "make check     validate + test + figures (what CI runs)"
 	@echo "make validate  static rules over the corpus"
-	@echo "make test      prove every rule still fires"
+	@echo "make test      prove every rule and every figure check still fires"
 	@echo "make figures   re-derive what the corpus claims about itself"
 	@echo "make refute CLAIMS=f.json RUNNING=<engine>   put each claim to the engines that did not make it"
 	@echo "make engines  ask each checker engine for one object; reports what is unreachable"
@@ -40,6 +40,7 @@ validate:
 
 test:
 	@python3 "$(REPO)/research-tools/test_validate.py"
+	@python3 "$(REPO)/research-tools/test_figures.py"
 
 figures:
 	@python3 "$(REPO)/research-tools/figures_check.py"
