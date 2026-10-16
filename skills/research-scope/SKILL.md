@@ -115,7 +115,7 @@ lines exist, all four caps are set, the prior is recorded, and a falsification c
   plan, a contradiction, a blocked path or a budget shortfall that affects the reader.
   Ask only a blocking question, with the default named (`_research/REPORT.md`)
 - **End with the requested phase result.** Scope returns the brief; source the corpus and
-  access gaps; appraise the assessment and advisory ceilings — none invent confidence labels.
+  access gaps; appraise the assessment and its ceilings — none invent confidence labels.
   A findings answer carries a label only if synthesis assigned it. No synthesis means no
   confidence label: cite the assessed source, preserve its conditions, and name the limitation
 - **Terminal synthesis supplies the answer, not just a ledger.** Include the supporting IDs,

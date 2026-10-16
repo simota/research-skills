@@ -154,6 +154,10 @@ def main() -> int:
     claims = json.loads(pathlib.Path(a.claims).read_text(encoding="utf-8"))
     if isinstance(claims, dict):
         claims = [claims]
+    if not isinstance(claims, list) or not all(isinstance(c, dict) for c in claims):
+        print(f"{a.claims}: expected a list of {{id, claim, [evidence], [where]}} objects",
+              file=sys.stderr)
+        return 2
     try:
         pool = refuters(a.running)
     except engine.EngineError as e:

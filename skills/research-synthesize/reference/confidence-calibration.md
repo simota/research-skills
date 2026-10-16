@@ -115,7 +115,7 @@ different record may answer a different question. Keep access/authenticity gaps 
 A gap is not "more research needed". It is a named unknown with a named closing action:
 
 ```
-GAP-1: No independent measurement of throughput under mixed workloads.
+UNSUPPORTED: GAP-1 — no independent measurement of throughput under mixed workloads.
   Affects: C-002, C-005, the primary answer's scale claim.
   Closes with: a replication on <workload>, or vendor raw data if published.
   Searched: 3 query rounds, 2 channels — see corpus.md log rows 7-11.

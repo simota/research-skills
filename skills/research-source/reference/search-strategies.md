@@ -71,7 +71,8 @@ in the terms of the thing being confirmed.
 
 Publication bias means failures are systematically under-published. A search that surfaces none is
 an audit record of where and how you looked — not evidence that none exist. The proposition stays
-open in `gaps` until a retrieved source settles it; never read silence as endorsement.
+in `gaps` (`UNSUPPORTED`, or `BLOCKED` where access stopped it) until a retrieved source settles
+it; never read silence as endorsement.
 
 ## Origin tracing
 

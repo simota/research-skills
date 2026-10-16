@@ -199,11 +199,30 @@ def _(r): sub(r / f"{S}research-source/reference/channel-map.md", "Verified:",
               "See `reference/gone.md`.\nVerified:")
 
 
-@case("V19-link", says="links to '../_research/CONTRACT.md'")
+@case("V19-link", says="links to '../../_research/CONTRACT.md', which leaves")
 def _(r):
-    """Resolves on disk, so V8 is quiet — and points at nothing once installed."""
+    """Resolves on disk, so V8 is quiet — and leaves the skill once installed."""
     sub(r / f"{S}research-source/playbooks/traps.md", "<!-- research:guidance -->\n",
-        "<!-- research:guidance -->\n[contract](../_research/CONTRACT.md)\n")
+        "<!-- research:guidance -->\n[contract](../../_research/CONTRACT.md)\n")
+
+
+@case("V19-shared-link", says="which a skill reads as 'research-scope/SKILL.md'")
+def _(r):
+    """Exists on disk, so V8 is quiet; inside an installed skill it is nothing."""
+    sub(r / f"{S}_research/ROUTING.md", "# Research Family Boundaries\n",
+        "# Research Family Boundaries\n\nSee [scope](../research-scope/SKILL.md).\n")
+
+
+@quiet("README names the tools directory")
+def _(r): sub(r / "README.md", "## Working on it\n", "## Working on it\n\nThe tools live in `research-tools`.\n")
+
+
+@quiet("playbook links its own reference page")
+def _(r):
+    """`../reference/` from a playbook normalises inside the skill: V8, V19 and
+    V30 all have to accept it, or a playbook can link its reference no way at all."""
+    sub(r / f"{S}research-route/playbooks/depth-tiers.md", "# Depth Tiers, Not Research\n",
+        "# Depth Tiers, Not Research\n\nSee [chain patterns](../reference/chain-patterns.md).\n")
 
 
 @case("V19-shared")
@@ -280,6 +299,18 @@ def _(r): (r / f"{S}research-source/reference/orphan.md").write_text(
     "<!-- research:deferred -->\n# Orphan\n\nPurpose: x\nRead when: y\nVerified: 2026-08-21\n")
 
 
+@case("V1-unparsed", says="frontmatter does not parse as YAML")
+def _(r): sub(r / f"{S}research-source/SKILL.md", 'description: "Building the corpus:',
+              'description: Note: "Building the corpus:')
+
+
+@case("V1-non-string", says="frontmatter gives ['description'] a non-string value")
+def _(r):
+    t = (r / f"{S}research-source/SKILL.md").read_text(encoding="utf-8")
+    line = next(l for l in t.splitlines() if l.startswith("description:"))
+    sub(r / f"{S}research-source/SKILL.md", line, "description: 12345")
+
+
 @case("V31")
 def _(r):
     for f in sorted((r / f"{S}").glob("*/reference/*.md")):
@@ -301,6 +332,14 @@ def _(r):
     sub(r / f"{S}research-source/reference/channel-map.md",
         "Verified: 2026-08-21 — no automated check.\n",
         "Verified: 2026-08-21.\nNothing here is re-checked by anyone.\n")
+
+
+@case("V31-bare-leak", says="channel-map.md states a `Verified:` date and nothing else on its line")
+def _(r):
+    """No period to end the date, so the old continuation rule read on into the body."""
+    sub(r / f"{S}research-source/reference/channel-map.md",
+        "Verified: 2026-08-21 — no automated check.\n",
+        "Verified: 2026-08-21\nThe table below is re-checked by running nothing at all.\n")
 
 
 @case("V32")

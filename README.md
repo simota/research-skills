@@ -133,8 +133,9 @@ research-skills/
 ├── README.md
 ├── Makefile
 ├── research-registry/            # budgets, boundaries, routes, delivered blocks
-├── research-tools/               # validate · test_validate · figures_check · render ·
-│                                 # refute · engine · githooks/pre-commit
+├── research-tools/               # validate · test_validate · figures_check · test_figures ·
+│                                 # test_hook · test_engine · render · refute · engine ·
+│                                 # githooks/
 └── skills/
     ├── _research/                # contracts in force on every run
     └── research-<phase>/

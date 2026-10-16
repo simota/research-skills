@@ -42,12 +42,14 @@ corpus-only:
 
 fill-the-gap:
   pattern: loop
-  when: "synthesis found a claim nothing supports"
+  when: "synthesis found a claim nothing supports (other raisers loop through their own chain's phases; HANDOFF.md)"
   # Synthesis closes each cycle: the oracle is about claims, and only synthesis
   # re-weighs them, so a loop ending at appraise leaves the ledger stale.
   chain: [research-source, research-appraise, research-synthesize]
   oracle: "every load-bearing claim reaches its evidence bar, or is recorded as unsupported"
   # Resolved at run time to an engine that is not running this one. No skill
   # holds a shell, so the person runs it: `make refute CLAIMS=… RUNNING=<engine>`.
+  # Until it has run, synthesis is certifying its own support: the result is
+  # PARTIAL with `DEFERRED: refutation not run`, never DONE.
   checker: other-engine
   max_cycles: 3

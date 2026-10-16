@@ -24,6 +24,12 @@ jobs:
         run: python3 research-tools/test_validate.py
       - name: Figures the corpus claims about itself
         run: python3 research-tools/figures_check.py
+      - name: Every figure check still fires
+        run: python3 research-tools/test_figures.py
+      - name: The pre-commit hook checks what is committed
+        run: python3 research-tools/test_hook.py
+      - name: refute and engine fail closed, against stub engines
+        run: python3 research-tools/test_engine.py
       - name: Delivered blocks are current
         run: |
           python3 research-tools/render.py

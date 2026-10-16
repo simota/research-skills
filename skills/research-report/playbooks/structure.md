@@ -8,7 +8,7 @@ Every deliverable above the one-liner carries these, in this order:
 3. **Evidence** — the claims that support it, cited, strongest first
 4. **Contradictions** — where sources disagreed and how it was diagnosed
 5. **What we do not know** — gaps, with what would close them
-6. **Sources** — resolvable list with tiers and access dates
+6. **Sources** — resolvable list with access dates, and the tier per claim each one supports
 7. **Method** (appendix) — search log, appraisal, exclusions
 
 Sections 4 and 5 are not optional and do not move to an appendix. They are what distinguishes a

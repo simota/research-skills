@@ -47,7 +47,7 @@ Missing any of these makes the number unusable — say which is missing rather t
 | Replication | One study, novel finding | Independently replicated |
 
 A novel, surprising, single-study finding is the profile most likely not to replicate. Record
-`CEILING: Medium` for synthesis regardless of the venue.
+`CEILING: Medium` for synthesis regardless of the venue, lifting on an independent replication.
 
 ## Surveys
 

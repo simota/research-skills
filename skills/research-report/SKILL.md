@@ -46,7 +46,7 @@ Phases: `SHAPE → DRAFT → CITE → QUALIFY → VERIFY`.
 | About to edit for readability | [traps](playbooks/traps.md) |
 | Choosing the format | [report-formats](reference/report-formats.md) |
 | Citing, quoting, or paraphrasing | [writing-standards](reference/writing-standards.md) |
-| A sentence has no claim behind it | Either it is inference — label it, with its basis — or it does not go in |
+| A sentence has no claim behind it | Cut it, or emit `LOOP_BACK` (`GAP_FILL` / `UNSUPPORTED_CLAIM`). An inference synthesis recorded is written as one, its basis named; a new one goes to synthesis |
 | The draft exposes a gap | Emit `LOOP_BACK` with `trigger.kind: GAP_FILL` and the sentence's `Q` (`_research/HANDOFF.md`). **Writing around a gap is how it stops being visible** |
 | A hedge makes the sentence clumsy | Keep the hedge and fix the sentence. **Hedge-stripping during editing is the single most common way an honest chain produces a dishonest deliverable** |
 | The answer is uncomfortable | Report it. The brief's falsification condition existed for this |
@@ -127,7 +127,7 @@ missing phases remain explicit. No label is invented to complete this check.
   plan, a contradiction, a blocked path or a budget shortfall that affects the reader.
   Ask only a blocking question, with the default named (`_research/REPORT.md`)
 - **End with the requested phase result.** Scope returns the brief; source the corpus and
-  access gaps; appraise the assessment and advisory ceilings — none invent confidence labels.
+  access gaps; appraise the assessment and its ceilings — none invent confidence labels.
   A findings answer carries a label only if synthesis assigned it. No synthesis means no
   confidence label: cite the assessed source, preserve its conditions, and name the limitation
 - **Terminal synthesis supplies the answer, not just a ledger.** Include the supporting IDs,

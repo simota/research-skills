@@ -1,0 +1,2 @@
+# Bytecode from importing a tool (python3 -c "import engine") is never source.
+__pycache__/

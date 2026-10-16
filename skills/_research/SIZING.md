@@ -16,7 +16,7 @@ A bare "tier" means a provenance tier (`P1`–`P5`); the depth always says "dept
 
 **A no-synthesis chain assigns no confidence label.** `quick` and the `vet` route
 (`registry/routes.yaml`) report a source-bound answer and "no synthesis pass; confidence
-unassigned". An appraisal ceiling is advice, not a label. New reconciliation or inference
+unassigned". An appraisal ceiling is an upper bound, never a label. New reconciliation or inference
 belongs to synthesis.
 
 ## One budget, held across the chain
@@ -27,7 +27,7 @@ reported at every handoff.
 
 **Never begin retrieval without both round caps.** Use the brief when present; do not
 silently repair or relax its limits. Without one, source first records an inline retrieval plan:
-exact requested target(s) as sub-questions, required version/date or source type, observable
+exact requested target(s) as sub-questions `Q1`…, required version/date or source type, observable
 capture/coverage condition, the evidence bar (default: the requested record itself, at `P1`), and
 all four caps. Default to the existing quick envelope: at most 3 sources, 3 full reads, 1 round
 per sub-question, 2 rounds total; tighter supplied caps prevail.

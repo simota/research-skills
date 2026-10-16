@@ -49,7 +49,7 @@ Phases: `CLASSIFY → PLAN → DISPATCH → MONITOR → ASSEMBLE`.
 | The brief omits either round cap | Do not dispatch retrieval. Ask scope to supply both — a search with no round cap does not end, it is abandoned |
 | A phase returns a loop-back | Read its trigger and route on that alone. **Never infer a loop-back from a phase's prose**: below-bar, gap-fill and unsupported-claim return to retrieval; a scope revision returns to scope |
 | The chain will write files and the repository has no `.research/` | Ask the person once; record `workspace: authorised` or `inline` in the dispatch handoff (`_research/HANDOFF.md`). Route writes nothing itself |
-| A loop route names `checker: other-engine` | No skill holds a shell. Hand the claims to the person to run `make refute` with the running engine named, and treat an unrun check as unchecked, never as passed |
+| A loop route names `checker: other-engine` | No skill holds a shell. Synthesis lists the claims as `id`, `claim`, `evidence`, `where`; the person runs `make refute` with the running engine named. Until it has run, the oracle is unchecked: `PARTIAL`, with `DEFERRED: refutation not run` in `gaps` |
 | A blocking question appears mid-chain | Surface it to the person **when it arises**, not at the end. A chain that finishes and then asks has spent the budget on a guess |
 <!-- deliver:values -->
 - Ties break by `_research/VALUES.md`, read top to bottom: **calibration over
@@ -113,7 +113,7 @@ against its caps, and any blocking question reached the person when it arose.
   plan, a contradiction, a blocked path or a budget shortfall that affects the reader.
   Ask only a blocking question, with the default named (`_research/REPORT.md`)
 - **End with the requested phase result.** Scope returns the brief; source the corpus and
-  access gaps; appraise the assessment and advisory ceilings — none invent confidence labels.
+  access gaps; appraise the assessment and its ceilings — none invent confidence labels.
   A findings answer carries a label only if synthesis assigned it. No synthesis means no
   confidence label: cite the assessed source, preserve its conditions, and name the limitation
 - **Terminal synthesis supplies the answer, not just a ledger.** Include the supporting IDs,

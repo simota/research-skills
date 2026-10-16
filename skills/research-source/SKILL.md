@@ -16,7 +16,7 @@ Phases: `PLAN → SEED → CHAIN → COUNTER → DEDUPE → MANIFEST`.
 ## Before starting
 
 - **Serve the brief, or establish the bounded entry plan in `_research/SIZING.md`.**
-  Before the first query, record exact targets, a capture/coverage stopping condition
+  Before the first query, record exact targets as `Q1`…, a capture/coverage stopping condition
   and all four caps. Tag sources to those targets; retrieval does not assign evidence tiers
 - **Do not retrieve without both round caps or silently relax a supplied brief.**
   Sufficiency may stop early; cap exhaustion with unmet coverage remains `PARTIAL`
@@ -133,7 +133,7 @@ every query including the empty ones.
   plan, a contradiction, a blocked path or a budget shortfall that affects the reader.
   Ask only a blocking question, with the default named (`_research/REPORT.md`)
 - **End with the requested phase result.** Scope returns the brief; source the corpus and
-  access gaps; appraise the assessment and advisory ceilings — none invent confidence labels.
+  access gaps; appraise the assessment and its ceilings — none invent confidence labels.
   A findings answer carries a label only if synthesis assigned it. No synthesis means no
   confidence label: cite the assessed source, preserve its conditions, and name the limitation
 - **Terminal synthesis supplies the answer, not just a ledger.** Include the supporting IDs,

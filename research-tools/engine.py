@@ -61,11 +61,20 @@ class EngineError(RuntimeError):
 
 
 def strict(schema: dict) -> dict:
-    """Every object closed, which is what codex requires and agy tolerates."""
+    """Every object closed, which is what codex requires and agy tolerates.
+
+    Codex's strict outputs also require every property to be required, so an
+    optional one is refused here rather than by the engine mid-run. `anyOf`,
+    `oneOf` and `$defs` are not normalised; no schema in this set uses them.
+    """
     if not isinstance(schema, dict):
         return schema
     out = {k: strict(v) if isinstance(v, dict) else v for k, v in schema.items()}
-    if out.get("type") == "object":
+    t = out.get("type")
+    if t == "object" or (isinstance(t, list) and "object" in t):
+        optional = sorted(set(out.get("properties") or {}) - set(out.get("required") or []))
+        if optional:
+            raise EngineError(f"schema leaves {optional} optional; strict outputs require all")
         out["additionalProperties"] = False
         out["properties"] = {k: strict(v) for k, v in (out.get("properties") or {}).items()}
     if isinstance(out.get("items"), dict):
@@ -79,10 +88,13 @@ def run(engine: str, prompt: str, schema: dict) -> dict:
     if engine not in known:
         raise EngineError(f"{engine} is not one of {known}")
 
+    # Held to the closed form whatever the engine was sent: an extra key from
+    # claude or agy is as much "not what was asked" as one from codex.
+    closed = strict(schema)
     with tempfile.TemporaryDirectory(prefix="research-engine-") as tmp:
         d = pathlib.Path(tmp)
         s = d / "schema.json"
-        s.write_text(json.dumps(strict(schema)), encoding="utf-8")
+        s.write_text(json.dumps(closed), encoding="utf-8")
         if engine == "codex":
             out = d / "answer.json"
             # `-` reads the instructions from stdin.
@@ -92,17 +104,21 @@ def run(engine: str, prompt: str, schema: dict) -> dict:
             body = out.read_text(encoding="utf-8") if out.exists() else ""
             if not body.strip():
                 raise EngineError(f"codex wrote no answer.\n{_tail(r)}")
-            return conform(engine, _parse(engine, body), schema)
+            return conform(engine, _parse(engine, body), closed)
         if engine == "claude":
             # No positional prompt: `-p` reads it from stdin.
+            # `--tools ""` disables every built-in tool and `--strict-mcp-config`
+            # loads no MCP server: the prompt carries text under attack, and codex
+            # gets `--sandbox read-only` for the same reason.
             argv = ["claude", "-p", "--output-format", "json",
-                    "--json-schema", json.dumps(schema)]
+                    "--json-schema", json.dumps(schema), "--strict-mcp-config",
+                    "--tools", ""]
             r = _spawn(engine, argv, stdin=prompt)
             envelope = _parse(engine, r.stdout)
             got = envelope.get("structured_output")
             if not isinstance(got, dict):
                 raise EngineError(f"claude returned no structured_output.\n{_tail(r)}")
-            return conform(engine, got, schema)
+            return conform(engine, got, closed)
         if engine == "agy":
             argv = ["agy", f"--print={prompt}", "--output-format", "json",
                     "--json-schema", str(s)]
@@ -112,7 +128,7 @@ def run(engine: str, prompt: str, schema: dict) -> dict:
             if not isinstance(got, dict):
                 raise EngineError(f"agy returned no structured_output object "
                                   f"(status {envelope.get('status')!r}).\n{_tail(r)}")
-            return conform(engine, got, schema)
+            return conform(engine, got, closed)
     raise EngineError(f"no invocation is known for {engine}")
 
 
@@ -122,21 +138,52 @@ TYPES = {"boolean": bool, "string": str, "array": list, "object": dict,
          "integer": int, "number": (int, float), "null": type(None)}
 
 
+def _is(got, want: str) -> bool:
+    py = TYPES.get(want)
+    if py is None:
+        return False                      # not a JSON type: nothing satisfies it
+    if isinstance(got, bool):
+        return want == "boolean"
+    if want == "integer":
+        return isinstance(got, int) or (isinstance(got, float) and got.is_integer())
+    return isinstance(got, py)
+
+
+def json_equal(a, b) -> bool:
+    """Equality as JSON defines it, at every depth: `1.0` is the integer 1, but
+    `true` is never 1 — which Python's `==` says it is, inside a list too."""
+    if isinstance(a, bool) or isinstance(b, bool):
+        return isinstance(a, bool) and isinstance(b, bool) and a == b
+    if isinstance(a, (int, float)) and isinstance(b, (int, float)):
+        return a == b
+    if isinstance(a, list) and isinstance(b, list):
+        return len(a) == len(b) and all(json_equal(x, y) for x, y in zip(a, b))
+    if isinstance(a, dict) and isinstance(b, dict):
+        return a.keys() == b.keys() and all(json_equal(a[k], b[k]) for k in a)
+    return type(a) is type(b) and a == b
+
+
 def conform(engine: str, got, schema: dict, at: str = "answer"):
     """`got` if it has the shape `schema` asks for, else EngineError.
 
-    Required keys and declared types, recursively — not the whole of JSON
-    Schema, but enough that a caller can read a field without a KeyError.
+    The subset held: `type` (one or a list), `enum`, `required`, `properties`,
+    `additionalProperties: false` and `items`, recursively. Combinators
+    (`anyOf`, `oneOf`, `allOf`) are not read — enough that a caller can read
+    a field without a KeyError, not the whole of JSON Schema.
     """
     want = schema.get("type")
-    py = TYPES.get(want) if isinstance(want, str) else None
-    if py is not None:
-        if not isinstance(got, py) or (isinstance(got, bool) and want in ("integer", "number")):
-            raise EngineError(f"{engine}: {at} is {type(got).__name__}, the schema says {want}")
+    wants = [want] if isinstance(want, str) else list(want or [])
+    if wants and not any(_is(got, w) for w in wants):
+        raise EngineError(f"{engine}: {at} is {type(got).__name__}, the schema says {want}")
+    if "enum" in schema and not any(json_equal(got, e) for e in schema["enum"]):
+        raise EngineError(f"{engine}: {at} is {got!r}, not one of {schema['enum']}")
     if isinstance(got, dict):
         missing = [k for k in schema.get("required") or [] if k not in got]
         if missing:
             raise EngineError(f"{engine}: {at} lacks required {missing}")
+        extra = sorted(set(got) - set(schema.get("properties") or {}))
+        if schema.get("additionalProperties") is False and extra:
+            raise EngineError(f"{engine}: {at} carries {extra}, which the schema closes out")
         for k, sub in (schema.get("properties") or {}).items():
             if k in got and isinstance(sub, dict):
                 conform(engine, got[k], sub, f"{at}.{k}")
@@ -158,14 +205,21 @@ def _spawn(engine: str, argv: list[str], stdin: str | None = None) -> subprocess
         raise EngineError(f"{engine} could not be started: {e}") from None
     try:
         out, err = p.communicate(stdin, timeout=TIMEOUT)
-    except subprocess.TimeoutExpired:
+    except BaseException as e:
+        # Its own session means the terminal's Ctrl-C never reaches it, so any
+        # way out of here — timeout, interrupt — takes the whole group with it.
         try:
             os.killpg(p.pid, signal.SIGKILL)
         except OSError:
             pass
-        p.communicate()
-        raise EngineError(f"{engine} did not answer within {TIMEOUT}s") from None
-    return subprocess.CompletedProcess(argv, p.returncode, out, err)
+        p.wait()
+        if isinstance(e, subprocess.TimeoutExpired):
+            raise EngineError(f"{engine} did not answer within {TIMEOUT}s") from None
+        raise
+    r = subprocess.CompletedProcess(argv, p.returncode, out, err)
+    if r.returncode != 0:
+        raise EngineError(f"{engine} exited {r.returncode}.\n{_tail(r)}")
+    return r
 
 
 def _parse(engine: str, body: str) -> dict:
@@ -245,6 +299,9 @@ def main() -> int:
         print("need --prompt-file and --schema", file=sys.stderr)
         return 2
     try:
+        known = ENGINES.get("runs_on") or []
+        if a.running not in known:
+            raise EngineError(f"the running engine {a.running!r} is not one of {known}")
         engine = a.engine or other_than(a.running)
         if a.running and engine == a.running:
             raise EngineError(f"{engine} is the engine running this; "

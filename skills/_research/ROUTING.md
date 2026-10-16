@@ -31,10 +31,11 @@ cycle limit — and **the phase that wanted a claim may not certify its own supp
 2. **No skill invents evidence.** If a needed source does not exist, that is a *gap* — report it,
    do not reason around it.
 3. **Assigned confidence is stated, never implied.** The four labels in `_research/CONTRACT.md`
-   are the whole vocabulary; an unassigned label is not `Unknown` or an advisory ceiling.
+   are the whole vocabulary; an unassigned label is not `Unknown`, and a ceiling is not a label.
 4. **Only `research-synthesize` assigns a confidence label.** `research-appraise` may recommend a
-   ceiling (`CEILING: Low`); it does not set the label, because a label set before cross-source
-   reconciliation becomes an unremovable cap under invariant 5.
+   ceiling with its lifting condition (`CEILING: Low`, lifts on a second independent `P3`); it
+   does not set the label, because a label set before cross-source reconciliation becomes an
+   unremovable cap under invariant 5.
    On a chain with no synthesis (`quick`, `vet`), no skill assigns a confidence label. Report
    the source-bound answer and "no synthesis pass; confidence unassigned". Reconciliation or
    inference not established upstream must go to synthesis, not to an implicit report verdict.

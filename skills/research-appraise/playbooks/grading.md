@@ -15,4 +15,4 @@ or interest ceilings; this does not upgrade promotional truth. Recommend a ceili
 | Is it undated but attributed, or attributed but methodless? | Cap at `P4` |
 | Does it disclose no method at all? | Cap at `P4` |
 | Do its own citations fail to resolve? | `P5`, exclude |
-| Is it the only source, and interest-aligned on an empirical/comparative/promotional claim? | Keep; record `CEILING: Low` as advice to synthesis |
+| Is it the only source, and interest-aligned on an empirical/comparative/promotional claim? | Keep; record `CEILING: Low` for synthesis, lifting on an independent measurement |

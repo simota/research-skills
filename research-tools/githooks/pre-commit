@@ -1,6 +1,14 @@
 #!/bin/sh
 # Budgets enforced by a mechanism rather than by remembering.
 # Install with: make hooks
+#
+# What is checked is what is being committed: the index, exported to a scratch
+# directory. Checking the working tree passed a staged violation whenever the
+# file on disk had since been fixed but not re-staged, and blocked a clean
+# commit over an unstaged edit.
 set -e
-python3 "$(git rev-parse --show-toplevel)/research-tools/validate.py"
-python3 "$(git rev-parse --show-toplevel)/research-tools/figures_check.py"
+snap=$(mktemp -d)
+trap 'rm -rf "$snap"' EXIT
+git checkout-index --all --prefix="$snap/"
+python3 "$snap/research-tools/validate.py"
+python3 "$snap/research-tools/figures_check.py"
