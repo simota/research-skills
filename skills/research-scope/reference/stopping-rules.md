@@ -85,7 +85,7 @@ Stop early — before the cap — when any of these hold:
 
 - The answer has been stable across the last several sources and further work would only add
   citations to a settled claim
-- The remaining uncertainty is `Unknown` in a way more sources cannot fix (nobody has published it)
+- The remaining uncertainty is one more sources cannot fix (nobody has published it)
 - The cost of further search exceeds the value of the residual uncertainty to the decision
 - The blocking uncertainty has moved from evidence to judgement — hand it back to the requester
 
@@ -95,8 +95,8 @@ Watch for these; each means the stopping rule is not being honoured:
 
 - **Scope creep by discovery**: an interesting adjacent finding becomes a new sub-question. Log it
   in `gaps` as `OUT-OF-SCOPE`, named as a future question; do not research it now.
-- **Corroboration hoarding**: adding a 9th source for an already-`High` claim while another
-  sub-question still sits at `Unknown`. Reallocate to the weakest sub-question, always.
+- **Corroboration hoarding**: adding a 9th source for a claim already at its bar while another
+  sub-question still sits below its own. Reallocate to the weakest sub-question, always.
 - **Depth substitution**: reading one source exhaustively instead of finding a second independent
   one. Independence beats depth for confidence.
 - **Search until agreement**: continuing until sources converge on the prior. Convergence produced

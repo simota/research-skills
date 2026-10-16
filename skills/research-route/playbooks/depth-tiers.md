@@ -6,8 +6,8 @@
 | Depth | Trigger | Chain | Budget |
 |------|---------|-------|--------|
 | `quick` | Settled fact, single answer shape, low cost of error | `source -> appraise -> report` (no ledger; report traces to `S-nnn`, confidence unassigned) | Entry-plan default: ≤3 sources, ≤2 rounds total |
-| `standard` | Multi-part question, some contestation, reversible decision | `scope -> source -> appraise -> synthesize` — the chain in `registry/routes.yaml`; add `report` only when a write-up was asked for | 5-12 sources, 8 rounds total (2-3 per sub-question) |
-| `deep` | High cost of error, contested field, landscape or comparison | Full chain + gap-fill loops | 15-40 sources, 3 per sub-question / 20 total |
+| `standard` | Multi-part question, some contestation, reversible decision | `scope -> source -> appraise -> synthesize` — the chain in `registry/routes.yaml`; add `report` only when a write-up was asked for | 5-12 sources, 8 rounds total (2-3 per sub-question), ~6 full reads |
+| `deep` | High cost of error, contested field, landscape or comparison | Full chain + gap-fill loops | 15-40 sources, 3 rounds per sub-question / 20 total, full reads set in the brief |
 
 Three bounded asks are chain patterns, not depths (`reference/chain-patterns.md`). With no brief
 they run on the entry-plan default; a bigger budget needs scope to write one.

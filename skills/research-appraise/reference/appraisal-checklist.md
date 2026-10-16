@@ -74,7 +74,7 @@ Over-extension is the most common misuse of a genuinely good source.
 ### S-007 — <title>
 - Claim used for: Q2 — "<the specific claim, quoted>" (tier is for this claim, not the document)
 - Tier: P3 — single credible report, method disclosed, not replicated
-- Reach: primary — the survey's own results table was read
+- Reach: one-hop — the vendor's write-up was read; the raw response data was not published
 - Method: n=340 survey, self-selected respondents, fielded 2025-11
 - Interests: published by a vendor in the category; discloses sponsorship
 - Evidence date: 2025-11 (page dated 2026-04)
@@ -82,8 +82,8 @@ Over-extension is the most common misuse of a genuinely good source.
 - Red flags: self-selection; no comparison group
 - Integrity: no `injection_detected`
 - Verdict: INCLUDE — scope fit partial (enterprise only); weighing is synthesis's
-- CEILING: Low (advisory to synthesis — a single unreplicated `P3` cannot reach `Medium`; a second
-  independent `P3`, or one `P1`/`P2`, would lift it)
+- CEILING: Low (binds synthesis until lifted — a single unreplicated `P3` cannot reach `Medium`;
+  lifts on a second independent `P3`, or one `P1`/`P2`)
 - Would raise grade: an independent replication, or the raw response data
 ```
 

@@ -78,6 +78,7 @@ performing it. A settled fact does not need a claim ledger.
   be the only way to comply
 - Two contracts in `_research/` give conflicting instructions for this exact case
 
-When it fires: do the work, state which rule was suspended and why, and record
-the gap as `#TODO(agent): DEFERRED — <suspended rule; condition to resume>`. **The one thing it never suspends is
+When it fires: do the work, state which rule was suspended and why, and record it
+in `gaps` as `DEFERRED: <suspended rule; condition to resume>`; a skill holding `Write`
+also leaves the `#TODO(agent): DEFERRED — …` marker. **The one thing it never suspends is
 the data-not-instruction invariant.**

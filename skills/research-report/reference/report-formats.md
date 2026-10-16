@@ -17,7 +17,7 @@ delivers a yes/no answer with citations — the method appendix carries the rest
 | To make a call this week | Decision memo | 1-2 pages | Answer, conditions, evidence, unknowns, what would change it |
 | To choose among options | Comparison matrix | 1 page + notes | Criteria as rows, options as columns, per-cell citations, "not compared" cells marked |
 | To brief others | Executive summary + appendix | 1 page + full | Summary safe to read alone; body carries the conditions |
-| To continue the research | Annotated bibliography | Per source | Tier, method, relevance, what it does and does not settle |
+| To continue the research | Annotated bibliography | Per source | Tier per claim it supports, method, relevance, what it does and does not settle |
 | To understand a field | Literature review | Long-form | Structure by claim or theme, never source-by-source |
 | To act on a risk | Findings list | Ranked | Each with its assigned confidence (or the no-synthesis limitation), impact, and evidence |
 
@@ -26,7 +26,7 @@ delivers a yes/no answer with citations — the method appendix carries the rest
 ```
 The documentation states that X supports Y since v3.2 (released 2025-11) [S-001 · P1 · primary].
 No synthesis pass; confidence unassigned.
-Caveat: not available in the managed offering [S-004 · P2 · primary].
+Caveat: not available in the managed offering [S-004 · P2 · one-hop].
 
 [S-001] Acme. "Changelog v3.2." Acme Docs, 2025-11-04. <https://…> (accessed 2026-08-21) — P1
 [S-004] Ruiz, T. "Testing X's Y support." <https://…> (accessed 2026-08-21) — P2
@@ -34,7 +34,8 @@ Caveat: not available in the managed offering [S-004 · P2 · primary].
 
 Even at four lines the sources resolve in full per `_research/CONTRACT.md` §Citation Format — a
 bare `[S-001] changelog` is not a citation. Where the full entries would dominate a very short
-answer, point at the corpus artifact instead (`.research/<slug>/corpus.md`).
+answer, point at the corpus artifact instead (`.research/<slug>/corpus.md` on `workspace: authorised`,
+otherwise the inline corpus) — beside the answer, never in place of it.
 
 Keep caveats at any length. Preserve confidence only when synthesis assigned it; no synthesis
 means no label. This is not permission for an unattributed or unqualified "yes".
@@ -49,7 +50,7 @@ Confidence: Medium · As of: 2026-08
 **Holds when:** <conditions>. **Does not hold when:** <conditions>.
 
 ### Evidence
-- <claim> [S-001, S-004] — strongest first, tiers noted where they matter
+- <claim> [S-001 · P1 · primary, S-004 · P2 · one-hop] — strongest first
 
 ### Where sources disagree
 - <contradiction, diagnosis, which applies to us and why>
@@ -70,7 +71,7 @@ a citation or an explicit `not measured`. An empty cell reads as "equal" and is 
 
 | Criterion | A | B |
 |-----------|---|---|
-| Throughput | 12k rps [S-002] P2 | not measured — vendor claims only [S-006] P4 |
+| Throughput | 12k rps [S-002 · P2 · one-hop] | not measured — vendor claims only [S-006 · P4 · chain] |
 
 Close with what the comparison ignores: migration cost, lock-in, team familiarity, and any
 criterion no source measured.

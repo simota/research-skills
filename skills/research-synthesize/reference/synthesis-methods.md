@@ -31,7 +31,7 @@ Rules:
 Claims down, sources across. Every cell gets one of four values — the fourth is what most
 syntheses omit and most need:
 
-| | S-001 (P1) | S-002 (P3) | S-004 (P4) |
+| | S-001 | S-002 | S-004 |
 |---|---|---|---|
 | C-001 | supports | contradicts | silent |
 | C-002 | silent | supports | supports |
@@ -84,11 +84,12 @@ a chain of reasonable steps output higher confidence than its weakest link.
 Answer each explicitly before assembling the primary answer:
 
 ```
-Q1: Yes — X supports Y since v3.2. Confidence: High [S-001 P1, S-004 P2, independent].
+Q1: Yes — X supports Y since v3.2. Confidence: High [S-001 · P1 · primary, S-004 · P2 · one-hop],
+    independent.
 Q2: Not established. Confidence: Unknown — no source measures this; the two that claim it trace
-    to one vendor page [S-006].
-Q3: Contested. Confidence: Low — S-002 (P2) and S-008 (P2) disagree on measurement; both are in
-    C-009's ledger row, the dispute reported, not averaged.
+    to one vendor page [S-006 · P4 · chain].
+Q3: ~12k rps under production tuning. Confidence: Medium — S-008's ~4k is a defaults measurement,
+    not a dispute (C-009, diagnosed in contradiction-handling); our storage backend is untested.
 ```
 
 Then the primary answer, with the conditions under which it holds and the conditions under which

@@ -14,7 +14,8 @@ RESEARCH_HANDOFF:
   to: <next skill or DONE>
   status: DONE | PARTIAL | BLOCKED
   question: "<the current research question, verbatim from the brief>"
-  budget_used: {sources: n/cap, rounds_total: n/cap, rounds_per_q: n/cap, full_reads: n/cap}
+  budget_used: {source_total_cap: n/N, query_rounds_total_cap: n/T, full_reads_cap: n/M,
+                query_rounds_per_subquestion_cap: {Q1: n/K, Q2: n/K}}   # the brief's names
   workspace: authorised | inline         # route records the user's answer; see Workspace
   artifacts:
     - path: <file path or "inline">
@@ -39,7 +40,9 @@ RESEARCH_HANDOFF:
 raises `BELOW_BAR`; synthesize (or report, finding a sentence nothing supports) raises `GAP_FILL` /
 `UNSUPPORTED_CLAIM`; any phase may raise `REVISE_SCOPE`. `research-route` reads `trigger.kind` to
 pick the destination — `BELOW_BAR` / `GAP_FILL` / `UNSUPPORTED_CLAIM` go to `research-source`,
-`REVISE_SCOPE` goes to `research-scope` — and must never infer a loop from prose in `gaps`.
+`REVISE_SCOPE` goes to `research-scope` — and must never infer a loop from prose in `gaps`. After
+retrieval and appraisal, the chain resumes at the phase that raised the trigger; a no-synthesis
+chain does not gain a synthesis pass by looping.
 
 ## Rules
 

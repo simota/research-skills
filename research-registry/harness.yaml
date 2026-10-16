@@ -93,7 +93,8 @@ refutation:
 # it; the tools directory is never linked whole, because a skill holding `Bash`
 # and all of it could edit the harness it is part of. A rule checks each link is
 # present exactly where the skill's class grants a shell, so a missing one is a
-# failure rather than an oversight.
+# failure rather than an oversight. No class here grants one, so refute.py is
+# linked nowhere and a person runs it (`make refute`); V34 holds that absence.
 linked_tools:
   refute.py: all
 
@@ -130,7 +131,8 @@ vocabulary:
   evidence_levels: [P1, P2, P3, P4, P5]
   residual_classes: [BLOCKED, OUT-OF-SCOPE, DEFERRED, UNSUPPORTED]
   statuses: [DONE, PARTIAL, BLOCKED]
-  tiers: [quick, standard, deep]
+  tiers: [quick, standard, deep]       # depths. The key keeps its name because agent-toolkit's
+                                       # pages.py reads it; in prose a bare "tier" is provenance
   reach_states: [primary, one-hop, chain, blocked, no-primary]
   # Weakest first. The composition table in
   # research-synthesize/reference/confidence-calibration.md is checked against

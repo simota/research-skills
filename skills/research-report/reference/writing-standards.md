@@ -46,12 +46,13 @@ Before delivery, walk the draft sentence by sentence:
 | Sentence type | Requirement |
 |---------------|-------------|
 | States a fact about the world | Maps to a `C-nnn` with citations — or to an `S-nnn` on a chain that ran no synthesis |
-| Draws a conclusion from claims | Labelled as inference, basis claims named |
+| Draws a conclusion from claims | Maps to an inference synthesis recorded, labelled, basis claims named |
 | Describes method or coverage | Matches the search log |
 | Recommends an action | Marked as recommendation, separated from evidence |
 | Sets context or transitions | No factual content — verify it smuggled none in |
 
-Anything that maps to nothing is either cut or promoted into a labelled inference. This sweep is
+Anything that maps to nothing is cut, or returned upstream as `GAP_FILL` / `UNSUPPORTED_CLAIM` —
+report never promotes it into an inference of its own. This sweep is
 where invented illustrative numbers and half-remembered background facts get caught, and it is
 mandatory — not a final polish.
 

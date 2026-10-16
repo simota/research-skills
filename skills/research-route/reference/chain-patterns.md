@@ -17,9 +17,9 @@ Verified: 2026-08-21 — no automated check.
 | Standard | `scope -> source -> appraise -> synthesize` | Terminal synthesis supplies the supported answer; add report for audience-shaped writing |
 | Deep | Standard + report, with bounded gap-fill loops | High error cost, contested field |
 | Reconcile | `appraise -> synthesize -> report` | A corpus already exists |
-| Write-up | `report` | The ledger already exists |
+| Write | `report` | The ledger already exists |
 
-Lookup, Vet, Standard and Deep are routes in `registry/routes.yaml`; the rest are ad hoc, and the
+Lookup (`quick`), Vet, Standard and Deep are routes in `registry/routes.yaml`; the rest are ad hoc, and the
 phases they omit are stated as skips. Never insert a phase because the chain looks short. Insert it
 because its contract is needed.
 
