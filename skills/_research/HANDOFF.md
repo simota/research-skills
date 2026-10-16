@@ -41,9 +41,10 @@ raises `BELOW_BAR`; synthesize (or report, finding a sentence nothing supports) 
 `UNSUPPORTED_CLAIM`; any phase may raise `REVISE_SCOPE`. `research-route` reads `trigger.kind` to
 pick the destination — `BELOW_BAR` / `GAP_FILL` / `UNSUPPORTED_CLAIM` go to `research-source`,
 `REVISE_SCOPE` goes to `research-scope` — and must never infer a loop from prose in `gaps`. A loop
-re-runs the chain's own phases from source up to and including the raiser, then carries on after
-it: `BELOW_BAR` is source → appraise; a synthesis trigger is `fill-the-gap`; report's is source →
-appraise → (synthesize, if the chain has it) → report. No phase is added and none runs twice.
+exists to retrieve, so it always runs source → appraise — even on a chain that began without them
+(Reconcile, Write) — then synthesize where a ledger exists (the chain has synthesis, or an earlier
+run left one), then the raiser if it is report; the chain carries on after the raiser. So
+`BELOW_BAR` is source → appraise and a synthesis trigger is `fill-the-gap`. Nothing runs twice.
 
 ## Rules
 

@@ -186,6 +186,8 @@ def conform_reads_json_values(b: Bench) -> str | None:
     nullable = engine.strict({"type": ["object", "null"], "properties": {"x": {"type": "string"}},
                               "required": ["x"]})
     checks = [(1.0, {"enum": [1]}, True), (True, {"enum": [1]}, False),
+              ([True], {"enum": [[1]]}, False), ({"x": True}, {"enum": [{"x": 1}]}, False),
+              ([1.0, {"y": "z"}], {"enum": [[1, {"y": "z"}]]}, True),
               ({"x": "ok", "extra": True}, nullable, False), (None, nullable, True)]
     for got, schema, ok in checks:
         try:

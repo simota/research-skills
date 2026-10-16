@@ -149,6 +149,20 @@ def _is(got, want: str) -> bool:
     return isinstance(got, py)
 
 
+def json_equal(a, b) -> bool:
+    """Equality as JSON defines it, at every depth: `1.0` is the integer 1, but
+    `true` is never 1 — which Python's `==` says it is, inside a list too."""
+    if isinstance(a, bool) or isinstance(b, bool):
+        return isinstance(a, bool) and isinstance(b, bool) and a == b
+    if isinstance(a, (int, float)) and isinstance(b, (int, float)):
+        return a == b
+    if isinstance(a, list) and isinstance(b, list):
+        return len(a) == len(b) and all(json_equal(x, y) for x, y in zip(a, b))
+    if isinstance(a, dict) and isinstance(b, dict):
+        return a.keys() == b.keys() and all(json_equal(a[k], b[k]) for k in a)
+    return type(a) is type(b) and a == b
+
+
 def conform(engine: str, got, schema: dict, at: str = "answer"):
     """`got` if it has the shape `schema` asks for, else EngineError.
 
@@ -161,10 +175,7 @@ def conform(engine: str, got, schema: dict, at: str = "answer"):
     wants = [want] if isinstance(want, str) else list(want or [])
     if wants and not any(_is(got, w) for w in wants):
         raise EngineError(f"{engine}: {at} is {type(got).__name__}, the schema says {want}")
-    # By JSON value: `1.0` is the integer 1, but `true` is never 1 (Python says
-    # `True == 1`, so a boolean only matches a boolean).
-    if "enum" in schema and not any(isinstance(got, bool) == isinstance(e, bool) and got == e
-                                    for e in schema["enum"]):
+    if "enum" in schema and not any(json_equal(got, e) for e in schema["enum"]):
         raise EngineError(f"{engine}: {at} is {got!r}, not one of {schema['enum']}")
     if isinstance(got, dict):
         missing = [k for k in schema.get("required") or [] if k not in got]
