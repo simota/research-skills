@@ -87,10 +87,13 @@ def run(engine: str, prompt: str, schema: dict) -> dict:
     if engine not in known:
         raise EngineError(f"{engine} is not one of {known}")
 
+    # Held to the closed form whatever the engine was sent: an extra key from
+    # claude or agy is as much "not what was asked" as one from codex.
+    closed = strict(schema)
     with tempfile.TemporaryDirectory(prefix="research-engine-") as tmp:
         d = pathlib.Path(tmp)
         s = d / "schema.json"
-        s.write_text(json.dumps(strict(schema)), encoding="utf-8")
+        s.write_text(json.dumps(closed), encoding="utf-8")
         if engine == "codex":
             out = d / "answer.json"
             # `-` reads the instructions from stdin.
@@ -100,19 +103,21 @@ def run(engine: str, prompt: str, schema: dict) -> dict:
             body = out.read_text(encoding="utf-8") if out.exists() else ""
             if not body.strip():
                 raise EngineError(f"codex wrote no answer.\n{_tail(r)}")
-            return conform(engine, _parse(engine, body), schema)
+            return conform(engine, _parse(engine, body), closed)
         if engine == "claude":
             # No positional prompt: `-p` reads it from stdin.
-            # `--tools ""` disables every built-in tool: the prompt carries text
-            # under attack, and codex gets `--sandbox read-only` for the same reason.
+            # `--tools ""` disables every built-in tool and `--strict-mcp-config`
+            # loads no MCP server: the prompt carries text under attack, and codex
+            # gets `--sandbox read-only` for the same reason.
             argv = ["claude", "-p", "--output-format", "json",
-                    "--json-schema", json.dumps(schema), "--tools", ""]
+                    "--json-schema", json.dumps(schema), "--strict-mcp-config",
+                    "--tools", ""]
             r = _spawn(engine, argv, stdin=prompt)
             envelope = _parse(engine, r.stdout)
             got = envelope.get("structured_output")
             if not isinstance(got, dict):
                 raise EngineError(f"claude returned no structured_output.\n{_tail(r)}")
-            return conform(engine, got, schema)
+            return conform(engine, got, closed)
         if engine == "agy":
             argv = ["agy", f"--print={prompt}", "--output-format", "json",
                     "--json-schema", str(s)]
@@ -122,7 +127,7 @@ def run(engine: str, prompt: str, schema: dict) -> dict:
             if not isinstance(got, dict):
                 raise EngineError(f"agy returned no structured_output object "
                                   f"(status {envelope.get('status')!r}).\n{_tail(r)}")
-            return conform(engine, got, schema)
+            return conform(engine, got, closed)
     raise EngineError(f"no invocation is known for {engine}")
 
 
@@ -135,7 +140,7 @@ TYPES = {"boolean": bool, "string": str, "array": list, "object": dict,
 def _is(got, want: str) -> bool:
     py = TYPES.get(want)
     if py is None:
-        return True                       # a type this subset does not know
+        return False                      # not a JSON type: nothing satisfies it
     if isinstance(got, bool):
         return want == "boolean"
     if want == "integer":
@@ -155,7 +160,8 @@ def conform(engine: str, got, schema: dict, at: str = "answer"):
     wants = [want] if isinstance(want, str) else list(want or [])
     if wants and not any(_is(got, w) for w in wants):
         raise EngineError(f"{engine}: {at} is {type(got).__name__}, the schema says {want}")
-    if "enum" in schema and got not in schema["enum"]:
+    # By value and by type: `True == 1` and `1.0 == 1` in Python, not in JSON.
+    if "enum" in schema and not any(type(got) is type(e) and got == e for e in schema["enum"]):
         raise EngineError(f"{engine}: {at} is {got!r}, not one of {schema['enum']}")
     if isinstance(got, dict):
         missing = [k for k in schema.get("required") or [] if k not in got]

@@ -76,6 +76,12 @@ hooks:
 # research-tools/ share it and must never be installed.
 SKILL_DIRS := $(patsubst %/SKILL.md,%,$(wildcard skills/research-*/SKILL.md))
 
+# Run from anywhere else, the wildcard above finds nothing and link/unlink/
+# status would report success over an empty set — or act on another checkout.
+ifeq ($(wildcard research-tools/validate.py),)
+$(error run make from the research-skills repo, or with make -C <repo>)
+endif
+
 link:
 	@for dir in $(HOST_DIRS); do \
 		if [ ! -d "$$(dirname "$$dir")" ]; then echo "skip $$dir (host not installed here)"; continue; fi; \

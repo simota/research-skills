@@ -397,18 +397,25 @@ def _is_own_reference(p: str) -> bool:
 def _check_paths(f: Path, base: Path, where: Path, label: str) -> None:
     """`where` is the file's directory as the skill sees it (`playbooks`,
     `_research`, ...). A markdown link resolves from there, the way markdown
-    does, so `../reference/x.md` from a playbook stays inside the skill; only a
-    link that normalises out of the skill directory leaves it once installed.
-    V8 checks that the target exists."""
+    does, so `../reference/x.md` from a playbook stays inside the skill. What
+    it names must exist at that lexical path from the skill directory — a
+    shared page's `../research-scope/SKILL.md` exists on disk and nowhere a
+    skill reads it from."""
     text = read(f)
     for raw in LINK_RE.findall(text):
         t = link_target(raw)
         if t.startswith(("http", "mailto:", "#")) or not t:
             continue
-        if os.path.normpath(where / t).split(os.sep)[0] == "..":
+        norm = os.path.normpath(where / t)
+        if norm.split(os.sep)[0] == "..":
             fail("V19", f"{label} links to {t!r}, which leaves the skill directory; "
                         "paths are normalised lexically, so `..` does not traverse "
                         "the install symlink")
+        elif not (base / norm).exists():
+            # On disk the link may resolve (V8 is quiet); read from inside an
+            # installed skill, `_research/../x` is `<skill>/x`, which may not.
+            fail("V19", f"{label} links to {t!r}, which a skill reads as {norm!r}; "
+                        "that does not resolve from a skill directory")
     for p in TICK_PATH_RE.findall(text):
         if p.startswith(("http", "~", "/")) or " " in p or not _is_own_reference(p):
             continue

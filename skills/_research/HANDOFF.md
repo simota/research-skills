@@ -41,8 +41,8 @@ raises `BELOW_BAR`; synthesize (or report, finding a sentence nothing supports) 
 `UNSUPPORTED_CLAIM`; any phase may raise `REVISE_SCOPE`. `research-route` reads `trigger.kind` to
 pick the destination — `BELOW_BAR` / `GAP_FILL` / `UNSUPPORTED_CLAIM` go to `research-source`,
 `REVISE_SCOPE` goes to `research-scope` — and must never infer a loop from prose in `gaps`. After
-retrieval and appraisal, the chain resumes at the phase that raised the trigger; a no-synthesis
-chain does not gain a synthesis pass by looping.
+retrieval, appraisal and — where the chain has one — synthesis, the chain resumes at the phase
+that raised the trigger; a no-synthesis chain does not gain a synthesis pass by looping.
 
 ## Rules
 

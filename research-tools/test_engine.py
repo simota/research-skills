@@ -23,6 +23,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 REFUTE = ROOT / "research-tools" / "refute.py"
+ENGINE = ROOT / "research-tools" / "engine.py"
 
 # One stub for every engine; its name says which CLI it is pretending to be.
 STUB = textwrap.dedent('''\
@@ -39,7 +40,9 @@ STUB = textwrap.dedent('''\
         time.sleep(300)
     answer = {{"stands": {{"refuted": False, "reason": "r", "what_would_settle_it": "w"}},
               "refutes": {{"refuted": True, "reason": "r", "what_would_settle_it": "w"}},
-              "malformed": {{"refuted": "false", "reason": "r", "what_would_settle_it": "w"}}}}
+              "malformed": {{"refuted": "false", "reason": "r", "what_would_settle_it": "w"}},
+              "extra": {{"refuted": False, "reason": "r", "what_would_settle_it": "w",
+                         "verdict": "fine"}}}}
     # "fail" prints a well-formed agreement and then exits non-zero: an answer
     # from a CLI that reports failure is not an answer.
     answer = answer["stands" if mode == "fail" else mode]
@@ -96,6 +99,12 @@ def refuted_exits_one(b: Bench) -> str | None:
     return None if code == 1 and v == ["CONTESTED"] else f"exit {code}, {v}: {err}"
 
 
+def extra_key_is_no_verdict(b: Bench) -> str | None:
+    # Claude and agy are sent the open schema; the answer is still held closed.
+    code, v, err = b.refute(claude="extra", agy="extra")
+    return None if code == 1 and v == ["UNCHECKED"] else f"exit {code}, {v}: {err}"
+
+
 def malformed_is_no_verdict(b: Bench) -> str | None:
     code, v, err = b.refute(claude="malformed", agy="malformed")
     return None if code == 1 and v == ["UNCHECKED"] else f"exit {code}, {v}: {err}"
@@ -108,8 +117,13 @@ def failed_exit_is_no_verdict(b: Bench) -> str | None:
 
 
 def maker_is_excluded(b: Bench) -> str | None:
-    b.refute(running="claude")
-    return "claude was asked to refute its own claim" if (b.log / "claude.json").exists() else None
+    code, v, err = b.refute(running="claude")
+    if (b.log / "claude.json").exists():
+        return "claude was asked to refute its own claim"
+    asked = sorted(p.stem for p in b.log.glob("*.json"))
+    if (code, v, asked) != (0, ["STANDS"], ["agy", "codex"]):
+        return f"exit {code}, {v}, asked {asked}: {err}"
+    return None
 
 
 def prompt_on_stdin_tools_off(b: Bench) -> str | None:
@@ -117,9 +131,15 @@ def prompt_on_stdin_tools_off(b: Bench) -> str | None:
     got = b.seen("claude")
     if "X supports Y" not in got["stdin"] or any("X supports Y" in a for a in got["argv"]):
         return f"the claim did not travel on stdin: {got}"
-    i = got["argv"].index("--tools") if "--tools" in got["argv"] else -1
-    if i < 0 or got["argv"][i + 1] != "":
-        return f"claude was not run with every tool off: {got['argv']}"
+    argv = got["argv"]
+    i = argv.index("--tools") if "--tools" in argv else -1
+    if i < 0 or argv[i + 1:i + 2] != [""] or "--strict-mcp-config" not in argv:
+        return f"claude was not run with every tool and MCP server off: {argv}"
+    b.refute(running="agy")                 # codex is only asked when it is not the maker
+    codex = b.seen("codex")
+    if "X supports Y" not in codex["stdin"] or codex["argv"][-1] != "-" \
+            or codex["argv"][codex["argv"].index("--sandbox") + 1] != "read-only":
+        return f"codex was not read-only with the prompt on stdin: {codex['argv']}"
     return None
 
 
@@ -143,8 +163,19 @@ def bad_claims_file_is_usage(b: Bench) -> str | None:
 
 
 def unknown_running_is_refused(b: Bench) -> str | None:
-    code, _, _ = b.refute(running="Claude")
-    return None if code != 0 else "a misspelled --running was accepted"
+    code, _, err = b.refute(running="Claude")
+    if code == 0 or "Traceback" in err:
+        return f"refute: a misspelled --running gave exit {code}: {err}"
+    # engine.py names its checker explicitly here, so only its own check can refuse.
+    prompt, schema = b.claims.with_name("p.txt"), b.claims.with_name("s.json")
+    prompt.write_text("x", encoding="utf-8")
+    schema.write_text('{"type": "object", "properties": {}, "required": []}', encoding="utf-8")
+    r = subprocess.run([sys.executable, str(ENGINE), "--running", "Claude", "claude",
+                        "--prompt-file", str(prompt), "--schema", str(schema)],
+                       capture_output=True, text=True, env=b.env(), timeout=60)
+    if r.returncode == 0 or "Traceback" in r.stderr or (b.log / "claude.json").exists():
+        return f"engine.py: a misspelled --running asked claude anyway (exit {r.returncode})"
+    return None
 
 
 def interrupt_kills_engine(b: Bench) -> str | None:
@@ -173,7 +204,7 @@ def interrupt_kills_engine(b: Bench) -> str | None:
     return f"engine pid {pid} outlived the interrupted run"
 
 
-CASES = [stands_exits_zero, refuted_exits_one, malformed_is_no_verdict,
+CASES = [stands_exits_zero, refuted_exits_one, extra_key_is_no_verdict, malformed_is_no_verdict,
          failed_exit_is_no_verdict, maker_is_excluded, prompt_on_stdin_tools_off,
          claim_is_fenced, bad_claims_file_is_usage, unknown_running_is_refused,
          interrupt_kills_engine]

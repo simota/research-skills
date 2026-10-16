@@ -10,6 +10,7 @@ Run: make test
 """
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 import sys
@@ -21,8 +22,15 @@ TARGET = "skills/research-source/playbooks/traps.md"
 BREAK = "\n| lonely | row |\n"          # a row outside any table: figures_check fails
 
 
+# Nothing from the caller's git may steer the throwaway repository: GIT_DIR and
+# friends would point every command at the outer one, and a global
+# commit.gpgsign would make the base commit prompt for a key.
+ENV = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+
+
 def git(repo: Path, *args: str) -> subprocess.CompletedProcess:
-    return subprocess.run(["git", "-C", str(repo), *args], capture_output=True, text=True)
+    return subprocess.run(["git", "-c", "commit.gpgsign=false", "-C", str(repo), *args],
+                          capture_output=True, text=True, env=ENV)
 
 
 def fresh(tmp: Path) -> Path:

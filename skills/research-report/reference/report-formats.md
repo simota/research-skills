@@ -34,8 +34,8 @@ Caveat: not available in the managed offering [S-004 · P2 · one-hop].
 
 Even at four lines the sources resolve in full per `_research/CONTRACT.md` §Citation Format — a
 bare `[S-001] changelog` is not a citation. Where the full entries would dominate a very short
-answer, point at the corpus artifact instead (`.research/<slug>/corpus.md` on `workspace: authorised`,
-otherwise the inline corpus) — beside the answer, never in place of it.
+answer, point at the corpus artifact instead (`.research/<slug>/corpus.md` on
+`workspace: authorised`, otherwise the inline corpus) — beside the answer, never in place of it.
 
 Keep caveats at any length. Preserve confidence only when synthesis assigned it; no synthesis
 means no label. This is not permission for an unattributed or unqualified "yes".

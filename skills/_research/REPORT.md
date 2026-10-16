@@ -25,7 +25,7 @@ The tool call is already visible. Explain what changed, not merely that a call h
 
 1. **The requested result first.** Scope: brief. Source: corpus and access limitations. Appraise:
    assessment with ceilings and their lifting conditions. None assigns a confidence label. For a
-   findings answer, preserve a label only when synthesis assigned it; a ceiling is not an assignment.
+   findings answer, preserve a label only when synthesis assigned it; a ceiling is not one.
 2. **The evidence or phase check.** Use the checks actually performed. Claim support and reach
    counts apply to findings, not to a brief or ungraded corpus. Do not fabricate downstream counts.
 3. **What remains unresolved.** `BLOCKED` and `UNSUPPORTED` stay visible; carry the other residuals

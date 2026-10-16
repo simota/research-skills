@@ -74,7 +74,8 @@ Over-extension is the most common misuse of a genuinely good source.
 ### S-007 — <title>
 - Claim used for: Q2 — "<the specific claim, quoted>" (tier is for this claim, not the document)
 - Tier: P3 — single credible report, method disclosed, not replicated
-- Reach: one-hop — the vendor's write-up was read; the raw response data was not published
+- Reach: blocked — the raw response data exists and is unpublished; a request to the vendor
+  would unblock it
 - Method: n=340 survey, self-selected respondents, fielded 2025-11
 - Interests: published by a vendor in the category; discloses sponsorship
 - Evidence date: 2025-11 (page dated 2026-04)

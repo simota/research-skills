@@ -206,6 +206,13 @@ def _(r):
         "<!-- research:guidance -->\n[contract](../../_research/CONTRACT.md)\n")
 
 
+@case("V19-shared-link", says="which a skill reads as 'research-scope/SKILL.md'")
+def _(r):
+    """Exists on disk, so V8 is quiet; inside an installed skill it is nothing."""
+    sub(r / f"{S}_research/ROUTING.md", "# Research Family Boundaries\n",
+        "# Research Family Boundaries\n\nSee [scope](../research-scope/SKILL.md).\n")
+
+
 @quiet("README names the tools directory")
 def _(r): sub(r / "README.md", "## Working on it\n", "## Working on it\n\nThe tools live in `research-tools`.\n")
 
