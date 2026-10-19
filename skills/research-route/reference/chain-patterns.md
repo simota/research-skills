@@ -13,7 +13,7 @@ Verified: 2026-08-21 — no automated check.
 | Lookup | `source -> appraise -> report` | Documented fact, primary source exists, low error cost. No ledger: report traces to `S-nnn`; no synthesis, confidence unassigned |
 | Vet | `source -> appraise -> report` | Bounded record/source check; a supplied retrieval handoff permits a stated source skip |
 | Trace | `source -> appraise` | "Where did this source come from and is it sound" |
-| Verify | `source -> appraise -> synthesize -> report` | "Is this claim true" — claim truth needs cross-source reconciliation, not just source quality |
+| Verify | `source -> appraise -> synthesize -> report` | "Is this claim true" — claim truth needs cross-source reconciliation, not just source quality. The entry-plan bar is the record that defines the claim, when one exists; otherwise scope runs first |
 | Standard | `scope -> source -> appraise -> synthesize` | Terminal synthesis supplies the supported answer; add report for audience-shaped writing |
 | Deep | Standard + report, with bounded gap-fill loops | High error cost, contested field |
 | Reconcile | `appraise -> synthesize -> report` | A corpus already exists |
@@ -25,23 +25,24 @@ Insert it because its contract is needed.
 
 ## Loop triggers
 
-Four trigger kinds in three routing groups. Each is named by the phase that raises it.
+Five trigger kinds in four routing groups. Each is named by the phase that raises it.
 
-All four arrive as `next_action: LOOP_BACK` with `trigger.kind` set (`_research/HANDOFF.md`).
+All five arrive as `next_action: LOOP_BACK` with `trigger.kind` set (`_research/HANDOFF.md`).
 
 | `trigger.kind` | Raised by | Goes to |
 |----------------|-----------|---------|
 | `BELOW_BAR` | `research-appraise` | `research-source` |
 | `GAP_FILL` / `UNSUPPORTED_CLAIM` | `research-synthesize`, or `research-report` for a sentence nothing supports | `research-source` |
+| `NEEDS_SYNTHESIS` | `research-appraise` or `research-report`, when the answer needs reconciliation or inference the ledger does not carry | `research-synthesize` (run, or run again), then report if the chain has one |
 | `REVISE_SCOPE` | Any downstream phase that finds the question unanswerable as asked — usually synthesize | `research-scope` |
 
 **One global counter, capped by `max_cycles` in `registry/routes.yaml`, of which at most 1 may be
 `REVISE_SCOPE`.** There are no per-trigger allowances — three counters would license three times
 the cap inside a single rule.
 
-A second loop that returns the same sources means the evidence does not exist. Stop: the claims
+A cycle that returns no new independent source means the evidence does not exist. Stop: the claims
 stay `UNSUPPORTED` in `gaps` and go to synthesis, which alone may call them `Unknown` — that is the
-finding, and looping a third time only spends budget confirming it.
+finding, and looping again only spends budget confirming it.
 
 A `REVISE_SCOPE` loop rewrites the question. Confirm with the user first: they asked the original
 question for a reason, and substituting an easier one without saying so is the quiet failure this

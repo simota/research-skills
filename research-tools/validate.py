@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Static checks over the research-* skill set.
 
-Every threshold and every piece of vocabulary comes from research-registry/harness.yaml.
-Nothing is hard-coded here: a number written twice is a number that drifts.
+Every budget and every piece of vocabulary comes from research-registry/harness.yaml:
+a number written twice is a number that drifts. What stays here is structure the
+rules are built on — the six SKILL.md sections, the definition forms, the
+12-line window a reference header must sit in.
 
 A rule earns its place only if CI can decide it. Anything needing judgement
 belongs in a review, not in this file.
@@ -328,7 +330,7 @@ def v17_delivery():
             fail("V17", f"{key} declares unknown delivery scope {only!r}")
             continue
         wanted = set(SIGNATURE["required_of"]) if only == "signature" else set(SKILLS)
-        want = read(ROOT / "research-registry" / "delivered" / f"{key}.md").rstrip("\n")
+        want = read(ROOT / "research-registry" / "delivered" / f"{key}.md").strip("\n")
         open_m, close_m = f"<!-- deliver:{key} -->", f"<!-- /deliver:{key} -->"
         for d in SKILL_DIRS:
             text = read(d / "SKILL.md")
@@ -914,10 +916,10 @@ def v37_source_pins_the_rot():
 
 
 # `KEY: A | B | C` in a schema, or a bare `A | B | C` on a line of its own —
-# upper-case words joined by pipes. Underscored and parenthesised forms are not
+# upper-case words, underscores allowed (`LOOP_BACK`), joined by pipes. Parenthesised forms are not
 # matched, so this is a floor.
-ENUM_RE = re.compile(r"(?:^|:\s*)((?:[A-Z][A-Z-]*(?: [A-Z][A-Z-]*)*)"
-                     r"(?:\s*\|\s*(?:[A-Z][A-Z-]*(?: [A-Z][A-Z-]*)*))+)\s*(?:#.*)?$")
+ENUM_RE = re.compile(r"(?:^|:\s*)((?:[A-Z][A-Z_-]*(?: [A-Z][A-Z_-]*)*)"
+                     r"(?:\s*\|\s*(?:[A-Z][A-Z_-]*(?: [A-Z][A-Z_-]*)*))+)\s*(?:#.*)?$")
 
 
 def v38_enumerations_declared():
@@ -976,7 +978,15 @@ def hook_installed() -> bool | None:
 
 def main() -> int:
     for rule in RULES:
-        rule()
+        # Malformed registry input (an empty `chain:`, a `not:` entry written as
+        # a string) used to end the run in a traceback, and every rule after it
+        # went unreported. The rule that tripped now says so, and the rest run.
+        try:
+            rule()
+        except Exception as e:                # noqa: BLE001 — reported, never swallowed
+            fail(rule.__name__.split("_")[0].upper(),
+                 f"could not run ({type(e).__name__}: {e}); malformed input, or a bug "
+                 "in the rule")
     hooks = hook_installed()
     state = "" if hooks is None else \
         f" · hooks {'on' if hooks else 'off — run: make hooks'}"

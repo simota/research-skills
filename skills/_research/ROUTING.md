@@ -38,7 +38,8 @@ cycle limit — and **the phase that wanted a claim may not certify its own supp
    unremovable cap under invariant 5.
    On a chain with no synthesis (`quick`, `vet`), no skill assigns a confidence label. Report
    the source-bound answer and "no synthesis pass; confidence unassigned". Reconciliation or
-   inference not established upstream must go to synthesis, not to an implicit report verdict.
+   inference not established upstream goes to synthesis as `NEEDS_SYNTHESIS`, never into an
+   implicit report verdict.
 5. **Uncertainty flows forward undiluted.** A `Low`-confidence claim in synthesis must still read
    as `Low`-confidence in the report. Downstream skills may not upgrade confidence.
 6. **Evidence tiers belong to `research-appraise`.** `research-source` records what a document *is*

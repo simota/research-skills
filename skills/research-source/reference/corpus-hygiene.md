@@ -72,11 +72,11 @@ Red flags: S-009 (undated, citations do not resolve) — flagged for appraisal, 
 ```markdown
 ## Search Log
 
-| # | Date | Sub-Q | Channel | Query | Seen | Kept |
-|---|------|-------|---------|-------|------|------|
-| 1 | 2026-08-21 | Q1 | web | "<exact query>" | 10 | 3 |
-| 2 | 2026-08-21 | Q1 | repo | site:... "<query>" | 4 | 1 |
-| 3 | 2026-08-21 | Q2 | web | "<disconfirming query>" | 12 | 0 |
+| # | Round | Date | Sub-Q | Channel | Query | Seen | Kept |
+|---|-------|------|-------|---------|-------|------|------|
+| 1 | 1 | 2026-08-21 | Q1 | web | "<exact query>" | 10 | 3 |
+| 2 | 1 | 2026-08-21 | Q1 | repo | site:... "<query>" | 4 | 1 |
+| 3 | 2 | 2026-08-21 | Q2 | web | "<disconfirming query>" | 12 | 0 |
 ```
 
 Zero-yield rows stay. They tell the next pass which ground was covered — they are evidence about

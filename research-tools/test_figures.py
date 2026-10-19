@@ -49,6 +49,11 @@ CASES = {
                       "Unknown does not absorb"),
     "missing-pair": (lambda r: sub(r / PAGE, ROW_HIGH + "\n", ""), "undefined pairs"),
     "no-table": (lambda r: sub(r / PAGE, "| ∘ |", "| o |"), "no composition table found"),
+    "duplicate-row": (lambda r: sub(r / PAGE, ROW_HIGH, "| `High` | `High` | `High` | `High` | `High` |\n"
+                                    + ROW_HIGH), "row 'High' appears more than once"),
+    "duplicate-header": (lambda r: sub(r / PAGE, "| ∘ | `High` | `Medium` |", "| ∘ | `High` | `High` |"),
+                         "header repeats a label"),
+    "missing-page": (lambda r: (r / PAGE).unlink(), "missing — the checker has stopped"),
 }
 
 

@@ -31,20 +31,36 @@ RESEARCH_HANDOFF:
       question: "<question for the user>"
   next_action: CONTINUE | LOOP_BACK | STOP
   trigger:                               # required when next_action is LOOP_BACK
-    kind: BELOW_BAR | GAP_FILL | UNSUPPORTED_CLAIM | REVISE_SCOPE
+    kind: BELOW_BAR | GAP_FILL | UNSUPPORTED_CLAIM | NEEDS_SYNTHESIS | REVISE_SCOPE
     targets: [Q2, C-004]                 # sub-question and/or claim IDs the loop must address
     reason: "<what the loop must change, in one line>"
 ```
 
-`LOOP_BACK` replaces free-text signalling. The phase that finds the shortfall emits it: appraise
-raises `BELOW_BAR`; synthesize (or report, finding a sentence nothing supports) raises `GAP_FILL` /
-`UNSUPPORTED_CLAIM`; any phase may raise `REVISE_SCOPE`. `research-route` reads `trigger.kind` to
-pick the destination — `BELOW_BAR` / `GAP_FILL` / `UNSUPPORTED_CLAIM` go to `research-source`,
-`REVISE_SCOPE` goes to `research-scope` — and must never infer a loop from prose in `gaps`. A loop
-exists to retrieve, so it always runs source → appraise — even on a chain that began without them
-(Reconcile, Write) — then synthesize where a ledger exists (the chain has synthesis, or an earlier
-run left one), then the raiser if it is report; the chain carries on after the raiser. So
-`BELOW_BAR` is source → appraise and a synthesis trigger is `fill-the-gap`. Nothing runs twice.
+`LOOP_BACK` replaces free-text signalling: `research-route` switches on `next_action` and
+`trigger.kind` alone, never on prose in `gaps`. The phase that finds the shortfall emits it.
+
+| `next_action` | Means |
+|---|---|
+| `CONTINUE` | Hand on to the next phase of the chain |
+| `LOOP_BACK` | A shortfall this phase cannot close; `trigger` names it |
+| `STOP` | The chain ends here, at this handoff's status |
+
+| Kind | Raised by, when | Route sends it to |
+|---|---|---|
+| `BELOW_BAR` | appraise: a `Q` cannot reach its bar | source → appraise |
+| `GAP_FILL` | synthesize, or report for a sentence nothing supports: a `Q` nothing addresses | a retrieval loop |
+| `UNSUPPORTED_CLAIM` | the same raisers: a claim below its bar | a retrieval loop |
+| `NEEDS_SYNTHESIS` | appraise or report: reconciliation or new inference the ledger does not carry | synthesize (run, or run again), then report if the chain has one |
+| `REVISE_SCOPE` | any phase that finds the question unanswerable as asked | scope |
+
+A retrieval loop always runs source → appraise — even on
+a chain that began without them (Reconcile, Write) — then synthesize where a ledger exists (the
+chain has synthesis, or an earlier run left one), then the raiser if it is report; the chain
+carries on after the raiser. So `BELOW_BAR` is source → appraise, and `GAP_FILL` /
+`UNSUPPORTED_CLAIM` from synthesize is `fill-the-gap`. Every kind counts against the one
+`max_cycles`. Nothing runs twice.
+After a `REVISE_SCOPE` the person confirmed, scope's new brief restarts the chain at source within
+what remains of the original budget; S-IDs persist and are re-tagged to the new `Q`s.
 
 ## Rules
 
@@ -73,7 +89,7 @@ When the chain writes files, use `.research/<slug>/`:
 ```
 .research/<slug>/
   brief.md        # research-scope
-  corpus.md       # research-source (source table + search log)
+  corpus.md       # research-source (entry plan when no brief + source table + search log)
   appraisal.md    # research-appraise
   synthesis.md    # research-synthesize
   report.md       # research-report
@@ -82,6 +98,7 @@ When the chain writes files, use `.research/<slug>/`:
 For short single-turn work, inline output is fine — say so in `artifacts[].path` as `inline`.
 
 **One asker.** When a repository has no `.research/` directory yet, `research-route` asks the user
-once and records the answer as `workspace:` in its dispatch handoff (route holds no `Write`). The
+once and records the answer as `workspace:` in its dispatch handoff (route holds no `Write`); an
+existing `.research/` records `authorised`, and a chain that writes nothing records `inline`. The
 first writing phase creates `.research/<slug>/` only on `workspace: authorised`; otherwise every
 phase emits inline. A phase invoked directly, with no route, asks for itself.

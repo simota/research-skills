@@ -47,7 +47,7 @@ Phases: `CLASSIFY → PLAN → DISPATCH → MONITOR → ASSEMBLE`.
 | Reading the request | [request-classification](reference/request-classification.md) |
 | Choosing the chain | [chain-patterns](reference/chain-patterns.md) |
 | The brief omits either round cap | Do not dispatch retrieval. Ask scope to supply both — a search with no round cap does not end, it is abandoned |
-| A phase returns a loop-back | Read its trigger and route on that alone. **Never infer a loop-back from a phase's prose**: below-bar, gap-fill and unsupported-claim return to retrieval; a scope revision returns to scope |
+| A phase returns a loop-back | Read its trigger and route on that alone. **Never infer a loop-back from a phase's prose**: below-bar, gap-fill and unsupported-claim return to retrieval; needs-synthesis inserts synthesis before report; a scope revision returns to scope |
 | The chain will write files and the repository has no `.research/` | Ask the person once; record `workspace: authorised` or `inline` in the dispatch handoff (`_research/HANDOFF.md`). Route writes nothing itself |
 | A loop route names `checker: other-engine` | No skill holds a shell. Synthesis lists the claims as `id`, `claim`, `evidence`, `where`; the person runs `make refute` with the running engine named. Until it has run, the oracle is unchecked: `PARTIAL`, with `DEFERRED: refutation not run` in `gaps` |
 | A blocking question appears mid-chain | Surface it to the person **when it arises**, not at the end. A chain that finishes and then asks has spent the budget on a guess |

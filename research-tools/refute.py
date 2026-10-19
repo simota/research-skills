@@ -2,8 +2,10 @@
 """Put a claim to the engines that did not make it, and ask them to break it.
 
     python3 research-tools/refute.py --running claude claims.json
+    python3 research-tools/refute.py --running claude - < pasted.json
 
-`claims.json` is a list of objects with `id`, `claim`, and optionally `evidence`
+`claims.json` (or `-`, the JSON on stdin — a run with no workspace emits its
+claims inline, and they are pasted, not saved) is a list of objects with `id`, `claim`, and optionally `evidence`
 and `where`. Every engine in `engines.runs_on` except the one running gets each
 claim and is asked to refute it. The verdicts come back structured.
 
@@ -140,7 +142,7 @@ def verdict(votes: dict[str, dict]) -> str:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("claims", help="JSON list of {id, claim, [evidence], [where]}")
+    ap.add_argument("claims", help="JSON list of {id, claim, [evidence], [where]}; - for stdin")
     ap.add_argument("--running", required=True,
                     help="the engine running this — stated, never sniffed")
     ap.add_argument("--json", action="store_true", help="emit the result as JSON")
@@ -151,7 +153,12 @@ def main() -> int:
               "framing is a second opinion, not an adversary", file=sys.stderr)
         return 1
 
-    claims = json.loads(pathlib.Path(a.claims).read_text(encoding="utf-8"))
+    raw = sys.stdin.read() if a.claims == "-" else pathlib.Path(a.claims).read_text(encoding="utf-8")
+    try:
+        claims = json.loads(raw)
+    except ValueError as e:
+        print(f"{a.claims}: not JSON ({e})", file=sys.stderr)
+        return 2
     if isinstance(claims, dict):
         claims = [claims]
     if not isinstance(claims, list) or not all(isinstance(c, dict) for c in claims):

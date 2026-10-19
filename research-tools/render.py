@@ -3,9 +3,10 @@
 
 A contract kept only in the shared directory is not read on most launches, so the operative
 part is carried verbatim in each skill. That only stays true if changing one
-line does not cost eight hand edits — this is that cost, paid once.
+line does not cost six hand edits — this is that cost, paid once.
 
-Idempotent: run it, commit the diff.
+Idempotent: run it, commit the diff. A file it cannot render safely is refused, left
+as it was, and the run exits non-zero.
 """
 from __future__ import annotations
 
@@ -32,8 +33,10 @@ def render(path: Path) -> bool:
             text = re.sub(rf"<!-- deliver:{key} -->.*?<!-- /deliver:{key} -->\n?",
                           "", text, flags=re.S)
             continue
+        # Blank lines are stripped at both ends, as V17 compares them: a leading
+        # one otherwise rendered a block V17 could never accept.
         block = (ROOT / "research-registry" / "delivered" / f"{key}.md").read_text(
-            encoding="utf-8").rstrip("\n")
+            encoding="utf-8").strip("\n")
         open_m, close_m = f"<!-- deliver:{key} -->", f"<!-- /deliver:{key} -->"
         payload = f"{open_m}\n{block}\n{close_m}"
         # Rewriting the first copy and leaving a second untouched would report
@@ -41,16 +44,23 @@ def render(path: Path) -> bool:
         if text.count(open_m) > 1 or text.count(close_m) > 1:
             raise ValueError(f"{path.parent.name}/SKILL.md carries the {key} block "
                              "more than once; remove the extra copy, then render")
-        if open_m in text and close_m in text:
+        # One marker without the other, or the two reversed, would send this to
+        # the insert branch and leave the old body behind as unmarked text.
+        if (open_m in text) != (close_m in text) or \
+                (open_m in text and text.index(close_m) < text.index(open_m)):
+            raise ValueError(f"{path.parent.name}/SKILL.md has an unmatched {key} marker; "
+                             "repair or remove it, then render")
+        if open_m in text:
             head, rest = text.split(open_m, 1)
             _, tail = rest.split(close_m, 1)
             text = head + payload + tail
         else:
-            heading = f"## {spec['section']}\n"
-            if heading not in text:
-                print(f"  {path.name}: no section {spec['section']!r}", file=sys.stderr)
-                continue
-            head, rest = text.split(heading, 1)
+            m = re.search(rf"^## {re.escape(spec['section'])}[ \t]*\n", text, re.M)
+            if not m:
+                raise ValueError(f"{path.parent.name}/SKILL.md has no section "
+                                 f"{spec['section']!r} to carry the {key} block")
+            heading = m.group(0)
+            head, rest = text[:m.start()], text[m.end():]
             # append at the end of that section, before the next heading
             nxt = rest.find("\n## ")
             body, tail = (rest[:nxt], rest[nxt:]) if nxt != -1 else (rest, "")
@@ -62,10 +72,19 @@ def render(path: Path) -> bool:
 
 
 def main() -> int:
-    changed = [d.name for d in sorted(SKILLS_ROOT.glob(f"{PREFIX}*"))
-               if (d / "SKILL.md").exists() and render(d / "SKILL.md")]
+    changed, refused = [], []
+    for d in sorted(SKILLS_ROOT.glob(f"{PREFIX}*")):
+        if not (d / "SKILL.md").exists():
+            continue
+        try:
+            if render(d / "SKILL.md"):
+                changed.append(d.name)
+        except ValueError as e:              # that file is left exactly as it was
+            refused.append(str(e))
     print(f"rendered: {len(changed)} changed" + (f" ({', '.join(changed)})" if changed else ""))
-    return 0
+    for r in refused:
+        print(f"  refused: {r}", file=sys.stderr)
+    return 1 if refused else 0
 
 
 if __name__ == "__main__":

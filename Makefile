@@ -16,7 +16,9 @@ AGY_DIR    ?= $(HOME)/.gemini/antigravity-cli/skills
 # written to when it is installed here, and its own home — the parent of the
 # skills directory — is what says so: judging by the skills directory itself
 # would skip a host that has one but has never been given a skill.
-HOST_DIRS  := $(CLAUDE_DIR) $(CODEX_DIR) $(AGY_DIR)
+# Quoted, so a HOME with a space in it stays one path per host: unquoted, the
+# shell split it and linked into whatever the first half named.
+HOST_DIRS  := "$(CLAUDE_DIR)" "$(CODEX_DIR)" "$(AGY_DIR)"
 
 .DEFAULT_GOAL := help
 .PHONY: help check validate test figures engines refute render hooks link unlink status
@@ -27,6 +29,7 @@ help:
 	@echo "make test      prove every rule and every figure check still fires"
 	@echo "make figures   re-derive what the corpus claims about itself"
 	@echo "make refute CLAIMS=f.json RUNNING=<engine>   put each claim to the engines that did not make it"
+	@echo "                (CLAIMS=- reads the JSON from stdin: make refute CLAIMS=- RUNNING=codex < pasted.json)"
 	@echo "make engines  ask each checker engine for one object; reports what is unreachable"
 	@echo "make render    write the delivered blocks back into every SKILL.md"
 	@echo "make hooks     install the pre-commit hook"
@@ -44,6 +47,8 @@ test:
 	@python3 "$(REPO)/research-tools/test_figures.py"
 	@python3 "$(REPO)/research-tools/test_hook.py"
 	@python3 "$(REPO)/research-tools/test_engine.py"
+	@python3 "$(REPO)/research-tools/test_render.py"
+	@python3 "$(REPO)/research-tools/test_make.py"
 
 figures:
 	@python3 "$(REPO)/research-tools/figures_check.py"

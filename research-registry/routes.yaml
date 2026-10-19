@@ -26,7 +26,7 @@ vet:
   pattern: linear
   when: "a bounded check against a record or supplied source; cross-source truth adjudication needs synthesis"
   chain: [research-source, research-appraise, research-report]
-  gate: "no synthesis pass; confidence unassigned. If reconciliation is needed, return it for synthesis"
+  gate: "no synthesis pass; confidence unassigned. If reconciliation is needed, raise NEEDS_SYNTHESIS"
 
 frame-only:
   pattern: report-only
@@ -46,7 +46,7 @@ fill-the-gap:
   # Synthesis closes each cycle: the oracle is about claims, and only synthesis
   # re-weighs them, so a loop ending at appraise leaves the ledger stale.
   chain: [research-source, research-appraise, research-synthesize]
-  oracle: "every load-bearing claim reaches its evidence bar, or is recorded as unsupported"
+  oracle: "every load-bearing claim reaches its evidence bar, or a cycle returned no new independent source for it (it stays UNSUPPORTED)"
   # Resolved at run time to an engine that is not running this one. No skill
   # holds a shell, so the person runs it: `make refute CLAIMS=… RUNNING=<engine>`.
   # Until it has run, synthesis is certifying its own support: the result is

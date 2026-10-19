@@ -43,7 +43,7 @@ than only a ledger or a path. This is a complete deliverable without an extra re
 
 On `quick` and `vet`, no synthesis ran. Report a source-attributed, bounded answer and say
 "no synthesis pass; confidence unassigned". Do not turn an appraisal ceiling into a label. If the
-request needs cross-source reconciliation or a new inference, return that need for synthesis;
+request needs cross-source reconciliation or a new inference, raise `NEEDS_SYNTHESIS` (HANDOFF);
 an evidence gap is not solved by writing an unlabelled but confident conclusion.
 
 ## Size and strength

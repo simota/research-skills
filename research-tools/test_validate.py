@@ -440,6 +440,23 @@ def _(r):
 def _(r): sub(r / "research-registry/harness.yaml", "finding_visuals:", "unused_visuals:")
 
 
+@case("V7-crash", says="could not run (TypeError")
+def _(r):
+    """An empty `chain:` crashed the whole run; now V7 says so and the rest report."""
+    sub(r / "research-registry/routes.yaml", "chain: [research-scope]", "chain:")
+
+
+@case("V38-underscored", says="switches on NOT_A_KIND")
+def _(r):
+    """`trigger.kind` is underscored; the old pattern never saw the line at all."""
+    sub(r / f"{S}_research/HANDOFF.md", "| NEEDS_SYNTHESIS | REVISE_SCOPE",
+        "| NEEDS_SYNTHESIS | NOT_A_KIND | REVISE_SCOPE")
+
+
+@case("V20-handoff", says="defines 'STOP' (next_actions)")
+def _(r): sub(r / f"{S}_research/HANDOFF.md", "| `STOP` |", "| STOP |")
+
+
 @case("V38")
 def _(r): sub(r / f"{S}research-source/playbooks/traps.md", "<!-- research:guidance -->\n",
               "<!-- research:guidance -->\nverdict: KEEP | DROP\n")
@@ -512,6 +529,10 @@ def main() -> int:
         expect = rule.split("-")[0]
         lines = re.findall(rf"^\s*{expect}: .*$", out, re.M)
         says = EXPECT.get(rule)
+        # A rule that crashed on its own mutation has not fired; only a case
+        # about crashing may count that line.
+        if not (says and "could not run" in says):
+            lines = [l for l in lines if "could not run" not in l]
         if code == 0 or not lines or (says and not any(says in l for l in lines)):
             bad.append(rule)
             print(f"  {rule} did not fire" + (f" saying {says!r}" if says else "") + f"\n{out}")

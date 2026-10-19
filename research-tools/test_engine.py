@@ -155,6 +155,18 @@ def claim_is_fenced(b: Bench) -> str | None:
     return None
 
 
+def claims_on_stdin(b: Bench) -> str | None:
+    """A run with no workspace emits its claims inline; they are pasted, not saved."""
+    r = subprocess.run([sys.executable, str(REFUTE), "--running", "codex", "--json", "-"],
+                       input=json.dumps(CLAIM), capture_output=True, text=True,
+                       env=b.env(), timeout=60)
+    try:
+        verdicts = [c["verdict"] for c in json.loads(r.stdout)]
+    except ValueError:
+        verdicts = []
+    return None if (r.returncode, verdicts) == (0, ["STANDS"]) else f"exit {r.returncode}: {r.stderr}"
+
+
 def bad_claims_file_is_usage(b: Bench) -> str | None:
     bad = b.claims.with_name("bad.json")
     bad.write_text(json.dumps(["a string, not a claim"]), encoding="utf-8")
@@ -228,7 +240,7 @@ def interrupt_kills_engine(b: Bench) -> str | None:
 
 CASES = [stands_exits_zero, refuted_exits_one, extra_key_is_no_verdict, malformed_is_no_verdict,
          failed_exit_is_no_verdict, maker_is_excluded, prompt_on_stdin_tools_off,
-         claim_is_fenced, bad_claims_file_is_usage, unknown_running_is_refused,
+         claim_is_fenced, claims_on_stdin, bad_claims_file_is_usage, unknown_running_is_refused,
          conform_reads_json_values,
          interrupt_kills_engine]
 

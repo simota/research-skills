@@ -18,7 +18,7 @@ Phases: `SHAPE → DRAFT → CITE → QUALIFY → VERIFY`.
   method or a tour of sources. A reader stopping after one line gets the bounded answer
 - **No synthesis pass means confidence unassigned.** Map to assessed source IDs,
   not invented claim IDs; say no synthesis ran. Never assign a label or convert
-  a ceiling to one. New inference or reconciliation goes back to synthesis
+  a ceiling to one. New inference or reconciliation is `trigger.kind: NEEDS_SYNTHESIS`
 - **A chain that skipped appraisal has no tiers, and therefore nothing citable.**
   Refuse and ask for the appraisal pass
 <!-- deliver:sizing -->
@@ -46,7 +46,7 @@ Phases: `SHAPE → DRAFT → CITE → QUALIFY → VERIFY`.
 | About to edit for readability | [traps](playbooks/traps.md) |
 | Choosing the format | [report-formats](reference/report-formats.md) |
 | Citing, quoting, or paraphrasing | [writing-standards](reference/writing-standards.md) |
-| A sentence has no claim behind it | Cut it, or emit `LOOP_BACK` (`GAP_FILL` / `UNSUPPORTED_CLAIM`). An inference synthesis recorded is written as one, its basis named; a new one goes to synthesis |
+| A sentence has no claim behind it | Cut it, or emit `LOOP_BACK` (`GAP_FILL` / `UNSUPPORTED_CLAIM`). An inference synthesis recorded is written as one, its basis named; a new one is `NEEDS_SYNTHESIS` |
 | The draft exposes a gap | Emit `LOOP_BACK` with `trigger.kind: GAP_FILL` and the sentence's `Q` (`_research/HANDOFF.md`). **Writing around a gap is how it stops being visible** |
 | A hedge makes the sentence clumsy | Keep the hedge and fix the sentence. **Hedge-stripping during editing is the single most common way an honest chain produces a dishonest deliverable** |
 | The answer is uncomfortable | Report it. The brief's falsification condition existed for this |

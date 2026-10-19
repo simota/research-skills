@@ -125,7 +125,8 @@ The "searched" line matters. It separates "nobody has published this" from "we d
 
 ## Prior vs. posterior
 
-Close by comparing against the prior recorded in the brief:
+When a brief recorded a prior, close by comparing against it (with no brief there is none, and
+none is invented):
 
 ```
 Prior: X is the faster option (Medium).

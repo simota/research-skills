@@ -90,7 +90,9 @@ that limit is stated on the page rather than glossed.
 
 **Budgets are enforced, not intended.**
 [`research-registry/harness.yaml`](research-registry/harness.yaml) holds every
-threshold; `research-tools/validate.py` decides them and CI fails on a violation.
+budget and vocabulary; `research-tools/validate.py` decides them and CI fails on a
+violation. (A few structural constants — the six SKILL.md sections, the 12-line
+reference-header window — live in the validator itself.)
 
 ## Names, and why none of them are generic
 
@@ -99,12 +101,14 @@ generic name placed there is a silent collision. This set's shared directory use
 to be `_common` — the same name an unrelated set already occupies in that
 directory, and which a third set's install line copies into it.
 
-**One declaration.** `set: research` in the harness file is the only place the
-name is written; the prefix, the shared directory (`_research/`), and the label
-every document carries all derive from it.
+**One declaration.** `set: research` in the harness file is the one the rest is
+held to: the prefix, the shared directory (`_research/`) and the label every
+document carries are written out elsewhere too, and V28 and V23 fail when any of
+them stops agreeing with it.
 
-**Every directory this set owns carries the set name**, with `skills/` exempt as
-the place the install instructions look. Carrying the prefix is not what makes
+**Every directory this set owns carries the set name**, with `skills/` (where the
+install instructions look) and `docs/` (where Pages publishes from) exempt, as
+`platform_dirs` in the harness file declares. Carrying the prefix is not what makes
 something installable — a skill is a directory holding a `SKILL.md`.
 
 **Everything a skill reads lives inside the skill**, reached through symlinks
@@ -119,7 +123,8 @@ quietly.
 |---|---|
 | [`skills/_research/CONTRACT.md`](skills/_research/CONTRACT.md) | Source IDs, the ladder, confidence, independence, recency, status, residuals, the sweep |
 | [`skills/_research/SOURCE_HYGIENE.md`](skills/_research/SOURCE_HYGIENE.md) | Provenance capture, the data-not-instruction invariant, access limits |
-| [`skills/_research/SIZING.md`](skills/_research/SIZING.md) | Depth tiers, one budget across the chain, when a dialogue is mandatory |
+| [`skills/_research/SIZING.md`](skills/_research/SIZING.md) | Depth, one budget across the chain, when a dialogue is mandatory |
+| [`skills/_research/REACH.md`](skills/_research/REACH.md) | How close each claim got to the record, and the reach rate |
 | [`skills/_research/VALUES.md`](skills/_research/VALUES.md) | The order when two goods conflict, and the escape hatch |
 | [`skills/_research/HANDOFF.md`](skills/_research/HANDOFF.md) | What passes between phases, including loop-back triggers |
 | [`skills/_research/OPERATIONAL.md`](skills/_research/OPERATIONAL.md) | Output language, density, reproducibility, the effort budget, and the journal |
@@ -134,8 +139,8 @@ research-skills/
 ├── Makefile
 ├── research-registry/            # budgets, boundaries, routes, delivered blocks
 ├── research-tools/               # validate · test_validate · figures_check · test_figures ·
-│                                 # test_hook · test_engine · render · refute · engine ·
-│                                 # githooks/
+│                                 # test_hook · test_engine · test_render · test_make ·
+│                                 # render · refute · engine · githooks/
 └── skills/
     ├── _research/                # contracts in force on every run
     └── research-<phase>/
@@ -152,8 +157,11 @@ external so the path checker does not read them as references into this repo.
 
 ## Working on it
 
+Needs Python 3 with PyYAML (`pip install pyyaml`), `make` and `git`.
+
 ```sh
-make check      # what CI runs: the rules, proof the rules still fire, the figures
+make check      # the rules, proof every rule and tool check still fires, the figures;
+                # CI runs these and also fails when `make render` would change a file
 make render     # after editing anything in research-registry/delivered/
 make hooks      # run the rules on every commit
 ```
@@ -161,11 +169,13 @@ make hooks      # run the rules on every commit
 ## Installing
 
 ```sh
-make link                       # into ~/.claude/skills
-make link CLAUDE_DIR=.claude/skills
+make link                                    # every installed host: claude, codex, agy
+make link CLAUDE_DIR=/abs/path/.claude/skills # claude's links go there; other installed
+                                             # hosts still link. A relative path resolves here
 ```
 
-Each `research-*` skill is linked individually and reaches its contracts through
+A host is linked only when its home (`~/.claude`, `~/.codex`, ...) already
+exists; `make status` shows what was linked. Each `research-*` skill is linked individually and reaches its contracts through
 the symlinks inside it. Nothing un-prefixed is copied anywhere — a plain `cp` of
 one skill directory used to leave a dangling shared link, and **a dangling
 shared link silently removes every binding contract with no error**.
