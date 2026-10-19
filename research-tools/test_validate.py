@@ -440,6 +440,23 @@ def _(r):
 def _(r): sub(r / "research-registry/harness.yaml", "finding_visuals:", "unused_visuals:")
 
 
+@case("V7-crash", says="could not run (TypeError")
+def _(r):
+    """An empty `chain:` crashed the whole run; now V7 says so and the rest report."""
+    sub(r / "research-registry/routes.yaml", "chain: [research-scope]", "chain:")
+
+
+@case("V38-underscored", says="switches on NOT_A_KIND")
+def _(r):
+    """`trigger.kind` is underscored; the old pattern never saw the line at all."""
+    sub(r / f"{S}_research/HANDOFF.md", "| NEEDS_SYNTHESIS | REVISE_SCOPE",
+        "| NEEDS_SYNTHESIS | NOT_A_KIND | REVISE_SCOPE")
+
+
+@case("V20-handoff", says="defines 'STOP' (next_actions)")
+def _(r): sub(r / f"{S}_research/HANDOFF.md", "| `STOP` |", "| STOP |")
+
+
 @case("V38")
 def _(r): sub(r / f"{S}research-source/playbooks/traps.md", "<!-- research:guidance -->\n",
               "<!-- research:guidance -->\nverdict: KEEP | DROP\n")

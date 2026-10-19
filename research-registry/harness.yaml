@@ -131,6 +131,8 @@ vocabulary:
   evidence_levels: [P1, P2, P3, P4, P5]
   residual_classes: [BLOCKED, OUT-OF-SCOPE, DEFERRED, UNSUPPORTED]
   statuses: [DONE, PARTIAL, BLOCKED]
+  next_actions: [CONTINUE, LOOP_BACK, STOP]
+  trigger_kinds: [BELOW_BAR, GAP_FILL, UNSUPPORTED_CLAIM, NEEDS_SYNTHESIS, REVISE_SCOPE]
   tiers: [quick, standard, deep]       # depths. The key keeps its name because agent-toolkit's
                                        # pages.py reads it; in prose a bare "tier" is provenance
   reach_states: [primary, one-hop, chain, blocked, no-primary]

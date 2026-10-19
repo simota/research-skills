@@ -15,8 +15,9 @@ Two checks today:
   for it. A chain is composed pairwise, so associativity is not decoration:
   without it, `(a . b) . c` and `a . (b . c)` disagree and the answer depends on
   the order someone happened to combine the hops in. The ladder itself is read
-  from the registry, and decay is checked against the page's opening sentence
-  rather than against one hardcoded cell.
+  from the registry. Decay is the rule the page opens with ("falls along a chain
+  and never holds") written as a check over every pair, not one hardcoded cell;
+  the sentence itself is not parsed.
 """
 import itertools
 import pathlib
@@ -92,6 +93,9 @@ CELL = re.compile(r"`([A-Za-z]+)`")
 
 def parse_composition() -> dict[tuple[str, str], str]:
     """Read the ∘ table out of the page rather than restating it here."""
+    if not PAGE.exists():
+        fail(str(PAGE.relative_to(ROOT)), "missing — the checker has stopped checking anything")
+        return {}
     lines = PAGE.read_text(encoding="utf-8").splitlines()
     start = next((i for i, l in enumerate(lines)
                   if l.strip().startswith("| ∘ ")), None)
@@ -100,6 +104,8 @@ def parse_composition() -> dict[tuple[str, str], str]:
                                           "checker has stopped checking anything")
         return {}
     header = CELL.findall(lines[start])
+    if len(set(header)) != len(header):
+        fail("confidence-calibration.md", f"header repeats a label: {header}")
     table: dict[tuple[str, str], str] = {}
     for raw in lines[start + 2:]:
         s = raw.strip()
@@ -111,6 +117,11 @@ def parse_composition() -> dict[tuple[str, str], str]:
                  f"row {s[:40]!r} has {len(cells)} labels, expected {len(header) + 1}")
             continue
         row, values = cells[0], cells[1:]
+        # A second row for the same label would silently win, while a reader
+        # stops at the first one — the one this checker never saw.
+        if any((row, col) in table for col in header):
+            fail("confidence-calibration.md", f"row {row!r} appears more than once")
+            continue
         for col, val in zip(header, values):
             table[(row, col)] = val
     return table

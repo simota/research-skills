@@ -30,6 +30,10 @@ jobs:
         run: python3 research-tools/test_hook.py
       - name: refute and engine fail closed, against stub engines
         run: python3 research-tools/test_engine.py
+      - name: render refuses what it cannot render safely
+        run: python3 research-tools/test_render.py
+      - name: make link touches only the right paths
+        run: python3 research-tools/test_make.py
       - name: Delivered blocks are current
         run: |
           python3 research-tools/render.py

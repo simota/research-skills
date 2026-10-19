@@ -36,13 +36,24 @@ RESEARCH_HANDOFF:
     reason: "<what the loop must change, in one line>"
 ```
 
-`LOOP_BACK` replaces free-text signalling. The phase that finds the shortfall emits it: appraise
-raises `BELOW_BAR`; synthesize (or report, finding a sentence nothing supports) raises `GAP_FILL` /
-`UNSUPPORTED_CLAIM`; appraise or report on a no-synthesis chain raises `NEEDS_SYNTHESIS` when the
-answer needs reconciliation or new inference; any phase may raise `REVISE_SCOPE`. `research-route`
-reads `trigger.kind` alone, never prose in `gaps`: `BELOW_BAR` / `GAP_FILL` / `UNSUPPORTED_CLAIM`
-go to `research-source`, `NEEDS_SYNTHESIS` inserts `research-synthesize` before report, and
-`REVISE_SCOPE` goes to `research-scope`. A retrieval loop always runs source → appraise — even on
+`LOOP_BACK` replaces free-text signalling: `research-route` switches on `next_action` and
+`trigger.kind` alone, never on prose in `gaps`. The phase that finds the shortfall emits it.
+
+| `next_action` | Means |
+|---|---|
+| `CONTINUE` | Hand on to the next phase of the chain |
+| `LOOP_BACK` | A shortfall this phase cannot close; `trigger` names it |
+| `STOP` | The chain ends here, at this handoff's status |
+
+| Kind | Raised by, when | Route sends it to |
+|---|---|---|
+| `BELOW_BAR` | appraise: a `Q` cannot reach its bar | source → appraise |
+| `GAP_FILL` | synthesize, or report for a sentence nothing supports: a `Q` nothing addresses | a retrieval loop |
+| `UNSUPPORTED_CLAIM` | the same raisers: a claim below its bar | a retrieval loop |
+| `NEEDS_SYNTHESIS` | appraise or report on a no-synthesis chain: reconciliation or new inference | synthesize, before report |
+| `REVISE_SCOPE` | any phase that finds the question unanswerable as asked | scope |
+
+A retrieval loop always runs source → appraise — even on
 a chain that began without them (Reconcile, Write) — then synthesize where a ledger exists (the
 chain has synthesis, or an earlier run left one), then the raiser if it is report; the chain
 carries on after the raiser. So `BELOW_BAR` is source → appraise and a synthesis trigger is
