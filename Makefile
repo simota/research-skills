@@ -29,6 +29,7 @@ help:
 	@echo "make test      prove every rule and every figure check still fires"
 	@echo "make figures   re-derive what the corpus claims about itself"
 	@echo "make refute CLAIMS=f.json RUNNING=<engine>   put each claim to the engines that did not make it"
+	@echo "                (CLAIMS=- reads the JSON from stdin: make refute CLAIMS=- RUNNING=codex < pasted.json)"
 	@echo "make engines  ask each checker engine for one object; reports what is unreachable"
 	@echo "make render    write the delivered blocks back into every SKILL.md"
 	@echo "make hooks     install the pre-commit hook"
