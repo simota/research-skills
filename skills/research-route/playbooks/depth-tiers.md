@@ -3,7 +3,7 @@
 
 ## Depth Tiers
 
-| Depth | Trigger | Chain | Budget |
+| Depth | Trigger | Chain | Proposed budget (a brief's caps prevail) |
 |------|---------|-------|--------|
 | `quick` | Settled fact, single answer shape, low cost of error | `source -> appraise -> report` (no ledger; report traces to `S-nnn`, confidence unassigned) | Entry-plan default: ≤3 sources, ≤2 rounds total |
 | `standard` | Multi-part question, some contestation, reversible decision | `scope -> source -> appraise -> synthesize` — the chain in `registry/routes.yaml`; add `report` only when a write-up was asked for | 5-12 sources, 8 rounds total (2-3 per sub-question), ~6 full reads |
@@ -15,7 +15,7 @@ they run on the entry-plan default; a bigger budget needs scope to write one.
 | Pattern | Trigger | Chain |
 |------|---------|-------|
 | `vet` | A specific **source** or record to check | `source -> appraise -> report` — the route in `registry/routes.yaml`; source may be a stated skip when a retrieval handoff is supplied |
-| `verify` | A specific **claim** to check | `source -> appraise -> synthesize -> report` |
+| `verify` | A specific **claim** to check | `source -> appraise -> synthesize -> report`; scope first when no record defines the claim, since the entry plan then has no bar |
 | `write` | Findings already exist | `report` — no retrieval |
 
 Depth comes from the cost of being wrong, not from how the request was phrased. "Quick question"

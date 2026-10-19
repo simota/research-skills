@@ -99,7 +99,7 @@ since both belong to the pair — the provenance tier and reach: `[S-007 · P2 �
 
 | Status | Condition |
 |---|---|
-| `DONE` | Requested phase complete; for findings, every load-bearing claim meets its bar (tier, and any reach target the brief set), provenance present, zero `UNSUPPORTED` |
+| `DONE` | Requested phase complete; for findings, every load-bearing claim meets its bar (tier, and any reach target the brief set), provenance present, zero `UNSUPPORTED`, and no `BLOCKED`/`DEFERRED` touching a load-bearing claim or the requested phase |
 | `PARTIAL` | Everything else that produced work — a single `UNSUPPORTED` lands here |
 | `BLOCKED` | Could not proceed. State the attempted step and barrier; a successful sufficiency stop is not a blocker |
 

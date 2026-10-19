@@ -74,5 +74,6 @@ State it in one line before dispatching, so the user can redirect cheaply:
 ```
 Classified: standard depth (reversible tooling choice), ranking shape, contested (vendor claims).
 Chain: scope -> source -> appraise -> synthesize (report skipped: no write-up asked).
-Budget: 10 sources, 8 rounds total, 3 per sub-question, 6 full reads.
+Proposed budget (scope's brief sets the caps): 10 sources, 8 rounds total, 3 per sub-question,
+6 full reads.
 ```

@@ -26,10 +26,11 @@ delivers a yes/no answer with citations — the method appendix carries the rest
 ```
 The documentation states that X supports Y since v3.2 (released 2025-11) [S-001 · P1 · primary].
 No synthesis pass; confidence unassigned.
-Caveat: not available in the managed offering [S-004 · P2 · one-hop].
+Caveat: not available in the managed offering [S-004 · P1 · primary].
+Reach: 2 of 2 at primary · swept, 0 markers / 0 in gaps; 2 claims / 2 at bar.
 
 [S-001] Acme. "Changelog v3.2." Acme Docs, 2025-11-04. <https://…> (accessed 2026-08-21) — P1
-[S-004] Ruiz, T. "Testing X's Y support." <https://…> (accessed 2026-08-21) — P2
+[S-004] Acme. "Managed offering limits." Acme Docs. <https://…> (accessed 2026-08-21) — P1
 ```
 
 Even at four lines the sources resolve in full per `_research/CONTRACT.md` §Citation Format — a

@@ -18,7 +18,7 @@ Phases: `SHAPE → DRAFT → CITE → QUALIFY → VERIFY`.
   method or a tour of sources. A reader stopping after one line gets the bounded answer
 - **No synthesis pass means confidence unassigned.** Map to assessed source IDs,
   not invented claim IDs; say no synthesis ran. Never assign a label or convert
-  a ceiling to one. New inference or reconciliation goes back to synthesis
+  a ceiling to one. New inference or reconciliation is `trigger.kind: NEEDS_SYNTHESIS`
 - **A chain that skipped appraisal has no tiers, and therefore nothing citable.**
   Refuse and ask for the appraisal pass
 <!-- deliver:sizing -->

@@ -23,7 +23,8 @@ belongs to synthesis.
 
 Not one per phase. The four caps — total sources, total query rounds, rounds per
 sub-question, full reads — are named identically everywhere and consumption is
-reported at every handoff.
+reported at every handoff. A round is one batch of queries for one `Q`, issued before
+reading its results; that `Q`'s disconfirming query belongs to the same round.
 
 **Never begin retrieval without both round caps.** Use the brief when present; do not
 silently repair or relax its limits. Without one, source first records an inline retrieval plan:
@@ -79,7 +80,8 @@ the sources and the host already use most. The answer lands in `terms`, travels
 in `carried`, and is appended to the glossary as `term · means · not to be
 called`, so the next chain inherits the decision rather than the ambiguity. A
 `standard` run may create the glossary for its first settled term; a `quick`
-one never does — it asks a blocking ambiguity and records any other as `DEFERRED`.
+one never does — it asks a blocking ambiguity and records any other as `DEFERRED`. On
+`workspace: inline` the run proposes the glossary line rather than writing it.
 
 ## Constraints do not loosen mid-run
 
