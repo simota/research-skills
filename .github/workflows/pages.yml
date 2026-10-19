@@ -36,7 +36,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: The page has to exist before it is published
         run: test -f docs/index.html
       - uses: actions/configure-pages@v5
