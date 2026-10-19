@@ -170,7 +170,8 @@ make hooks      # run the rules on every commit
 
 ```sh
 make link                                    # every installed host: claude, codex, agy
-make link CLAUDE_DIR=/abs/path/.claude/skills # one place; a relative path resolves in this repo
+make link CLAUDE_DIR=/abs/path/.claude/skills # claude's links go there; other installed
+                                             # hosts still link. A relative path resolves here
 ```
 
 A host is linked only when its home (`~/.claude`, `~/.codex`, ...) already

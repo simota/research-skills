@@ -52,7 +52,7 @@ Phases: `EXTRACT → MAP → DIAGNOSE → WEIGH → ANSWER`.
 | Setting the label | [confidence-calibration](reference/confidence-calibration.md) |
 | The disagreement is a genuine dispute | Report it as a dispute with both sides cited. **Never average it, and never pick a winner** on the strength of the argument |
 | A load-bearing claim has no support at its bar | Carry it as `UNSUPPORTED` in `gaps` and emit `LOOP_BACK` — `trigger.kind: UNSUPPORTED_CLAIM` for a claim below its bar, `GAP_FILL` for a `Q` nothing addresses (`_research/HANDOFF.md`). Do not soften the claim until the evidence fits it |
-| Closing a `fill-the-gap` cycle | List the load-bearing claims as JSON `id`, `claim`, `evidence`, `where` (`.research/<slug>/claims.json` on `workspace: authorised`, else inline) and add `DEFERRED: refutation not run — make refute CLAIMS=… RUNNING=<this engine>`; status `PARTIAL`. Verdicts the person returns: all `STANDS` lifts it, `REFUTED`/`CONTESTED` re-enters as `UNSUPPORTED_CLAIM` |
+| Closing a `fill-the-gap` cycle | List the load-bearing claims as JSON `id`, `claim`, `evidence`, `where` (`.research/<slug>/claims.json` on `workspace: authorised`, else inline) and add `DEFERRED: refutation not run — make refute CLAIMS=… RUNNING=<this engine>`; status `PARTIAL`. Verdicts the person returns: all `STANDS` lifts it, `REFUTED`/`CONTESTED` re-enters as `UNSUPPORTED_CLAIM`, `UNCHECKED` keeps the `DEFERRED` |
 | Four sources agree and one primary disagrees | Check whether the four share an origin. **One primary outweighs four derivatives** that do |
 | Weighing agreeing sources | Check what each one opened before counting them as independent. Agreement among sources that all read the same unopened primary is one source, repeated |
 <!-- deliver:values -->

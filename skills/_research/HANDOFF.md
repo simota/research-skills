@@ -50,14 +50,15 @@ RESEARCH_HANDOFF:
 | `BELOW_BAR` | appraise: a `Q` cannot reach its bar | source → appraise |
 | `GAP_FILL` | synthesize, or report for a sentence nothing supports: a `Q` nothing addresses | a retrieval loop |
 | `UNSUPPORTED_CLAIM` | the same raisers: a claim below its bar | a retrieval loop |
-| `NEEDS_SYNTHESIS` | appraise or report on a no-synthesis chain: reconciliation or new inference | synthesize, before report |
+| `NEEDS_SYNTHESIS` | appraise or report: reconciliation or new inference the ledger does not carry | synthesize (run, or run again), then report if the chain has one |
 | `REVISE_SCOPE` | any phase that finds the question unanswerable as asked | scope |
 
 A retrieval loop always runs source → appraise — even on
 a chain that began without them (Reconcile, Write) — then synthesize where a ledger exists (the
 chain has synthesis, or an earlier run left one), then the raiser if it is report; the chain
-carries on after the raiser. So `BELOW_BAR` is source → appraise and a synthesis trigger is
-`fill-the-gap`. Nothing runs twice.
+carries on after the raiser. So `BELOW_BAR` is source → appraise, and `GAP_FILL` /
+`UNSUPPORTED_CLAIM` from synthesize is `fill-the-gap`. Every kind counts against the one
+`max_cycles`. Nothing runs twice.
 After a `REVISE_SCOPE` the person confirmed, scope's new brief restarts the chain at source within
 what remains of the original budget; S-IDs persist and are re-tagged to the new `Q`s.
 

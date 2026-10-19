@@ -47,8 +47,13 @@ def foreign_link_is_kept(tmp: Path) -> str | None:
     (home / ".claude/skills").mkdir(parents=True)
     foreign = home / ".claude/skills" / SKILLS[0]
     foreign.symlink_to(other)
-    make(home, "link")
-    make(home, "unlink")
+    linked = make(home, "link")
+    ours = [home / ".claude/skills" / s for s in SKILLS[1:]]
+    if linked.returncode != 0 or not all(p.is_symlink() for p in ours):
+        return f"link: exit {linked.returncode}, linked {[p.name for p in ours if p.is_symlink()]}"
+    unlinked = make(home, "unlink")
+    if unlinked.returncode != 0 or any(p.is_symlink() for p in ours):
+        return f"unlink: exit {unlinked.returncode}; this checkout's links were left"
     if not foreign.is_symlink() or foreign.resolve() != other.resolve():
         return "a link owned by another checkout was replaced or removed"
     return None

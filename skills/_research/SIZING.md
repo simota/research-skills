@@ -24,7 +24,8 @@ belongs to synthesis.
 Not one per phase. The four caps — total sources, total query rounds, rounds per
 sub-question, full reads — are named identically everywhere and consumption is
 reported at every handoff. A round is one batch of queries for one `Q`, issued before
-reading its results; that `Q`'s disconfirming query belongs to the same round.
+reading its results; that `Q`'s disconfirming query counts in the same round, even when it is
+issued after reading.
 
 **Never begin retrieval without both round caps.** Use the brief when present; do not
 silently repair or relax its limits. Without one, source first records an inline retrieval plan:

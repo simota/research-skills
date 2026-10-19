@@ -529,6 +529,10 @@ def main() -> int:
         expect = rule.split("-")[0]
         lines = re.findall(rf"^\s*{expect}: .*$", out, re.M)
         says = EXPECT.get(rule)
+        # A rule that crashed on its own mutation has not fired; only a case
+        # about crashing may count that line.
+        if not (says and "could not run" in says):
+            lines = [l for l in lines if "could not run" not in l]
         if code == 0 or not lines or (says and not any(says in l for l in lines)):
             bad.append(rule)
             print(f"  {rule} did not fire" + (f" saying {says!r}" if says else "") + f"\n{out}")

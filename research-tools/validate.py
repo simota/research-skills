@@ -985,7 +985,8 @@ def main() -> int:
             rule()
         except Exception as e:                # noqa: BLE001 — reported, never swallowed
             fail(rule.__name__.split("_")[0].upper(),
-                 f"could not run ({type(e).__name__}: {e}); the input it reads is malformed")
+                 f"could not run ({type(e).__name__}: {e}); malformed input, or a bug "
+                 "in the rule")
     hooks = hook_installed()
     state = "" if hooks is None else \
         f" · hooks {'on' if hooks else 'off — run: make hooks'}"

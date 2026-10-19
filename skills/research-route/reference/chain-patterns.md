@@ -33,16 +33,16 @@ All five arrive as `next_action: LOOP_BACK` with `trigger.kind` set (`_research/
 |----------------|-----------|---------|
 | `BELOW_BAR` | `research-appraise` | `research-source` |
 | `GAP_FILL` / `UNSUPPORTED_CLAIM` | `research-synthesize`, or `research-report` for a sentence nothing supports | `research-source` |
-| `NEEDS_SYNTHESIS` | `research-appraise` or `research-report` on `quick`/`vet`, when the answer needs reconciliation or new inference | `research-synthesize`, inserted before report |
+| `NEEDS_SYNTHESIS` | `research-appraise` or `research-report`, when the answer needs reconciliation or inference the ledger does not carry | `research-synthesize` (run, or run again), then report if the chain has one |
 | `REVISE_SCOPE` | Any downstream phase that finds the question unanswerable as asked — usually synthesize | `research-scope` |
 
 **One global counter, capped by `max_cycles` in `registry/routes.yaml`, of which at most 1 may be
 `REVISE_SCOPE`.** There are no per-trigger allowances — three counters would license three times
 the cap inside a single rule.
 
-A second loop that returns the same sources means the evidence does not exist. Stop: the claims
+A cycle that returns no new independent source means the evidence does not exist. Stop: the claims
 stay `UNSUPPORTED` in `gaps` and go to synthesis, which alone may call them `Unknown` — that is the
-finding, and looping a third time only spends budget confirming it.
+finding, and looping again only spends budget confirming it.
 
 A `REVISE_SCOPE` loop rewrites the question. Confirm with the user first: they asked the original
 question for a reason, and substituting an easier one without saying so is the quiet failure this

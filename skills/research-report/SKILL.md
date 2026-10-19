@@ -46,7 +46,7 @@ Phases: `SHAPE → DRAFT → CITE → QUALIFY → VERIFY`.
 | About to edit for readability | [traps](playbooks/traps.md) |
 | Choosing the format | [report-formats](reference/report-formats.md) |
 | Citing, quoting, or paraphrasing | [writing-standards](reference/writing-standards.md) |
-| A sentence has no claim behind it | Cut it, or emit `LOOP_BACK` (`GAP_FILL` / `UNSUPPORTED_CLAIM`). An inference synthesis recorded is written as one, its basis named; a new one goes to synthesis |
+| A sentence has no claim behind it | Cut it, or emit `LOOP_BACK` (`GAP_FILL` / `UNSUPPORTED_CLAIM`). An inference synthesis recorded is written as one, its basis named; a new one is `NEEDS_SYNTHESIS` |
 | The draft exposes a gap | Emit `LOOP_BACK` with `trigger.kind: GAP_FILL` and the sentence's `Q` (`_research/HANDOFF.md`). **Writing around a gap is how it stops being visible** |
 | A hedge makes the sentence clumsy | Keep the hedge and fix the sentence. **Hedge-stripping during editing is the single most common way an honest chain produces a dishonest deliverable** |
 | The answer is uncomfortable | Report it. The brief's falsification condition existed for this |
