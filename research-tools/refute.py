@@ -37,8 +37,9 @@ about at all.
 **Exit status is the verdict.** 0 only when every claim `STANDS`; 1 when any is
 `REFUTED`, `CONTESTED` or `UNCHECKED`, in `--json` mode too. A malformed answer
 from an engine counts as no verdict, the same as no answer — so a run where
-nothing could be checked never exits green. Claims that cannot be read or are
-not a list of objects exit 2: no claim was put to anyone.
+nothing could be checked never exits green. Claims that cannot be read, are
+not a list of objects, or hold one with no `claim` text or with an `id` that is
+missing or repeated exit 2: no claim was put to anyone.
 """
 from __future__ import annotations
 
@@ -122,6 +123,26 @@ def ask(engine_name: str, claim: dict) -> dict:
     return engine.run(engine_name, prompt, SCHEMA)
 
 
+def malformed(claims: list[dict]) -> list[str]:
+    """What makes a claim impossible to put to anyone, or its verdict impossible
+    to hand back. A blank claim asked to be refuted came back STANDS and exited
+    0; a missing or repeated id left a verdict nobody could match to its claim."""
+    out, seen = [], set()
+    for i, c in enumerate(claims):
+        cid = c.get("id")
+        if isinstance(cid, bool) or not isinstance(cid, (str, int)) \
+                or (isinstance(cid, str) and not cid.strip()):
+            out.append(f"claim #{i + 1} has no usable `id` ({cid!r})")
+        elif json.dumps(cid) in seen:
+            out.append(f"id {cid!r} names more than one claim")
+        else:
+            seen.add(json.dumps(cid))
+        text = c.get("claim")
+        if not (isinstance(text, str) and text.strip()):
+            out.append(f"claim {cid!r} has no `claim` text")
+    return out
+
+
 def refuters(running: str) -> list[str]:
     known = H.get("engines", {}).get("runs_on") or []
     if running not in known:
@@ -175,6 +196,13 @@ def main() -> int:
     if not isinstance(claims, list) or not all(isinstance(c, dict) for c in claims):
         print(f"{a.claims}: expected a list of {{id, claim, [evidence], [where]}} objects",
               file=sys.stderr)
+        return 2
+    # Checked before any engine runs: a claim that cannot be asked is malformed
+    # input, not an engine that gave no verdict.
+    problems = malformed(claims)
+    if problems:
+        for p in problems:
+            print(f"{a.claims}: {p}", file=sys.stderr)
         return 2
     try:
         pool = refuters(a.running)

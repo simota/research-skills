@@ -186,6 +186,30 @@ def bad_claims_file_is_usage(b: Bench) -> str | None:
     return None
 
 
+def unaskable_claim_is_usage(b: Bench) -> str | None:
+    """A blank claim came back STANDS and exited 0; a missing one was reported as
+    every engine failing; a missing or repeated id left verdicts nobody could
+    match. Each is malformed input, refused before any engine is paid."""
+    for label, claims in (("blank claim", [{"id": "A", "claim": "   "}]),
+                          ("no claim", [{"id": "A", "claim": "x"}, {"id": "B"}]),
+                          ("claim not text", [{"id": "A", "claim": ["x"]}]),
+                          ("no id", [{"claim": "x"}]),
+                          ("blank id", [{"id": " ", "claim": "x"}]),
+                          ("id a boolean", [{"id": True, "claim": "x"}]),
+                          ("repeated id", [{"id": "A", "claim": "x"}, {"id": "A", "claim": "y"}])):
+        path = b.claims.with_name("unaskable.json")
+        path.write_text(json.dumps(claims), encoding="utf-8")
+        code, _, err = b.refute(claims=path)
+        if code != 2 or "Traceback" in err or any(b.log.glob("*.json")):
+            asked = sorted(p.stem for p in b.log.glob("*.json"))
+            return f"{label}: exit {code}, engines asked {asked}: {err[-300:]}"
+    # Distinct in JSON, so distinct here: "1" and 1 are two ids.
+    path.write_text(json.dumps([{"id": 1, "claim": "x"}, {"id": "1", "claim": "y"}]),
+                    encoding="utf-8")
+    code, v, err = b.refute(claims=path)
+    return None if (code, v) == (0, ["STANDS", "STANDS"]) else f"ids 1 and \"1\": exit {code}: {err}"
+
+
 def unreadable_engine_input_is_usage(b: Bench) -> str | None:
     prompt, schema = b.claims.with_name("p.txt"), b.claims.with_name("s.json")
     prompt.write_text("x", encoding="utf-8")
@@ -353,7 +377,8 @@ def interrupt_kills_engine(b: Bench) -> str | None:
 
 CASES = [stands_exits_zero, refuted_exits_one, extra_key_is_no_verdict, malformed_is_no_verdict,
          failed_exit_is_no_verdict, maker_is_excluded, prompt_on_stdin_tools_off,
-         claim_is_fenced, claims_on_stdin, bad_claims_file_is_usage, unknown_running_is_refused,
+         claim_is_fenced, claims_on_stdin, bad_claims_file_is_usage, unaskable_claim_is_usage,
+         unknown_running_is_refused,
          unreadable_engine_input_is_usage,
          text_that_cannot_cross_is_no_verdict, output_not_utf8_is_no_verdict,
          json_survives_an_ascii_stdout,
