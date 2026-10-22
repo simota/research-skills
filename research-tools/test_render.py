@@ -73,6 +73,24 @@ def heading_with_trailing_space_renders(r: Path) -> str | None:
     return None if code == 0 else f"validate after render: {out}"
 
 
+def empty_section_keeps_its_block(r: Path) -> str | None:
+    """A section with no body yet: the block used to land under the next heading,
+    render said it succeeded, and V17 then failed on a file render could not fix."""
+    f = r / SCOPE
+    t = f.read_text(encoding="utf-8")
+    start = t.index("## Before starting\n") + len("## Before starting\n")
+    f.write_text(t[:start] + t[t.index("## Decide first\n"):], encoding="utf-8")
+    code, out = run(r, "render.py")
+    if code != 0:
+        return f"render: exit {code}: {out}"
+    t = f.read_text(encoding="utf-8")
+    if not t.index("## Before starting\n") < t.index("<!-- deliver:sizing -->") \
+            < t.index("## Decide first\n"):
+        return "the sizing block was not written under 'Before starting'"
+    code, out = run(r, "validate.py")
+    return None if code == 0 else f"validate after render: {out}"
+
+
 def missing_section_is_refused(r: Path) -> str | None:
     without_surface(r / SCOPE, "## Done when\n", "## Finished when\n")
     code, out = run(r, "render.py")
@@ -81,7 +99,8 @@ def missing_section_is_refused(r: Path) -> str | None:
 
 
 CASES = [clean_is_idempotent, unmatched_marker_is_refused, leading_blank_line_agrees,
-         heading_with_trailing_space_renders, missing_section_is_refused]
+         heading_with_trailing_space_renders, empty_section_keeps_its_block,
+         missing_section_is_refused]
 
 
 def main() -> int:
