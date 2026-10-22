@@ -88,6 +88,12 @@ def run(engine: str, prompt: str, schema: dict) -> dict:
     if engine not in known:
         raise EngineError(f"{engine} is not one of {known}")
 
+    # Checked once for every engine: in argv, os.fsencode would let a lone
+    # \udcXX through as a raw byte, so agy answered on text nobody wrote.
+    try:
+        prompt.encode("utf-8")
+    except UnicodeEncodeError as e:
+        raise EngineError(f"the prompt is not UTF-8 text ({e.reason} at {e.start})") from None
     # Held to the closed form whatever the engine was sent: an extra key from
     # claude or agy is as much "not what was asked" as one from codex.
     closed = strict(schema)
@@ -327,6 +333,11 @@ def main() -> int:
         return 2
     if not isinstance(schema, dict):
         print(f"{a.schema}: a schema is a JSON object", file=sys.stderr)
+        return 2
+    try:
+        strict(schema)                     # malformed inside, or optional keys: before any engine
+    except (AttributeError, TypeError, EngineError) as e:
+        print(f"{a.schema}: not a schema this can hold an answer to ({e})", file=sys.stderr)
         return 2
     try:
         got = run(engine, prompt, schema)

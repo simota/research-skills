@@ -148,6 +148,9 @@ def main() -> int:
                     help="the engine running this — stated, never sniffed")
     ap.add_argument("--json", action="store_true", help="emit the result as JSON")
     a = ap.parse_args()
+    # An id holding a lone surrogate failed at print, after every engine had
+    # answered, and took all the verdicts with it. Escaped, it is still valid JSON.
+    sys.stdout.reconfigure(errors="backslashreplace")
 
     if not (REFUTATION.get("lens") and REFUTATION.get("refuted_when")):
         print("harness.yaml declares no refutation lens; a refuter with no domain "

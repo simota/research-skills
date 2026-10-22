@@ -186,7 +186,12 @@ def bad_claims_file_is_usage(b: Bench) -> str | None:
 def unreadable_engine_input_is_usage(b: Bench) -> str | None:
     prompt, schema = b.claims.with_name("p.txt"), b.claims.with_name("s.json")
     prompt.write_text("x", encoding="utf-8")
-    for label, text in (("absent", None), ("not JSON", "{"), ("not an object", "[]")):
+    for label, text in (("absent", None), ("not JSON", "{"), ("not an object", "[]"),
+                        ("properties a list",
+                         '{"type": "object", "properties": ["a"], "required": ["a"]}'),
+                        ("a key left optional",
+                         '{"type": "object", "properties": {"a": {}}, "required": []}'),
+                        ("required a number", '{"type": "object", "required": 5}')):
         if text is None:
             schema.unlink(missing_ok=True)
         else:
@@ -215,15 +220,20 @@ def _results(b: Bench, claims: str, **modes) -> tuple[int, dict, str]:
 def text_that_cannot_cross_is_no_verdict(b: Bench) -> str | None:
     """A NUL cannot go in agy's argv, and a lone surrogate cannot be encoded for
     anyone. Either used to raise past refute and lose every other claim's verdict."""
+    # `esc` is the surrogate argv would have let through to agy as a raw byte;
+    # the last id holds one, which used to fail at print after every verdict was in.
     claims = ('[{"id": "nul", "claim": "a\\u0000b"}, {"id": "lone", "claim": "a\\ud800b"},'
-              ' {"id": "plain", "claim": "fine"}]')
+              ' {"id": "esc", "claim": "a\\udcffb"}, {"id": "plain", "claim": "fine"},'
+              ' {"id": "id\\ud800", "claim": "fine"}]')
     code, got, err = _results(b, claims)
-    if "Traceback" in err or set(got) != {"nul", "lone", "plain"}:
+    if "Traceback" in err or set(got) != {"nul", "lone", "esc", "plain", "id\ud800"}:
         return f"exit {code}, results for {sorted(got)}: {err[-300:]}"
     if "agy" not in got["nul"]["unreachable"] or "agy" in got["nul"]["votes"]:
         return f"agy was counted for a prompt it could not be given: {got['nul']}"
-    if got["lone"]["verdict"] != "UNCHECKED" or got["plain"]["verdict"] != "STANDS":
-        return f"lone {got['lone']['verdict']}, plain {got['plain']['verdict']}"
+    verdicts = {k: c["verdict"] for k, c in got.items()}
+    if verdicts != {"nul": "STANDS", "lone": "UNCHECKED", "esc": "UNCHECKED",
+                    "plain": "STANDS", "id\ud800": "STANDS"}:
+        return f"verdicts {verdicts}"
     return None if code == 1 else f"exit {code} with an unchecked claim"
 
 
