@@ -37,7 +37,8 @@ about at all.
 **Exit status is the verdict.** 0 only when every claim `STANDS`; 1 when any is
 `REFUTED`, `CONTESTED` or `UNCHECKED`, in `--json` mode too. A malformed answer
 from an engine counts as no verdict, the same as no answer — so a run where
-nothing could be checked never exits green.
+nothing could be checked never exits green. Claims that cannot be read or are
+not a list of objects exit 2: no claim was put to anyone.
 """
 from __future__ import annotations
 
@@ -147,13 +148,23 @@ def main() -> int:
                     help="the engine running this — stated, never sniffed")
     ap.add_argument("--json", action="store_true", help="emit the result as JSON")
     a = ap.parse_args()
+    # An id holding a lone surrogate failed at print, after every engine had
+    # answered, and took all the verdicts with it. The text report escapes what
+    # stdout cannot carry; --json is ASCII and never needs to.
+    sys.stdout.reconfigure(errors="backslashreplace")
 
     if not (REFUTATION.get("lens") and REFUTATION.get("refuted_when")):
         print("harness.yaml declares no refutation lens; a refuter with no domain "
               "framing is a second opinion, not an adversary", file=sys.stderr)
         return 1
 
-    raw = sys.stdin.read() if a.claims == "-" else pathlib.Path(a.claims).read_text(encoding="utf-8")
+    # Unreadable is malformed input, the same 2 as bad JSON: a traceback exited
+    # 1, which here is the status that means a claim was refuted.
+    try:
+        raw = sys.stdin.read() if a.claims == "-" else pathlib.Path(a.claims).read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as e:
+        print(f"{a.claims}: cannot read ({e})", file=sys.stderr)
+        return 2
     try:
         claims = json.loads(raw)
     except ValueError as e:
@@ -190,7 +201,8 @@ def main() -> int:
     status = 0 if results and all(r["verdict"] == "STANDS" for r in results) else 1
 
     if a.json:
-        print(json.dumps(results, ensure_ascii=False, indent=2))
+        # ASCII, so no stdout encoding can put an escape JSON lacks (`\xe9`) here.
+        print(json.dumps(results, indent=2))
         return status
 
     for r in results:

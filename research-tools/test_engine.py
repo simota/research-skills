@@ -38,6 +38,12 @@ STUB = textwrap.dedent('''\
     if mode == "hang":
         open(os.path.join(log, name + ".pid"), "w").write(str(os.getpid()))
         time.sleep(300)
+    if mode == "garbled":                   # bytes that are not UTF-8, where the answer goes
+        if name == "codex":
+            open(sys.argv[sys.argv.index("-o") + 1], "wb").write(b"\\xff\\xfe not text")
+        else:
+            sys.stdout.buffer.write(b"\\xff\\xfe not text\\n")
+        sys.exit(0)
     answer = {{"stands": {{"refuted": False, "reason": "r", "what_would_settle_it": "w"}},
               "refutes": {{"refuted": True, "reason": "r", "what_would_settle_it": "w"}},
               "malformed": {{"refuted": "false", "reason": "r", "what_would_settle_it": "w"}},
@@ -170,8 +176,115 @@ def claims_on_stdin(b: Bench) -> str | None:
 def bad_claims_file_is_usage(b: Bench) -> str | None:
     bad = b.claims.with_name("bad.json")
     bad.write_text(json.dumps(["a string, not a claim"]), encoding="utf-8")
-    code, _, err = b.refute(claims=bad)
-    return None if code == 2 and "Traceback" not in err else f"exit {code}: {err}"
+    latin = b.claims.with_name("latin.json")
+    latin.write_bytes(b'[{"id": "C", "claim": "caf\xe9"}]')
+    # Unreadable used to be a traceback and exit 1 — the status for "refuted".
+    for path in (bad, b.claims.with_name("absent.json"), latin):
+        code, _, err = b.refute(claims=path)
+        if code != 2 or "Traceback" in err:
+            return f"{path.name}: exit {code}: {err[-300:]}"
+    return None
+
+
+def unreadable_engine_input_is_usage(b: Bench) -> str | None:
+    prompt, schema = b.claims.with_name("p.txt"), b.claims.with_name("s.json")
+    prompt.write_text("x", encoding="utf-8")
+    for label, text in (("absent", None), ("not JSON", "{"), ("not an object", "[]"),
+                        ("properties a list",
+                         '{"type": "object", "properties": ["a"], "required": ["a"]}'),
+                        ("type a number", '{"type": 5}'),
+                        ("type not a JSON type", '{"type": "bogus"}'),
+                        ("items a number", '{"type": "array", "items": 5}'),
+                        ("required undeclared", '{"type": "object", "required": ["b"]}'),
+                        ("enum empty", '{"type": "object", "properties": {"a": {"enum": []}},'
+                                       ' "required": ["a"]}'),
+                        ("a key left optional",
+                         '{"type": "object", "properties": {"a": {}}, "required": []}'),
+                        ("required a number", '{"type": "object", "required": 5}')):
+        if text is None:
+            schema.unlink(missing_ok=True)
+        else:
+            schema.write_text(text, encoding="utf-8")
+        r = subprocess.run([sys.executable, str(ENGINE), "--running", "codex",
+                            "--prompt-file", str(prompt), "--schema", str(schema)],
+                           capture_output=True, text=True, env=b.env(), timeout=60)
+        if r.returncode != 2 or "Traceback" in r.stderr or any(b.log.glob("*.json")):
+            return f"schema {label}: exit {r.returncode}: {r.stderr[-300:]}"
+    # Satisfiable by null, so it is the engine's to answer, not a usage error.
+    schema.write_text('{"type": ["object", "null"], "required": ["missing"]}', encoding="utf-8")
+    r = subprocess.run([sys.executable, str(ENGINE), "--running", "codex",
+                        "--prompt-file", str(prompt), "--schema", str(schema)],
+                       capture_output=True, text=True, env=b.env(), timeout=60)
+    if r.returncode == 2 or not any(b.log.glob("*.json")):
+        return f"a nullable object schema was refused before asking: {r.stderr[-300:]}"
+    return None
+
+
+def _results(b: Bench, claims: str, **modes) -> tuple[int, dict, str]:
+    """refute.py on raw claims JSON; each claim's result by id."""
+    path = b.claims.with_name("raw.json")
+    path.write_text(claims, encoding="utf-8")
+    r = subprocess.run([sys.executable, str(REFUTE), "--running", "codex", "--json", str(path)],
+                       capture_output=True, text=True, env=b.env(**modes), timeout=60)
+    try:
+        got = {c["id"]: c for c in json.loads(r.stdout)}
+    except ValueError:
+        got = {}
+    return r.returncode, got, r.stderr
+
+
+def text_that_cannot_cross_is_no_verdict(b: Bench) -> str | None:
+    """A NUL cannot go in agy's argv, and a lone surrogate cannot be encoded for
+    anyone. Either used to raise past refute and lose every other claim's verdict."""
+    # `esc` is the surrogate argv would have let through to agy as a raw byte;
+    # the last id holds one, which used to fail at print after every verdict was in.
+    claims = ('[{"id": "nul", "claim": "a\\u0000b"}, {"id": "lone", "claim": "a\\ud800b"},'
+              ' {"id": "esc", "claim": "a\\udcffb"}, {"id": "plain", "claim": "fine"},'
+              ' {"id": "id\\ud800", "claim": "fine"}]')
+    code, got, err = _results(b, claims)
+    if "Traceback" in err or set(got) != {"nul", "lone", "esc", "plain", "id\ud800"}:
+        return f"exit {code}, results for {sorted(got)}: {err[-300:]}"
+    if "agy" not in got["nul"]["unreachable"] or "agy" in got["nul"]["votes"]:
+        return f"agy was counted for a prompt it could not be given: {got['nul']}"
+    verdicts = {k: c["verdict"] for k, c in got.items()}
+    if verdicts != {"nul": "STANDS", "lone": "UNCHECKED", "esc": "UNCHECKED",
+                    "plain": "STANDS", "id\ud800": "STANDS"}:
+        return f"verdicts {verdicts}"
+    return None if code == 1 else f"exit {code} with an unchecked claim"
+
+
+def output_not_utf8_is_no_verdict(b: Bench) -> str | None:
+    code, got, err = _results(b, json.dumps(CLAIM), claude="garbled")
+    c = got.get(CLAIM[0]["id"], {})
+    if "Traceback" in err or "claude" not in c.get("unreachable", {}) \
+            or list(c.get("votes", {})) != ["agy"]:
+        return f"exit {code}, {c}: {err[-300:]}"
+    # codex answers in a file, read after it exits: the same holds there.
+    path = b.claims.with_name("raw.json")
+    r = subprocess.run([sys.executable, str(REFUTE), "--running", "claude", "--json", str(path)],
+                       capture_output=True, text=True, env=b.env(codex="garbled"), timeout=60)
+    try:
+        c = json.loads(r.stdout)[0]
+    except (ValueError, IndexError):
+        c = {}
+    if "Traceback" in r.stderr or "codex" not in c.get("unreachable", {}) \
+            or list(c.get("votes", {})) != ["agy"]:
+        return f"codex answer file: exit {r.returncode}, {c}: {r.stderr[-300:]}"
+    return None
+
+
+def json_survives_an_ascii_stdout(b: Bench) -> str | None:
+    """--json piped somewhere that is not UTF-8 is still JSON."""
+    path = b.claims.with_name("cafe.json")
+    path.write_text(json.dumps([{"id": "café", "claim": "naïve"}]), encoding="utf-8")
+    r = subprocess.run([sys.executable, str(REFUTE), "--running", "codex", "--json", str(path)],
+                       capture_output=True, env=dict(b.env(), PYTHONIOENCODING="ascii"),
+                       timeout=60)
+    try:
+        got = json.loads(r.stdout.decode("ascii"))
+    except ValueError as e:
+        return f"exit {r.returncode}, not JSON ({e}): {r.stdout[:200]!r}"
+    return None if [c["id"] for c in got] == ["café"] else f"ids {[c['id'] for c in got]}"
 
 
 def unknown_running_is_refused(b: Bench) -> str | None:
@@ -241,6 +354,9 @@ def interrupt_kills_engine(b: Bench) -> str | None:
 CASES = [stands_exits_zero, refuted_exits_one, extra_key_is_no_verdict, malformed_is_no_verdict,
          failed_exit_is_no_verdict, maker_is_excluded, prompt_on_stdin_tools_off,
          claim_is_fenced, claims_on_stdin, bad_claims_file_is_usage, unknown_running_is_refused,
+         unreadable_engine_input_is_usage,
+         text_that_cannot_cross_is_no_verdict, output_not_utf8_is_no_verdict,
+         json_survives_an_ascii_stdout,
          conform_reads_json_values,
          interrupt_kills_engine]
 

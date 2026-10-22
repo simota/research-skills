@@ -61,9 +61,11 @@ def render(path: Path) -> bool:
                                  f"{spec['section']!r} to carry the {key} block")
             heading = m.group(0)
             head, rest = text[:m.start()], text[m.end():]
-            # append at the end of that section, before the next heading
-            nxt = rest.find("\n## ")
-            body, tail = (rest[:nxt], rest[nxt:]) if nxt != -1 else (rest, "")
+            # append at the end of that section, before the next heading. Matched
+            # at a line start, so an empty section — its heading straight after
+            # this one — ends here rather than at the heading after that.
+            nxt = re.search(r"^## ", rest, re.M)
+            body, tail = (rest[:nxt.start()], "\n" + rest[nxt.start():]) if nxt else (rest, "")
             text = head + heading + body.rstrip("\n") + "\n" + payload + "\n" + tail
     if text != original:
         path.write_text(text, encoding="utf-8")

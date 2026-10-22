@@ -88,6 +88,13 @@ def run(engine: str, prompt: str, schema: dict) -> dict:
     if engine not in known:
         raise EngineError(f"{engine} is not one of {known}")
 
+    # Checked once for every engine: in argv, os.fsencode would let a lone
+    # \udcXX through as a raw byte, so agy answered on text nobody wrote.
+    try:
+        prompt.encode("utf-8")
+    except UnicodeEncodeError as e:
+        raise EngineError(f"the prompt is not UTF-8 text ({e.reason} at {e.start})") from None
+    check_schema(schema)
     # Held to the closed form whatever the engine was sent: an extra key from
     # claude or agy is as much "not what was asked" as one from codex.
     closed = strict(schema)
@@ -101,7 +108,10 @@ def run(engine: str, prompt: str, schema: dict) -> dict:
             argv = ["codex", "exec", "--output-schema", str(s), "-o", str(out),
                     "--sandbox", "read-only", "--skip-git-repo-check", "-"]
             r = _spawn(engine, argv, stdin=prompt)
-            body = out.read_text(encoding="utf-8") if out.exists() else ""
+            try:
+                body = out.read_text(encoding="utf-8") if out.exists() else ""
+            except UnicodeDecodeError as e:
+                raise EngineError(f"codex wrote an answer that is not UTF-8 ({e})") from None
             if not body.strip():
                 raise EngineError(f"codex wrote no answer.\n{_tail(r)}")
             return conform(engine, _parse(engine, body), closed)
@@ -163,6 +173,44 @@ def json_equal(a, b) -> bool:
     return type(a) is type(b) and a == b
 
 
+def check_schema(schema, at: str = "schema") -> None:
+    """The keywords `strict` and `conform` read have the shapes they read them as.
+
+    That is `type`, `enum`, `required`, `properties` and `items`;
+    `additionalProperties` is not checked because `strict` overwrites it.
+
+    Otherwise `{"type": 5}` reached `conform` only after the engine had been
+    paid to answer, and ended there in a TypeError.
+    """
+    if not isinstance(schema, dict):
+        raise EngineError(f"{at} is {type(schema).__name__}, not an object")
+    t = schema.get("type")
+    names = [t] if isinstance(t, str) else t
+    if t is not None and not (isinstance(names, list) and names
+                              and all(isinstance(x, str) and x in TYPES for x in names)):
+        raise EngineError(f"{at}.type is {t!r}; one of {sorted(TYPES)}, or a list of them")
+    if "enum" in schema and not (isinstance(schema["enum"], list) and schema["enum"]):
+        raise EngineError(f"{at}.enum is not a non-empty list; no answer could match it")
+    req = schema.get("required")
+    if req is not None and not (isinstance(req, list) and all(isinstance(x, str) for x in req)):
+        raise EngineError(f"{at}.required is {req!r}; a list of names")
+    props = schema.get("properties")
+    if props is not None and not isinstance(props, dict):
+        raise EngineError(f"{at}.properties is not an object")
+    # `strict` closes every object, so a required key it does not declare is a
+    # key no answer can both carry and be allowed to carry. Only when an object
+    # is the only answer allowed: `["object", "null"]` is still met by null.
+    undeclared = sorted(set(req or []) - set(props or {}))
+    if names and set(names) == {"object"} and undeclared:
+        raise EngineError(f"{at}.required names {undeclared}, which properties never declares")
+    for k, sub in (props or {}).items():
+        check_schema(sub, f"{at}.properties.{k}")
+    # One schema for every item, the only form `conform` reads; a tuple or a
+    # boolean here would be skipped there and checked by nothing.
+    if "items" in schema:
+        check_schema(schema["items"], f"{at}.items")
+
+
 def conform(engine: str, got, schema: dict, at: str = "answer"):
     """`got` if it has the shape `schema` asks for, else EngineError.
 
@@ -194,14 +242,20 @@ def conform(engine: str, got, schema: dict, at: str = "answer"):
 
 
 def _spawn(engine: str, argv: list[str], stdin: str | None = None) -> subprocess.CompletedProcess:
-    """Run in a session of its own, so a timeout kills whatever it started too."""
+    """Run in a session of its own, so a timeout kills whatever it started too.
+
+    UTF-8 both ways, as every file here is read, rather than whatever the locale
+    says. Text that cannot cross — a NUL in argv, a lone surrogate, output that
+    is not UTF-8 — is this engine not answering, never a crash that takes every
+    other claim's verdict down with it.
+    """
     try:
-        p = subprocess.Popen(argv, text=True, start_new_session=True,
+        p = subprocess.Popen(argv, encoding="utf-8", start_new_session=True,
                              stdin=subprocess.DEVNULL if stdin is None else subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     except FileNotFoundError:
         raise EngineError(f"{engine} is not on PATH") from None
-    except OSError as e:                   # E2BIG, EACCES, ...: it never started
+    except (OSError, ValueError) as e:     # E2BIG, EACCES, a NUL in argv: it never started
         raise EngineError(f"{engine} could not be started: {e}") from None
     try:
         out, err = p.communicate(stdin, timeout=TIMEOUT)
@@ -215,6 +269,8 @@ def _spawn(engine: str, argv: list[str], stdin: str | None = None) -> subprocess
         p.wait()
         if isinstance(e, subprocess.TimeoutExpired):
             raise EngineError(f"{engine} did not answer within {TIMEOUT}s") from None
+        if isinstance(e, UnicodeError):
+            raise EngineError(f"{engine}: the exchange is not UTF-8 ({e})") from None
         raise
     r = subprocess.CompletedProcess(argv, p.returncode, out, err)
     if r.returncode != 0:
@@ -306,9 +362,25 @@ def main() -> int:
         if a.running and engine == a.running:
             raise EngineError(f"{engine} is the engine running this; "
                               "a verdict from it is not a check")
-        got = run(engine,
-                  pathlib.Path(a.prompt_file).read_text(encoding="utf-8"),
-                  json.loads(pathlib.Path(a.schema).read_text(encoding="utf-8")))
+    except EngineError as e:
+        print(f"{a.engine or 'checker'}: {e}", file=sys.stderr)
+        return 1
+    # A file that cannot be read is a usage error, as a missing flag is: 2 and a
+    # sentence, not a traceback that exits 1 the way a failed check does.
+    try:
+        prompt = pathlib.Path(a.prompt_file).read_text(encoding="utf-8")
+        schema = json.loads(pathlib.Path(a.schema).read_text(encoding="utf-8"))
+    except (OSError, ValueError) as e:
+        print(f"cannot read --prompt-file / --schema: {e}", file=sys.stderr)
+        return 2
+    try:
+        check_schema(schema)               # malformed, or keys left optional: before any engine
+        strict(schema)
+    except (AttributeError, TypeError, EngineError) as e:
+        print(f"{a.schema}: not a schema this can hold an answer to ({e})", file=sys.stderr)
+        return 2
+    try:
+        got = run(engine, prompt, schema)
     except EngineError as e:
         print(f"{a.engine or 'checker'}: {e}", file=sys.stderr)
         return 1
