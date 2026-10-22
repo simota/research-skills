@@ -194,14 +194,20 @@ def conform(engine: str, got, schema: dict, at: str = "answer"):
 
 
 def _spawn(engine: str, argv: list[str], stdin: str | None = None) -> subprocess.CompletedProcess:
-    """Run in a session of its own, so a timeout kills whatever it started too."""
+    """Run in a session of its own, so a timeout kills whatever it started too.
+
+    UTF-8 both ways, as every file here is read, rather than whatever the locale
+    says. Text that cannot cross — a NUL in argv, a lone surrogate, output that
+    is not UTF-8 — is this engine not answering, never a crash that takes every
+    other claim's verdict down with it.
+    """
     try:
-        p = subprocess.Popen(argv, text=True, start_new_session=True,
+        p = subprocess.Popen(argv, encoding="utf-8", start_new_session=True,
                              stdin=subprocess.DEVNULL if stdin is None else subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     except FileNotFoundError:
         raise EngineError(f"{engine} is not on PATH") from None
-    except OSError as e:                   # E2BIG, EACCES, ...: it never started
+    except (OSError, ValueError) as e:     # E2BIG, EACCES, a NUL in argv: it never started
         raise EngineError(f"{engine} could not be started: {e}") from None
     try:
         out, err = p.communicate(stdin, timeout=TIMEOUT)
@@ -215,6 +221,8 @@ def _spawn(engine: str, argv: list[str], stdin: str | None = None) -> subprocess
         p.wait()
         if isinstance(e, subprocess.TimeoutExpired):
             raise EngineError(f"{engine} did not answer within {TIMEOUT}s") from None
+        if isinstance(e, UnicodeError):
+            raise EngineError(f"{engine}: the exchange is not UTF-8 ({e})") from None
         raise
     r = subprocess.CompletedProcess(argv, p.returncode, out, err)
     if r.returncode != 0:
@@ -306,9 +314,22 @@ def main() -> int:
         if a.running and engine == a.running:
             raise EngineError(f"{engine} is the engine running this; "
                               "a verdict from it is not a check")
-        got = run(engine,
-                  pathlib.Path(a.prompt_file).read_text(encoding="utf-8"),
-                  json.loads(pathlib.Path(a.schema).read_text(encoding="utf-8")))
+    except EngineError as e:
+        print(f"{a.engine or 'checker'}: {e}", file=sys.stderr)
+        return 1
+    # A file that cannot be read is a usage error, as a missing flag is: 2 and a
+    # sentence, not a traceback that exits 1 the way a failed check does.
+    try:
+        prompt = pathlib.Path(a.prompt_file).read_text(encoding="utf-8")
+        schema = json.loads(pathlib.Path(a.schema).read_text(encoding="utf-8"))
+    except (OSError, ValueError) as e:
+        print(f"cannot read --prompt-file / --schema: {e}", file=sys.stderr)
+        return 2
+    if not isinstance(schema, dict):
+        print(f"{a.schema}: a schema is a JSON object", file=sys.stderr)
+        return 2
+    try:
+        got = run(engine, prompt, schema)
     except EngineError as e:
         print(f"{a.engine or 'checker'}: {e}", file=sys.stderr)
         return 1
