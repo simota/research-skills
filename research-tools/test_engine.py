@@ -38,8 +38,11 @@ STUB = textwrap.dedent('''\
     if mode == "hang":
         open(os.path.join(log, name + ".pid"), "w").write(str(os.getpid()))
         time.sleep(300)
-    if mode == "garbled":                   # bytes that are not UTF-8
-        sys.stdout.buffer.write(b"\\xff\\xfe not text\\n")
+    if mode == "garbled":                   # bytes that are not UTF-8, where the answer goes
+        if name == "codex":
+            open(sys.argv[sys.argv.index("-o") + 1], "wb").write(b"\\xff\\xfe not text")
+        else:
+            sys.stdout.buffer.write(b"\\xff\\xfe not text\\n")
         sys.exit(0)
     answer = {{"stands": {{"refuted": False, "reason": "r", "what_would_settle_it": "w"}},
               "refutes": {{"refuted": True, "reason": "r", "what_would_settle_it": "w"}},
@@ -189,6 +192,7 @@ def unreadable_engine_input_is_usage(b: Bench) -> str | None:
     for label, text in (("absent", None), ("not JSON", "{"), ("not an object", "[]"),
                         ("properties a list",
                          '{"type": "object", "properties": ["a"], "required": ["a"]}'),
+                        ("type a number", '{"type": 5}'),
                         ("a key left optional",
                          '{"type": "object", "properties": {"a": {}}, "required": []}'),
                         ("required a number", '{"type": "object", "required": 5}')):
@@ -243,7 +247,32 @@ def output_not_utf8_is_no_verdict(b: Bench) -> str | None:
     if "Traceback" in err or "claude" not in c.get("unreachable", {}) \
             or list(c.get("votes", {})) != ["agy"]:
         return f"exit {code}, {c}: {err[-300:]}"
+    # codex answers in a file, read after it exits: the same holds there.
+    path = b.claims.with_name("raw.json")
+    r = subprocess.run([sys.executable, str(REFUTE), "--running", "claude", "--json", str(path)],
+                       capture_output=True, text=True, env=b.env(codex="garbled"), timeout=60)
+    try:
+        c = json.loads(r.stdout)[0]
+    except (ValueError, IndexError):
+        c = {}
+    if "Traceback" in r.stderr or "codex" not in c.get("unreachable", {}) \
+            or list(c.get("votes", {})) != ["agy"]:
+        return f"codex answer file: exit {r.returncode}, {c}: {r.stderr[-300:]}"
     return None
+
+
+def json_survives_an_ascii_stdout(b: Bench) -> str | None:
+    """--json piped somewhere that is not UTF-8 is still JSON."""
+    path = b.claims.with_name("cafe.json")
+    path.write_text(json.dumps([{"id": "café", "claim": "naïve"}]), encoding="utf-8")
+    r = subprocess.run([sys.executable, str(REFUTE), "--running", "codex", "--json", str(path)],
+                       capture_output=True, env=dict(b.env(), PYTHONIOENCODING="ascii"),
+                       timeout=60)
+    try:
+        got = json.loads(r.stdout.decode("ascii"))
+    except ValueError as e:
+        return f"exit {r.returncode}, not JSON ({e}): {r.stdout[:200]!r}"
+    return None if [c["id"] for c in got] == ["café"] else f"ids {[c['id'] for c in got]}"
 
 
 def unknown_running_is_refused(b: Bench) -> str | None:
@@ -315,6 +344,7 @@ CASES = [stands_exits_zero, refuted_exits_one, extra_key_is_no_verdict, malforme
          claim_is_fenced, claims_on_stdin, bad_claims_file_is_usage, unknown_running_is_refused,
          unreadable_engine_input_is_usage,
          text_that_cannot_cross_is_no_verdict, output_not_utf8_is_no_verdict,
+         json_survives_an_ascii_stdout,
          conform_reads_json_values,
          interrupt_kills_engine]
 

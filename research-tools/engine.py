@@ -94,6 +94,7 @@ def run(engine: str, prompt: str, schema: dict) -> dict:
         prompt.encode("utf-8")
     except UnicodeEncodeError as e:
         raise EngineError(f"the prompt is not UTF-8 text ({e.reason} at {e.start})") from None
+    check_schema(schema)
     # Held to the closed form whatever the engine was sent: an extra key from
     # claude or agy is as much "not what was asked" as one from codex.
     closed = strict(schema)
@@ -107,7 +108,10 @@ def run(engine: str, prompt: str, schema: dict) -> dict:
             argv = ["codex", "exec", "--output-schema", str(s), "-o", str(out),
                     "--sandbox", "read-only", "--skip-git-repo-check", "-"]
             r = _spawn(engine, argv, stdin=prompt)
-            body = out.read_text(encoding="utf-8") if out.exists() else ""
+            try:
+                body = out.read_text(encoding="utf-8") if out.exists() else ""
+            except UnicodeDecodeError as e:
+                raise EngineError(f"codex wrote an answer that is not UTF-8 ({e})") from None
             if not body.strip():
                 raise EngineError(f"codex wrote no answer.\n{_tail(r)}")
             return conform(engine, _parse(engine, body), closed)
@@ -167,6 +171,32 @@ def json_equal(a, b) -> bool:
     if isinstance(a, dict) and isinstance(b, dict):
         return a.keys() == b.keys() and all(json_equal(a[k], b[k]) for k in a)
     return type(a) is type(b) and a == b
+
+
+def check_schema(schema, at: str = "schema") -> None:
+    """The keywords `strict` and `conform` read have the shapes they read them as.
+
+    Otherwise `{"type": 5}` reached `conform` only after the engine had been
+    paid to answer, and ended there in a TypeError.
+    """
+    if not isinstance(schema, dict):
+        raise EngineError(f"{at} is {type(schema).__name__}, not an object")
+    t = schema.get("type")
+    if t is not None and not (isinstance(t, str) or
+                              (isinstance(t, list) and all(isinstance(x, str) for x in t))):
+        raise EngineError(f"{at}.type is {t!r}; a type name or a list of them")
+    if "enum" in schema and not isinstance(schema["enum"], list):
+        raise EngineError(f"{at}.enum is not a list")
+    req = schema.get("required")
+    if req is not None and not (isinstance(req, list) and all(isinstance(x, str) for x in req)):
+        raise EngineError(f"{at}.required is {req!r}; a list of names")
+    props = schema.get("properties")
+    if props is not None and not isinstance(props, dict):
+        raise EngineError(f"{at}.properties is not an object")
+    for k, sub in (props or {}).items():
+        check_schema(sub, f"{at}.properties.{k}")
+    if isinstance(schema.get("items"), dict):
+        check_schema(schema["items"], f"{at}.items")
 
 
 def conform(engine: str, got, schema: dict, at: str = "answer"):
@@ -331,11 +361,9 @@ def main() -> int:
     except (OSError, ValueError) as e:
         print(f"cannot read --prompt-file / --schema: {e}", file=sys.stderr)
         return 2
-    if not isinstance(schema, dict):
-        print(f"{a.schema}: a schema is a JSON object", file=sys.stderr)
-        return 2
     try:
-        strict(schema)                     # malformed inside, or optional keys: before any engine
+        check_schema(schema)               # malformed, or keys left optional: before any engine
+        strict(schema)
     except (AttributeError, TypeError, EngineError) as e:
         print(f"{a.schema}: not a schema this can hold an answer to ({e})", file=sys.stderr)
         return 2

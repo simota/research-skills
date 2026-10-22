@@ -149,7 +149,8 @@ def main() -> int:
     ap.add_argument("--json", action="store_true", help="emit the result as JSON")
     a = ap.parse_args()
     # An id holding a lone surrogate failed at print, after every engine had
-    # answered, and took all the verdicts with it. Escaped, it is still valid JSON.
+    # answered, and took all the verdicts with it. The text report escapes what
+    # stdout cannot carry; --json is ASCII and never needs to.
     sys.stdout.reconfigure(errors="backslashreplace")
 
     if not (REFUTATION.get("lens") and REFUTATION.get("refuted_when")):
@@ -200,7 +201,8 @@ def main() -> int:
     status = 0 if results and all(r["verdict"] == "STANDS" for r in results) else 1
 
     if a.json:
-        print(json.dumps(results, ensure_ascii=False, indent=2))
+        # ASCII, so no stdout encoding can put an escape JSON lacks (`\xe9`) here.
+        print(json.dumps(results, indent=2))
         return status
 
     for r in results:
