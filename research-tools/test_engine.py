@@ -189,25 +189,33 @@ def bad_claims_file_is_usage(b: Bench) -> str | None:
 def unaskable_claim_is_usage(b: Bench) -> str | None:
     """A blank claim came back STANDS and exited 0; a missing one was reported as
     every engine failing; a missing or repeated id left verdicts nobody could
-    match. Each is malformed input, refused before any engine is paid."""
-    for label, claims in (("blank claim", [{"id": "A", "claim": "   "}]),
-                          ("no claim", [{"id": "A", "claim": "x"}, {"id": "B"}]),
-                          ("claim not text", [{"id": "A", "claim": ["x"]}]),
-                          ("no id", [{"claim": "x"}]),
-                          ("blank id", [{"id": " ", "claim": "x"}]),
-                          ("id a boolean", [{"id": True, "claim": "x"}]),
-                          ("repeated id", [{"id": "A", "claim": "x"}, {"id": "A", "claim": "y"}])):
+    match. Each is malformed input, refused before any engine is paid, and the
+    refusal names the reason."""
+    no_text, bad_id, again = "no `claim` text", "an id is", "prints the same"
+    for label, claims, why in (
+            ("blank claim", [{"id": "A", "claim": "   "}], no_text),
+            ("zero-width claim", [{"id": "A", "claim": "​"}], no_text),
+            ("no claim", [{"id": "A", "claim": "x"}, {"id": "B"}], no_text),
+            ("claim not text", [{"id": "A", "claim": ["x"]}], no_text),
+            ("no id", [{"claim": "x"}], bad_id),
+            ("blank id", [{"id": " ", "claim": "x"}], bad_id),
+            ("id a boolean", [{"id": True, "claim": "x"}], bad_id),
+            ("id a float", [{"id": 1.0, "claim": "x"}], bad_id),
+            ("repeated id", [{"id": "A", "claim": "x"}, {"id": "A", "claim": "y"}], again),
+            # Two ids in JSON, one on the page `make refute` prints.
+            ("1 and \"1\"", [{"id": 1, "claim": "x"}, {"id": "1", "claim": "y"}], again),
+            ("trailing space", [{"id": "A", "claim": "x"}, {"id": "A ", "claim": "y"}], again),
+            ("no claims", [], "holds no claims")):
         path = b.claims.with_name("unaskable.json")
         path.write_text(json.dumps(claims), encoding="utf-8")
         code, _, err = b.refute(claims=path)
-        if code != 2 or "Traceback" in err or any(b.log.glob("*.json")):
+        if code != 2 or why not in err or "Traceback" in err or any(b.log.glob("*.json")):
             asked = sorted(p.stem for p in b.log.glob("*.json"))
             return f"{label}: exit {code}, engines asked {asked}: {err[-300:]}"
-    # Distinct in JSON, so distinct here: "1" and 1 are two ids.
-    path.write_text(json.dumps([{"id": 1, "claim": "x"}, {"id": "1", "claim": "y"}]),
+    path.write_text(json.dumps([{"id": 1, "claim": "x"}, {"id": "C-2", "claim": "y"}]),
                     encoding="utf-8")
     code, v, err = b.refute(claims=path)
-    return None if (code, v) == (0, ["STANDS", "STANDS"]) else f"ids 1 and \"1\": exit {code}: {err}"
+    return None if (code, v) == (0, ["STANDS", "STANDS"]) else f"ids 1 and C-2: exit {code}: {err}"
 
 
 def unreadable_engine_input_is_usage(b: Bench) -> str | None:

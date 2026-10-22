@@ -38,8 +38,9 @@ about at all.
 `REFUTED`, `CONTESTED` or `UNCHECKED`, in `--json` mode too. A malformed answer
 from an engine counts as no verdict, the same as no answer — so a run where
 nothing could be checked never exits green. Claims that cannot be read, are
-not a list of objects, or hold one with no `claim` text or with an `id` that is
-missing or repeated exit 2: no claim was put to anyone.
+not a non-empty list of objects, or hold one with no `claim` text or with an
+`id` that is missing or prints the same as another's exit 2: no claim was put
+to anyone.
 """
 from __future__ import annotations
 
@@ -48,6 +49,7 @@ import json
 import pathlib
 import secrets
 import sys
+import unicodedata
 
 import yaml
 
@@ -123,23 +125,34 @@ def ask(engine_name: str, claim: dict) -> dict:
     return engine.run(engine_name, prompt, SCHEMA)
 
 
+def _blank(s: str) -> bool:
+    """Nothing a reader can see: whitespace, and format characters such as a
+    zero-width space, which `str.strip` keeps."""
+    return all(ch.isspace() or unicodedata.category(ch) == "Cf" for ch in s)
+
+
 def malformed(claims: list[dict]) -> list[str]:
     """What makes a claim impossible to put to anyone, or its verdict impossible
     to hand back. A blank claim asked to be refuted came back STANDS and exited
-    0; a missing or repeated id left a verdict nobody could match to its claim."""
+    0; a missing or repeated id left a verdict nobody could match to its claim.
+
+    Ids are compared as the report prints them: `1` and `"1"`, or `A` and `A `,
+    are two ids in JSON and one on the page `make refute` shows."""
     out, seen = [], set()
     for i, c in enumerate(claims):
         cid = c.get("id")
+        label = f"claim #{i + 1}"
         if isinstance(cid, bool) or not isinstance(cid, (str, int)) \
-                or (isinstance(cid, str) and not cid.strip()):
-            out.append(f"claim #{i + 1} has no usable `id` ({cid!r})")
-        elif json.dumps(cid) in seen:
-            out.append(f"id {cid!r} names more than one claim")
+                or _blank(str(cid)):
+            out.append(f"{label} has id {cid!r}; an id is a non-blank string or an integer")
+        elif str(cid).strip() in seen:
+            out.append(f"{label} has id {cid!r}, which prints the same as an earlier claim's")
         else:
-            seen.add(json.dumps(cid))
+            seen.add(str(cid).strip())
+            label = f"claim {cid!r}"
         text = c.get("claim")
-        if not (isinstance(text, str) and text.strip()):
-            out.append(f"claim {cid!r} has no `claim` text")
+        if not (isinstance(text, str) and not _blank(text)):
+            out.append(f"{label} has no `claim` text")
     return out
 
 
@@ -199,7 +212,7 @@ def main() -> int:
         return 2
     # Checked before any engine runs: a claim that cannot be asked is malformed
     # input, not an engine that gave no verdict.
-    problems = malformed(claims)
+    problems = malformed(claims) if claims else ["holds no claims"]
     if problems:
         for p in problems:
             print(f"{a.claims}: {p}", file=sys.stderr)
