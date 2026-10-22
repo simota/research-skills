@@ -182,9 +182,10 @@ def check_schema(schema, at: str = "schema") -> None:
     if not isinstance(schema, dict):
         raise EngineError(f"{at} is {type(schema).__name__}, not an object")
     t = schema.get("type")
-    if t is not None and not (isinstance(t, str) or
-                              (isinstance(t, list) and all(isinstance(x, str) for x in t))):
-        raise EngineError(f"{at}.type is {t!r}; a type name or a list of them")
+    names = [t] if isinstance(t, str) else t
+    if t is not None and not (isinstance(names, list) and names
+                              and all(isinstance(x, str) and x in TYPES for x in names)):
+        raise EngineError(f"{at}.type is {t!r}; one of {sorted(TYPES)}, or a list of them")
     if "enum" in schema and not isinstance(schema["enum"], list):
         raise EngineError(f"{at}.enum is not a list")
     req = schema.get("required")
