@@ -148,8 +148,12 @@ def _ignorable(ch: str) -> bool:
 def _blank(s: str) -> bool:
     """Nothing a reader can see. Asked the other way round — is there a letter,
     digit, punctuation mark or symbol that is not ignorable — because listing
-    what is invisible missed one class at a time."""
-    return not any(unicodedata.category(ch)[0] in "LNPS" and not _ignorable(ch) for ch in s)
+    what is invisible missed one class at a time. Unassigned and private-use
+    code points count as seen: a renderer draws them as a glyph or a box, and
+    a letter from a script newer than this Python's tables reads as unassigned."""
+    return not any((unicodedata.category(ch)[0] in "LNPS"
+                    or unicodedata.category(ch) in ("Cn", "Co")) and not _ignorable(ch)
+                   for ch in s)
 
 
 def _shown(cid) -> str:
@@ -174,6 +178,10 @@ def malformed(claims: list[dict]) -> list[str]:
         if isinstance(cid, bool) or not isinstance(cid, (str, int)) \
                 or _blank(str(cid)):
             out.append(f"{label} has id {cid!r}; an id is a non-blank string or an integer")
+        elif any(unicodedata.category(ch) == "Cc" for ch in str(cid)):
+            # The text report writes an id as it is, and a terminal acts on an
+            # escape sequence in it: `\x1b[0mA` is shown as `A`.
+            out.append(f"{label} has id {cid!r}; an id holds no control characters")
         elif _shown(cid) in seen:
             out.append(f"{label} has id {cid!r}, which prints the same as an earlier claim's")
         else:

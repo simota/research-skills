@@ -204,6 +204,9 @@ def unaskable_claim_is_usage(b: Bench) -> str | None:
             ("blank id", [{"id": " ", "claim": "x"}], bad_id),
             ("id a boolean", [{"id": True, "claim": "x"}], bad_id),
             ("id a float", [{"id": 1.0, "claim": "x"}], bad_id),
+            ("terminal escape in id", [{"id": "A", "claim": "x"},
+                                       {"id": "\x1b[0mA", "claim": "y"}], "control characters"),
+            ("newline in id", [{"id": "A\nB", "claim": "x"}], "control characters"),
             ("repeated id", [{"id": "A", "claim": "x"}, {"id": "A", "claim": "y"}], again),
             # Two ids in JSON, one on the page `make refute` prints.
             ("1 and \"1\"", [{"id": 1, "claim": "x"}, {"id": "1", "claim": "y"}], again),
@@ -221,10 +224,12 @@ def unaskable_claim_is_usage(b: Bench) -> str | None:
         if code != 2 or why not in err or "Traceback" in err or any(b.log.glob("*.json")):
             asked = sorted(p.stem for p in b.log.glob("*.json"))
             return f"{label}: exit {code}, engines asked {asked}: {err[-300:]}"
-    path.write_text(json.dumps([{"id": 1, "claim": "x"}, {"id": "C-2", "claim": "y"}]),
-                    encoding="utf-8")
+    # Seen though this Python's tables may not name them: a private-use glyph,
+    # and an unassigned code point, which is how a newer script's letter reads.
+    path.write_text(json.dumps([{"id": 1, "claim": "x"}, {"id": "C-2", "claim": ""},
+                                {"id": "\U0003fffd", "claim": "\U0003fffd"}]), encoding="utf-8")
     code, v, err = b.refute(claims=path)
-    return None if (code, v) == (0, ["STANDS", "STANDS"]) else f"ids 1 and C-2: exit {code}: {err}"
+    return None if (code, v) == (0, ["STANDS"] * 3) else f"well-formed claims: exit {code}: {err}"
 
 
 def unreadable_engine_input_is_usage(b: Bench) -> str | None:
