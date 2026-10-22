@@ -138,6 +138,23 @@ def _blank(s: str) -> bool:
                    for ch in s)
 
 
+def _ignorable(ch: str) -> bool:
+    """Drawn as nothing even next to visible text: format and control
+    characters, variation selectors, the grapheme joiner, the Hangul fillers."""
+    cat = unicodedata.category(ch)
+    return (cat == "Cf" or (cat == "Cc" and not ch.isspace()) or ch in _INVISIBLE_LETTERS
+            or ch == "͏" or "︀" <= ch <= "️"
+            or "\U000e0100" <= ch <= "\U000e01ef")
+
+
+def _shown(cid) -> str:
+    """An id as a reader of the report sees it, which is what two ids must
+    differ in: `A` and `A\\u200b`, or a precomposed `é` and `e` plus an accent,
+    print the same. Look-alike letters from other scripts are not folded."""
+    return unicodedata.normalize(
+        "NFC", "".join(ch for ch in str(cid) if not _ignorable(ch))).strip()
+
+
 def malformed(claims: list[dict]) -> list[str]:
     """What makes a claim impossible to put to anyone, or its verdict impossible
     to hand back. A blank claim asked to be refuted came back STANDS and exited
@@ -152,10 +169,10 @@ def malformed(claims: list[dict]) -> list[str]:
         if isinstance(cid, bool) or not isinstance(cid, (str, int)) \
                 or _blank(str(cid)):
             out.append(f"{label} has id {cid!r}; an id is a non-blank string or an integer")
-        elif str(cid).strip() in seen:
+        elif _shown(cid) in seen:
             out.append(f"{label} has id {cid!r}, which prints the same as an earlier claim's")
         else:
-            seen.add(str(cid).strip())
+            seen.add(_shown(cid))
             label = f"claim {cid!r}"
         text = c.get("claim")
         if not (isinstance(text, str) and not _blank(text)):

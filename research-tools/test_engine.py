@@ -208,6 +208,10 @@ def unaskable_claim_is_usage(b: Bench) -> str | None:
             # Two ids in JSON, one on the page `make refute` prints.
             ("1 and \"1\"", [{"id": 1, "claim": "x"}, {"id": "1", "claim": "y"}], again),
             ("trailing space", [{"id": "A", "claim": "x"}, {"id": "A ", "claim": "y"}], again),
+            ("zero-width suffix", [{"id": "A", "claim": "x"}, {"id": "A​", "claim": "y"}],
+             again),
+            ("decomposed accent", [{"id": "é", "claim": "x"},
+                                   {"id": "é", "claim": "y"}], again),
             ("no claims", [], "holds no claims")):
         path = b.claims.with_name("unaskable.json")
         path.write_text(json.dumps(claims), encoding="utf-8")
