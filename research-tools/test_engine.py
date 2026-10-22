@@ -210,6 +210,8 @@ def unaskable_claim_is_usage(b: Bench) -> str | None:
             ("trailing space", [{"id": "A", "claim": "x"}, {"id": "A ", "claim": "y"}], again),
             ("zero-width suffix", [{"id": "A", "claim": "x"}, {"id": "A​", "claim": "y"}],
              again),
+            ("ignorable mark suffix", [{"id": "A", "claim": "x"}, {"id": "A᠋឴",
+                                                                   "claim": "y"}], again),
             ("decomposed accent", [{"id": "é", "claim": "x"},
                                    {"id": "é", "claim": "y"}], again),
             ("no claims", [], "holds no claims")):

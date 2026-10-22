@@ -125,26 +125,31 @@ def ask(engine_name: str, claim: dict) -> dict:
     return engine.run(engine_name, prompt, SCHEMA)
 
 
-# Letters by category that render as nothing: the Hangul fillers.
-_INVISIBLE_LETTERS = {"ᅟ", "ᅠ", "ㅤ", "ﾠ"}
+# Unicode's Default_Ignorable_Code_Point, whole: what a renderer draws as
+# nothing, whatever its category. unicodedata does not expose the property,
+# and picking ranges from it by hand let one through per review — the Hangul
+# fillers are letters, U+180B and U+17B4 are marks.
+_DEFAULT_IGNORABLE = (
+    (0x00AD, 0x00AD), (0x034F, 0x034F), (0x061C, 0x061C), (0x115F, 0x1160),
+    (0x17B4, 0x17B5), (0x180B, 0x180F), (0x200B, 0x200F), (0x202A, 0x202E),
+    (0x2060, 0x206F), (0x3164, 0x3164), (0xFE00, 0xFE0F), (0xFEFF, 0xFEFF),
+    (0xFFA0, 0xFFA0), (0xFFF0, 0xFFF8), (0x1BCA0, 0x1BCA3), (0x1D173, 0x1D17A),
+    (0xE0000, 0xE0FFF))
+
+
+def _ignorable(ch: str) -> bool:
+    """Drawn as nothing even next to visible text: a default-ignorable code
+    point, or a format or control character that is not whitespace."""
+    cp, cat = ord(ch), unicodedata.category(ch)
+    return (cat == "Cf" or (cat == "Cc" and not ch.isspace())
+            or any(lo <= cp <= hi for lo, hi in _DEFAULT_IGNORABLE))
 
 
 def _blank(s: str) -> bool:
     """Nothing a reader can see. Asked the other way round — is there a letter,
-    digit, punctuation mark or symbol — because listing what is invisible
-    missed one class at a time: `str.strip` keeps a zero-width space (`Cf`),
-    and a lone variation selector is a mark (`Mn`)."""
-    return not any(unicodedata.category(ch)[0] in "LNPS" and ch not in _INVISIBLE_LETTERS
-                   for ch in s)
-
-
-def _ignorable(ch: str) -> bool:
-    """Drawn as nothing even next to visible text: format and control
-    characters, variation selectors, the grapheme joiner, the Hangul fillers."""
-    cat = unicodedata.category(ch)
-    return (cat == "Cf" or (cat == "Cc" and not ch.isspace()) or ch in _INVISIBLE_LETTERS
-            or ch == "͏" or "︀" <= ch <= "️"
-            or "\U000e0100" <= ch <= "\U000e01ef")
+    digit, punctuation mark or symbol that is not ignorable — because listing
+    what is invisible missed one class at a time."""
+    return not any(unicodedata.category(ch)[0] in "LNPS" and not _ignorable(ch) for ch in s)
 
 
 def _shown(cid) -> str:
