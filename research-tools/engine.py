@@ -195,9 +195,10 @@ def check_schema(schema, at: str = "schema") -> None:
     if props is not None and not isinstance(props, dict):
         raise EngineError(f"{at}.properties is not an object")
     # `strict` closes every object, so a required key it does not declare is a
-    # key no answer can both carry and be allowed to carry.
+    # key no answer can both carry and be allowed to carry. Only when an object
+    # is the only answer allowed: `["object", "null"]` is still met by null.
     undeclared = sorted(set(req or []) - set(props or {}))
-    if "object" in (names or []) and undeclared:
+    if names and set(names) == {"object"} and undeclared:
         raise EngineError(f"{at}.required names {undeclared}, which properties never declares")
     for k, sub in (props or {}).items():
         check_schema(sub, f"{at}.properties.{k}")

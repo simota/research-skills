@@ -209,6 +209,13 @@ def unreadable_engine_input_is_usage(b: Bench) -> str | None:
                            capture_output=True, text=True, env=b.env(), timeout=60)
         if r.returncode != 2 or "Traceback" in r.stderr or any(b.log.glob("*.json")):
             return f"schema {label}: exit {r.returncode}: {r.stderr[-300:]}"
+    # Satisfiable by null, so it is the engine's to answer, not a usage error.
+    schema.write_text('{"type": ["object", "null"], "required": ["missing"]}', encoding="utf-8")
+    r = subprocess.run([sys.executable, str(ENGINE), "--running", "codex",
+                        "--prompt-file", str(prompt), "--schema", str(schema)],
+                       capture_output=True, text=True, env=b.env(), timeout=60)
+    if r.returncode == 2 or not any(b.log.glob("*.json")):
+        return f"a nullable object schema was refused before asking: {r.stderr[-300:]}"
     return None
 
 
