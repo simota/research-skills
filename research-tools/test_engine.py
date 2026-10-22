@@ -195,6 +195,9 @@ def unaskable_claim_is_usage(b: Bench) -> str | None:
     for label, claims, why in (
             ("blank claim", [{"id": "A", "claim": "   "}], no_text),
             ("zero-width claim", [{"id": "A", "claim": "​"}], no_text),
+            ("variation selector claim", [{"id": "A", "claim": "️"}], no_text),
+            ("hangul filler claim", [{"id": "A", "claim": "ㅤ ‍"}], no_text),
+            ("zero-width id", [{"id": "​️", "claim": "x"}], bad_id),
             ("no claim", [{"id": "A", "claim": "x"}, {"id": "B"}], no_text),
             ("claim not text", [{"id": "A", "claim": ["x"]}], no_text),
             ("no id", [{"claim": "x"}], bad_id),

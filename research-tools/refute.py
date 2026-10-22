@@ -125,10 +125,17 @@ def ask(engine_name: str, claim: dict) -> dict:
     return engine.run(engine_name, prompt, SCHEMA)
 
 
+# Letters by category that render as nothing: the Hangul fillers.
+_INVISIBLE_LETTERS = {"ᅟ", "ᅠ", "ㅤ", "ﾠ"}
+
+
 def _blank(s: str) -> bool:
-    """Nothing a reader can see: whitespace, and format characters such as a
-    zero-width space, which `str.strip` keeps."""
-    return all(ch.isspace() or unicodedata.category(ch) == "Cf" for ch in s)
+    """Nothing a reader can see. Asked the other way round — is there a letter,
+    digit, punctuation mark or symbol — because listing what is invisible
+    missed one class at a time: `str.strip` keeps a zero-width space (`Cf`),
+    and a lone variation selector is a mark (`Mn`)."""
+    return not any(unicodedata.category(ch)[0] in "LNPS" and ch not in _INVISIBLE_LETTERS
+                   for ch in s)
 
 
 def malformed(claims: list[dict]) -> list[str]:
