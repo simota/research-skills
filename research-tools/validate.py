@@ -255,8 +255,13 @@ def v9_signals():
 
 
 def v10_fixtures():
+    # An empty file, or a mapping where the list belongs, used to pass as zero
+    # misroutes — the same green as every fixture routing where it should.
+    if not (isinstance(FIX, list) and FIX):
+        fail("V10", "fixtures.yaml holds no list of fixtures; this rule is checking nothing")
+        return
     pairs = [(_norm(s), name) for name, c in CAP.items() for s in c.get("signals", [])]
-    for entry in FIX if isinstance(FIX, list) else []:
+    for entry in FIX:
         ask, expect = _norm(entry["ask"]), entry["expect"]
         hits = [(len(sig), owner) for sig, owner in pairs if sig in ask]
         if not hits:

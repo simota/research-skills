@@ -135,6 +135,10 @@ def _(r): sub(r / "research-registry/fixtures.yaml",
               '- ask: "build the corpus, and run disconfirming queries too"\n  expect: research-scope')
 
 
+@case("V10-empty", says="this rule is checking nothing")
+def _(r): (r / "research-registry/fixtures.yaml").write_text("# every fixture removed\n")
+
+
 @case("V11")
 def _(r):
     import shutil
