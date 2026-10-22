@@ -194,6 +194,7 @@ def unreadable_engine_input_is_usage(b: Bench) -> str | None:
                          '{"type": "object", "properties": ["a"], "required": ["a"]}'),
                         ("type a number", '{"type": 5}'),
                         ("type not a JSON type", '{"type": "bogus"}'),
+                        ("items a number", '{"type": "array", "items": 5}'),
                         ("required undeclared", '{"type": "object", "required": ["b"]}'),
                         ("enum empty", '{"type": "object", "properties": {"a": {"enum": []}},'
                                        ' "required": ["a"]}'),

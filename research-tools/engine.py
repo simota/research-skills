@@ -176,6 +176,9 @@ def json_equal(a, b) -> bool:
 def check_schema(schema, at: str = "schema") -> None:
     """The keywords `strict` and `conform` read have the shapes they read them as.
 
+    That is `type`, `enum`, `required`, `properties` and `items`;
+    `additionalProperties` is not checked because `strict` overwrites it.
+
     Otherwise `{"type": 5}` reached `conform` only after the engine had been
     paid to answer, and ended there in a TypeError.
     """
@@ -202,7 +205,9 @@ def check_schema(schema, at: str = "schema") -> None:
         raise EngineError(f"{at}.required names {undeclared}, which properties never declares")
     for k, sub in (props or {}).items():
         check_schema(sub, f"{at}.properties.{k}")
-    if isinstance(schema.get("items"), dict):
+    # One schema for every item, the only form `conform` reads; a tuple or a
+    # boolean here would be skipped there and checked by nothing.
+    if "items" in schema:
         check_schema(schema["items"], f"{at}.items")
 
 
