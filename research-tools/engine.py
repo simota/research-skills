@@ -186,14 +186,19 @@ def check_schema(schema, at: str = "schema") -> None:
     if t is not None and not (isinstance(names, list) and names
                               and all(isinstance(x, str) and x in TYPES for x in names)):
         raise EngineError(f"{at}.type is {t!r}; one of {sorted(TYPES)}, or a list of them")
-    if "enum" in schema and not isinstance(schema["enum"], list):
-        raise EngineError(f"{at}.enum is not a list")
+    if "enum" in schema and not (isinstance(schema["enum"], list) and schema["enum"]):
+        raise EngineError(f"{at}.enum is not a non-empty list; no answer could match it")
     req = schema.get("required")
     if req is not None and not (isinstance(req, list) and all(isinstance(x, str) for x in req)):
         raise EngineError(f"{at}.required is {req!r}; a list of names")
     props = schema.get("properties")
     if props is not None and not isinstance(props, dict):
         raise EngineError(f"{at}.properties is not an object")
+    # `strict` closes every object, so a required key it does not declare is a
+    # key no answer can both carry and be allowed to carry.
+    undeclared = sorted(set(req or []) - set(props or {}))
+    if "object" in (names or []) and undeclared:
+        raise EngineError(f"{at}.required names {undeclared}, which properties never declares")
     for k, sub in (props or {}).items():
         check_schema(sub, f"{at}.properties.{k}")
     if isinstance(schema.get("items"), dict):
