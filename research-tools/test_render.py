@@ -55,6 +55,18 @@ def unmatched_marker_is_refused(r: Path) -> str | None:
     return None if f.read_text(encoding="utf-8") == before else "the refused file was rewritten"
 
 
+def stray_marker_out_of_scope_is_refused(r: Path) -> str | None:
+    """Out of scope, only whole blocks were removed: a lone marker stayed, render
+    exited 0, and V17 then failed on a file render had called clean."""
+    f = r / SCOPE
+    f.write_text(f.read_text(encoding="utf-8") + "<!-- /deliver:reach -->\n", encoding="utf-8")
+    before = f.read_text(encoding="utf-8")
+    code, out = run(r, "render.py")
+    if code == 0 or "unmatched reach marker" not in out:
+        return f"exit {code}: {out}"
+    return None if f.read_text(encoding="utf-8") == before else "the refused file was rewritten"
+
+
 def leading_blank_line_agrees(r: Path) -> str | None:
     """A blank first line in a delivered file: render and V17 must settle together."""
     d = r / "research-registry/delivered/values.md"
@@ -98,7 +110,8 @@ def missing_section_is_refused(r: Path) -> str | None:
         else f"exit {code}: {out}"
 
 
-CASES = [clean_is_idempotent, unmatched_marker_is_refused, leading_blank_line_agrees,
+CASES = [clean_is_idempotent, unmatched_marker_is_refused, stray_marker_out_of_scope_is_refused,
+         leading_blank_line_agrees,
          heading_with_trailing_space_renders, empty_section_keeps_its_block,
          missing_section_is_refused]
 
