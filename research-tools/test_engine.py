@@ -191,7 +191,7 @@ def unaskable_claim_is_usage(b: Bench) -> str | None:
     every engine failing; a missing or repeated id left verdicts nobody could
     match. Each is malformed input, refused before any engine is paid, and the
     refusal names the reason."""
-    no_text, bad_id, again = "no `claim` text", "an id is", "prints the same"
+    no_text, bad_id, again = "no `claim` text", "an id is", "reads the same"
     hidden = "invisible characters"
     for label, claims, why in (
             ("blank claim", [{"id": "A", "claim": "   "}], no_text),
@@ -225,6 +225,10 @@ def unaskable_claim_is_usage(b: Bench) -> str | None:
                                                                    "claim": "y"}], hidden),
             ("decomposed accent", [{"id": "é", "claim": "x"},
                                    {"id": "é", "claim": "y"}], again),
+            ("no-break space", [{"id": "A B", "claim": "x"},
+                                {"id": "A\u00a0B", "claim": "y"}], again),
+            ("full-width letter", [{"id": "C-1", "claim": "x"},
+                                   {"id": "\uff23-1", "claim": "y"}], again),
             # The text report writes a lone surrogate as its escape.
             ("surrogate and its escape", [{"id": "A\ud800", "claim": "x"},
                                           {"id": "A\\ud800", "claim": "y"}], again),

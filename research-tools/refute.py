@@ -39,7 +39,7 @@ about at all.
 from an engine counts as no verdict, the same as no answer — so a run where
 nothing could be checked never exits green. Claims that cannot be read, are
 not a non-empty list of objects, or hold one with no `claim` text or with an
-`id` that is missing or prints the same as another's exit 2: no claim was put
+`id` that is missing or reads the same as another's exit 2: no claim was put
 to anyone.
 """
 from __future__ import annotations
@@ -158,11 +158,13 @@ def _blank(s: str) -> bool:
 
 def _shown(cid) -> bytes:
     """An id as a reader of the report sees it, once `_hidden` has refused what
-    a renderer may draw as nothing or act on: a precomposed `é` and `e` plus an
-    accent print the same, and so do a lone surrogate and its escape, since the
-    report writes what stdout cannot carry as `\\ud800`. Look-alike letters
-    from other scripts are not folded."""
-    return unicodedata.normalize("NFC", str(cid)).strip().encode(
+    a renderer may draw as nothing or act on. Compatibility forms fold, since
+    they are the same character drawn another way: a precomposed `é` and `e`
+    plus an accent, a no-break space and a space, `ﬁ` and `fi`, a full-width
+    `Ａ` and `A`. So do a lone surrogate and its escape, since the report writes
+    what stdout cannot carry as `\\ud800`. Look-alike letters from other
+    scripts are distinct characters and are not folded."""
+    return unicodedata.normalize("NFKC", str(cid)).strip().encode(
         sys.stdout.encoding or "utf-8", "backslashreplace")
 
 
@@ -196,7 +198,7 @@ def malformed(claims: list[dict]) -> list[str]:
             out.append(f"{label} has id {cid!r}; an id holds no control, format or "
                        "invisible characters")
         elif _shown(cid) in seen:
-            out.append(f"{label} has id {cid!r}, which prints the same as an earlier claim's")
+            out.append(f"{label} has id {cid!r}, which reads the same as an earlier claim's")
         else:
             seen.add(_shown(cid))
             label = f"claim {cid!r}"
