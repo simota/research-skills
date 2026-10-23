@@ -294,6 +294,19 @@ def _(r):
     f.symlink_to(outside)
 
 
+# Through a linked directory: research-registry/ is reached by every skill's
+# `registry` link, and was checked as a link and never walked.
+@case("V27-through-link", says="registry/delivered/outside.md points outside")
+def _(r):
+    outside = r.parent / "outside.md"
+    outside.write_text("x\n", encoding="utf-8")
+    (r / "research-registry/delivered/outside.md").symlink_to(outside)
+
+
+@case("V27-through-link-broken", says="registry/delivered/gone.md is a broken")
+def _(r): (r / "research-registry/delivered/gone.md").symlink_to("../nowhere.md")
+
+
 @case("V28")
 def _(r): sub(r / "research-registry/harness.yaml", "set: research", "set: rsrch")
 
