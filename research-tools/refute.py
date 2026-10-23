@@ -163,9 +163,11 @@ def _shown(cid) -> bytes:
     plus an accent, a no-break space and a space, `ﬁ` and `fi`, a full-width
     `Ａ` and `A`. So do a lone surrogate and its escape, since the report writes
     what stdout cannot carry as `\\ud800`. Look-alike letters from other
-    scripts are distinct characters and are not folded."""
-    return unicodedata.normalize("NFKC", str(cid)).strip().encode(
-        sys.stdout.encoding or "utf-8", "backslashreplace")
+    scripts are distinct characters and are not folded. Every space separator
+    is a space, including the one NFKC leaves alone, U+1680."""
+    folded = "".join(" " if unicodedata.category(ch) == "Zs" else ch
+                     for ch in unicodedata.normalize("NFKC", str(cid)))
+    return folded.strip().encode(sys.stdout.encoding or "utf-8", "backslashreplace")
 
 
 def _hidden(cid) -> bool:

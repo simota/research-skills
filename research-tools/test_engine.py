@@ -227,6 +227,8 @@ def unaskable_claim_is_usage(b: Bench) -> str | None:
                                    {"id": "é", "claim": "y"}], again),
             ("no-break space", [{"id": "A B", "claim": "x"},
                                 {"id": "A\u00a0B", "claim": "y"}], again),
+            ("ogham space", [{"id": "A B", "claim": "x"},
+                             {"id": "A\u1680B", "claim": "y"}], again),
             ("full-width letter", [{"id": "C-1", "claim": "x"},
                                    {"id": "\uff23-1", "claim": "y"}], again),
             # The text report writes a lone surrogate as its escape.
