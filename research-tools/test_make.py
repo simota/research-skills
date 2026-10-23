@@ -94,6 +94,16 @@ def foreign_hook_is_kept(tmp: Path) -> str | None:
     ours = (repo / "research-tools/githooks/pre-commit").read_text(encoding="utf-8")
     if r.returncode != 0 or hook.read_text(encoding="utf-8") != ours:
         return f"an older copy of this hook was not updated: exit {r.returncode}: {r.stderr}"
+    # A link to a hook elsewhere is not this checkout's to write through: cp
+    # followed it and replaced the file it pointed at, install line or not.
+    shared = tmp / "shared-pre-commit"
+    shared.write_text("#!/bin/sh\n# Install with: make hooks\necho shared\n", encoding="utf-8")
+    hook.unlink()
+    hook.symlink_to(shared)
+    r = make(tmp, "hooks", cwd=repo)
+    if r.returncode == 0 or "echo shared" not in shared.read_text(encoding="utf-8") \
+            or not hook.is_symlink():
+        return f"a linked hook was written through: exit {r.returncode}: {r.stdout}{r.stderr}"
     return None
 
 
