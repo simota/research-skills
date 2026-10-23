@@ -152,16 +152,17 @@ def _ignorable(ch: str) -> bool:
 def _blank(s: str) -> bool:
     """Nothing a reader can see. Asked the other way round — is there a letter,
     digit, punctuation mark or symbol that is not ignorable — because listing
-    what is invisible missed one class at a time. Unassigned and private-use
-    code points count as seen: a renderer draws them as a glyph or a box, and
-    a letter from a script newer than this Python's tables reads as unassigned."""
+    what is invisible missed one class at a time. A spacing mark (`Mc`) takes
+    room of its own and is drawn. Unassigned and private-use code points count
+    as seen: a renderer draws them as a glyph or a box, and a letter from a
+    script newer than this Python's tables reads as unassigned."""
     return not any((unicodedata.category(ch)[0] in "LNPS"
-                    or unicodedata.category(ch) in ("Cn", "Co"))
+                    or unicodedata.category(ch) in ("Mc", "Cn", "Co"))
                    and not _ignorable(ch) and ch not in _BLANK_SYMBOLS
                    for ch in s)
 
 
-def _shown(cid) -> bytes:
+def _shown(cid) -> frozenset[bytes]:
     """An id as a reader of the report sees it, once `_hidden` has refused what
     a renderer may draw as nothing or act on. Compatibility forms fold, since
     they are the same character drawn another way: a precomposed `é` and `e`
@@ -170,10 +171,16 @@ def _shown(cid) -> bytes:
     what stdout cannot carry as `\\ud800`. Look-alike letters from other
     scripts are distinct characters and are not folded. Every space separator
     is a space, including the one NFKC leaves alone, U+1680, and so is the
-    blank braille cell."""
+    blank braille cell.
+
+    Two keys, because folding happens in the reader and escaping in stdout:
+    on an ASCII stdout `²` is written `\\xb2`, which is what the six
+    characters `\\xb2` are written as too, while its folded key is `2`. Two
+    ids read the same when any of their keys meet."""
+    enc = sys.stdout.encoding or "utf-8"
     folded = "".join(" " if unicodedata.category(ch) == "Zs" or ch in _BLANK_SYMBOLS else ch
                      for ch in unicodedata.normalize("NFKC", str(cid)))
-    return folded.strip().encode(sys.stdout.encoding or "utf-8", "backslashreplace")
+    return frozenset(s.strip().encode(enc, "backslashreplace") for s in (folded, str(cid)))
 
 
 def _hidden(cid) -> bool:
@@ -205,10 +212,10 @@ def malformed(claims: list[dict]) -> list[str]:
         elif _hidden(cid):
             out.append(f"{label} has id {cid!r}; an id holds no control, format or "
                        "invisible characters")
-        elif _shown(cid) in seen:
+        elif _shown(cid) & seen:
             out.append(f"{label} has id {cid!r}, which reads the same as an earlier claim's")
         else:
-            seen.add(_shown(cid))
+            seen |= _shown(cid)
             label = f"claim {cid!r}"
         text = c.get("claim")
         if not (isinstance(text, str) and not _blank(text)):

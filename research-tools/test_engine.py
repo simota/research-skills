@@ -245,12 +245,22 @@ def unaskable_claim_is_usage(b: Bench) -> str | None:
         if code != 2 or why not in err or "Traceback" in err or any(b.log.glob("*.json")):
             asked = sorted(p.stem for p in b.log.glob("*.json"))
             return f"{label}: exit {code}, engines asked {asked}: {err[-300:]}"
+    # On an ASCII stdout `²` is written `\\xb2`, as the six characters `\\xb2` are.
+    path.write_text(json.dumps([{"id": "\u00b2", "claim": "x"}, {"id": "\\xb2", "claim": "y"}]),
+                    encoding="utf-8")
+    r = subprocess.run([sys.executable, str(REFUTE), "--running", "codex", str(path)],
+                       capture_output=True, env=dict(b.env(), PYTHONIOENCODING="ascii"),
+                       timeout=60)
+    if r.returncode != 2 or b"reads the same" not in r.stderr or any(b.log.glob("*.json")):
+        return f"escaped alike on an ASCII stdout: exit {r.returncode}: {r.stderr[-300:]!r}"
     # Seen though this Python's tables may not name them: a private-use glyph,
-    # and an unassigned code point, which is how a newer script's letter reads.
+    # and an unassigned code point, which is how a newer script's letter reads;
+    # and a spacing mark, which takes room of its own.
     path.write_text(json.dumps([{"id": 1, "claim": "x"}, {"id": "C-2", "claim": ""},
-                                {"id": "\U0003fffd", "claim": "\U0003fffd"}]), encoding="utf-8")
+                                {"id": "\U0003fffd", "claim": "\U0003fffd"},
+                                {"id": "\u0903", "claim": "\u0903"}]), encoding="utf-8")
     code, v, err = b.refute(claims=path)
-    return None if (code, v) == (0, ["STANDS"] * 3) else f"well-formed claims: exit {code}: {err}"
+    return None if (code, v) == (0, ["STANDS"] * 4) else f"well-formed claims: exit {code}: {err}"
 
 
 def unreadable_engine_input_is_usage(b: Bench) -> str | None:
