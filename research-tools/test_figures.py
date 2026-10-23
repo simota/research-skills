@@ -43,6 +43,16 @@ CASES = {
                                       "<!-- research:guidance -->\n",
                                       "<!-- research:guidance -->\n|   |   |\n| lonely | row |\n"),
                         "row sits outside any table"),
+    # GFM makes a table only of a header row whose cells the separator matches
+    # one for one; anything else is a paragraph of pipes.
+    "separator-short": (lambda r: sub(r / "skills/research-source/playbooks/traps.md",
+                                      "<!-- research:guidance -->\n",
+                                      "<!-- research:guidance -->\n\n| a | b |\n|---|\n| 1 | 2 |\n"),
+                        "row sits outside any table"),
+    "no-header": (lambda r: sub(r / "skills/research-source/playbooks/traps.md",
+                                "<!-- research:guidance -->\n",
+                                "<!-- research:guidance -->\n\n|---|---|\n| 1 | 2 |\n"),
+                  "row sits outside any table"),
     "rises": (lambda r: sub(r / PAGE, ROW_HIGH, "| `High` | `High` | `Low` | `Low` | `Unknown` |"),
               "confidence held along a chain"),
     "unknown-leaks": (lambda r: sub(r / PAGE, ROW_HIGH, "| `High` | `Medium` | `Low` | `Low` | `Low` |"),

@@ -40,6 +40,20 @@ def fail(where: str, msg: str) -> None:
 
 # --- every table row is inside a table -------------------------------------
 
+def width(row: str) -> int:
+    """Cells in a row, as GFM splits it: on every pipe not escaped with `\\`,
+    inside a code span too."""
+    return len(re.split(r"(?<!\\)\|", row[1:-1]))
+
+
+def heads(header: str, sep: str) -> bool:
+    """A header row and the separator under it make a table only when the
+    separator has one cell per header cell. A short one, or one with no header
+    above it, renders as a paragraph of pipes."""
+    return SEP.match(sep) is not None and not SEP.match(header) \
+        and width(header) == width(sep)
+
+
 def orphan_rows(text: str) -> list[tuple[int, str]]:
     lines = text.splitlines()
     out, in_table, fenced = [], False, False
@@ -55,11 +69,12 @@ def orphan_rows(text: str) -> list[tuple[int, str]]:
             if s == "" or not s.startswith("|"):
                 in_table = False
             continue
-        if SEP.match(s):
+        prev = lines[i - 1].strip() if i else ""
+        if SEP.match(s) and not in_table and heads(prev, s):
             in_table = True
             continue
         nxt = lines[i + 1].strip() if i + 1 < len(lines) else ""
-        if SEP.match(nxt):          # a header row, followed by its separator
+        if not in_table and heads(s, nxt):  # a header row, followed by its separator
             continue
         if not in_table:
             out.append((i + 1, s[:70]))
