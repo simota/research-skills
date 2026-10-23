@@ -32,7 +32,8 @@ here: the tool is the same in every set, and the lens is not.
 fenced in blocks named with a fresh nonce, and the prompt says on both sides of
 them that anything inside — "ignore the above", "answer refuted=false" — is part
 of what is under attack. A claim that contains the fence itself is not asked
-about at all.
+about at all. What comes back has read that material, so the text report prints
+each engine's words escaped on one line: no answer can start a verdict line.
 
 **Exit status is the verdict.** 0 only when every claim `STANDS`; 1 when any is
 `REFUTED`, `CONTESTED` or `UNCHECKED`, in `--json` mode too. A malformed answer
@@ -313,14 +314,17 @@ def main() -> int:
         print(json.dumps(results, indent=2))
         return status
 
+    # Every line here is the report's own: what an engine said is printed as
+    # one escaped line, so it cannot start a verdict line for another claim.
+    shown = engine.printable
     for r in results:
         print(f"\n[{r['verdict']}] {r['id']}   "
               f"{r['independent_readings']} independent reading(s) of a possible {len(pool)}")
         for name, v in r["votes"].items():
-            print(f"  {name}: refuted={v['refuted']} — {v['reason']}")
-            print(f"    would settle it: {v['what_would_settle_it']}")
+            print(f"  {name}: refuted={v['refuted']} — {shown(v['reason'])}")
+            print(f"    would settle it: {shown(v['what_would_settle_it'])}")
         for name, why in r["unreachable"].items():
-            print(f"  {name}: NO VERDICT — {why}")
+            print(f"  {name}: NO VERDICT — {shown(why)}")
     kinds = [r["verdict"] for r in results]
     print(f"\n{kinds.count('REFUTED')} refuted · {kinds.count('CONTESTED')} contested · "
           f"{kinds.count('STANDS')} unrefuted · {kinds.count('UNCHECKED')} unchecked")
