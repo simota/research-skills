@@ -67,6 +67,18 @@ CASES = {
                                            "<!-- research:guidance -->\n",
                                            "<!-- research:guidance -->\n\n|---|\n| 1 |\n"),
                              "row sits outside any table"),
+    # A line of text heads a table too, but only one of the separator's width.
+    "text-header-short": (lambda r: sub(r / "skills/research-source/playbooks/traps.md",
+                                        "<!-- research:guidance -->\n",
+                                        "<!-- research:guidance -->\n\nHeader\n|---|---|\n| a | b |\n"),
+                          "row sits outside any table"),
+    # An HTML comment, as the delivery markers are, ends a table: a row after
+    # it is a paragraph, though a line of text there would be one more row.
+    "comment-ends-table": (lambda r: sub(r / "skills/research-source/playbooks/traps.md",
+                                         "<!-- research:guidance -->\n",
+                                         "<!-- research:guidance -->\n\n| a |\n|---|\n"
+                                         "<!-- note -->\n| lonely |\n"),
+                           "row sits outside any table"),
     "rises": (lambda r: sub(r / PAGE, ROW_HIGH, "| `High` | `High` | `Low` | `Low` | `Unknown` |"),
               "confidence held along a chain"),
     "unknown-leaks": (lambda r: sub(r / PAGE, ROW_HIGH, "| `High` | `Medium` | `Low` | `Low` | `Low` |"),
