@@ -156,11 +156,14 @@ def _blank(s: str) -> bool:
                    for ch in s)
 
 
-def _shown(cid) -> str:
+def _shown(cid) -> bytes:
     """An id as a reader of the report sees it, once `_hidden` has refused what
     a renderer may draw as nothing or act on: a precomposed `é` and `e` plus an
-    accent print the same. Look-alike letters from other scripts are not folded."""
-    return unicodedata.normalize("NFC", str(cid)).strip()
+    accent print the same, and so do a lone surrogate and its escape, since the
+    report writes what stdout cannot carry as `\\ud800`. Look-alike letters
+    from other scripts are not folded."""
+    return unicodedata.normalize("NFC", str(cid)).strip().encode(
+        sys.stdout.encoding or "utf-8", "backslashreplace")
 
 
 def _hidden(cid) -> bool:

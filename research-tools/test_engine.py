@@ -225,6 +225,9 @@ def unaskable_claim_is_usage(b: Bench) -> str | None:
                                                                    "claim": "y"}], hidden),
             ("decomposed accent", [{"id": "é", "claim": "x"},
                                    {"id": "é", "claim": "y"}], again),
+            # The text report writes a lone surrogate as its escape.
+            ("surrogate and its escape", [{"id": "A\ud800", "claim": "x"},
+                                          {"id": "A\\ud800", "claim": "y"}], again),
             ("no claims", [], "holds no claims")):
         path = b.claims.with_name("unaskable.json")
         path.write_text(json.dumps(claims), encoding="utf-8")
