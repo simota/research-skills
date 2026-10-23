@@ -37,8 +37,10 @@ about at all.
 **Exit status is the verdict.** 0 only when every claim `STANDS`; 1 when any is
 `REFUTED`, `CONTESTED` or `UNCHECKED`, in `--json` mode too. A malformed answer
 from an engine counts as no verdict, the same as no answer — so a run where
-nothing could be checked never exits green. Claims that cannot be read or are
-not a list of objects exit 2: no claim was put to anyone.
+nothing could be checked never exits green. Claims that cannot be read, are
+not a non-empty list of objects, or hold one with no `claim` text or with an
+`id` that is missing or reads the same as another's exit 2: no claim was put
+to anyone.
 """
 from __future__ import annotations
 
@@ -47,6 +49,7 @@ import json
 import pathlib
 import secrets
 import sys
+import unicodedata
 
 import yaml
 
@@ -122,6 +125,104 @@ def ask(engine_name: str, claim: dict) -> dict:
     return engine.run(engine_name, prompt, SCHEMA)
 
 
+# Unicode's Default_Ignorable_Code_Point, whole: what a renderer draws as
+# nothing, whatever its category. unicodedata does not expose the property,
+# and picking ranges from it by hand let one through per review — the Hangul
+# fillers are letters, U+180B and U+17B4 are marks.
+_DEFAULT_IGNORABLE = (
+    (0x00AD, 0x00AD), (0x034F, 0x034F), (0x061C, 0x061C), (0x115F, 0x1160),
+    (0x17B4, 0x17B5), (0x180B, 0x180F), (0x200B, 0x200F), (0x202A, 0x202E),
+    (0x2060, 0x206F), (0x3164, 0x3164), (0xFE00, 0xFE0F), (0xFEFF, 0xFEFF),
+    (0xFFA0, 0xFFA0), (0xFFF0, 0xFFF8), (0x1BCA0, 0x1BCA3), (0x1D173, 0x1D17A),
+    (0xE0000, 0xE0FFF))
+
+
+# A symbol by category that is drawn as an empty cell, the width of a space.
+_BLANK_SYMBOLS = {"\u2800"}            # BRAILLE PATTERN BLANK
+
+
+def _ignorable(ch: str) -> bool:
+    """Drawn as nothing even next to visible text: a default-ignorable code
+    point, or a format or control character that is not whitespace."""
+    cp, cat = ord(ch), unicodedata.category(ch)
+    return (cat == "Cf" or (cat == "Cc" and not ch.isspace())
+            or any(lo <= cp <= hi for lo, hi in _DEFAULT_IGNORABLE))
+
+
+def _blank(s: str) -> bool:
+    """Nothing a reader can see. Asked the other way round — is there a letter,
+    digit, punctuation mark or symbol that is not ignorable — because listing
+    what is invisible missed one class at a time. A spacing mark (`Mc`) takes
+    room of its own and is drawn. Unassigned and private-use code points count
+    as seen: a renderer draws them as a glyph or a box, and a letter from a
+    script newer than this Python's tables reads as unassigned."""
+    return not any((unicodedata.category(ch)[0] in "LNPS"
+                    or unicodedata.category(ch) in ("Mc", "Cn", "Co"))
+                   and not _ignorable(ch) and ch not in _BLANK_SYMBOLS
+                   for ch in s)
+
+
+def _shown(cid) -> frozenset[bytes]:
+    """An id as a reader of the report sees it, once `_hidden` has refused what
+    a renderer may draw as nothing or act on. Compatibility forms fold, since
+    they are the same character drawn another way: a precomposed `é` and `e`
+    plus an accent, a no-break space and a space, `ﬁ` and `fi`, a full-width
+    `Ａ` and `A`. So do a lone surrogate and its escape, since the report writes
+    what stdout cannot carry as `\\ud800`. Look-alike letters from other
+    scripts are distinct characters and are not folded. Every space separator
+    is a space, including the one NFKC leaves alone, U+1680, and so is the
+    blank braille cell.
+
+    Two keys, because folding happens in the reader and escaping in stdout:
+    on an ASCII stdout `²` is written `\\xb2`, which is what the six
+    characters `\\xb2` are written as too, while its folded key is `2`. Two
+    ids read the same when any of their keys meet."""
+    enc = sys.stdout.encoding or "utf-8"
+    folded = "".join(" " if unicodedata.category(ch) == "Zs" or ch in _BLANK_SYMBOLS else ch
+                     for ch in unicodedata.normalize("NFKC", str(cid)))
+    return frozenset(s.strip().encode(enc, "backslashreplace") for s in (folded, str(cid)))
+
+
+def _hidden(cid) -> bool:
+    """A character in the id that is not simply drawn: a control character, a
+    format character, a default-ignorable one, or a line or paragraph separator.
+    Refused rather than stripped, because what they do depends on context — a
+    joiner can merge two glyphs into one, a bidi override can reorder `A\\u202eBC`
+    to read as `ACB`, an escape can rewrite the terminal, a separator can start a
+    line that looks like another verdict — so no comparison after removing them
+    is honest."""
+    return any(_ignorable(ch) or unicodedata.category(ch) in ("Cc", "Zl", "Zp")
+               for ch in str(cid))
+
+
+def malformed(claims: list[dict]) -> list[str]:
+    """What makes a claim impossible to put to anyone, or its verdict impossible
+    to hand back. A blank claim asked to be refuted came back STANDS and exited
+    0; a missing or repeated id left a verdict nobody could match to its claim.
+
+    Ids are compared as the report prints them: `1` and `"1"`, or `A` and `A `,
+    are two ids in JSON and one on the page `make refute` shows."""
+    out, seen = [], set()
+    for i, c in enumerate(claims):
+        cid = c.get("id")
+        label = f"claim #{i + 1}"
+        if isinstance(cid, bool) or not isinstance(cid, (str, int)) \
+                or _blank(str(cid)):
+            out.append(f"{label} has id {cid!r}; an id is a non-blank string or an integer")
+        elif _hidden(cid):
+            out.append(f"{label} has id {cid!r}; an id holds no control, format or "
+                       "invisible characters")
+        elif _shown(cid) & seen:
+            out.append(f"{label} has id {cid!r}, which reads the same as an earlier claim's")
+        else:
+            seen |= _shown(cid)
+            label = f"claim {cid!r}"
+        text = c.get("claim")
+        if not (isinstance(text, str) and not _blank(text)):
+            out.append(f"{label} has no `claim` text")
+    return out
+
+
 def refuters(running: str) -> list[str]:
     known = H.get("engines", {}).get("runs_on") or []
     if running not in known:
@@ -175,6 +276,13 @@ def main() -> int:
     if not isinstance(claims, list) or not all(isinstance(c, dict) for c in claims):
         print(f"{a.claims}: expected a list of {{id, claim, [evidence], [where]}} objects",
               file=sys.stderr)
+        return 2
+    # Checked before any engine runs: a claim that cannot be asked is malformed
+    # input, not an engine that gave no verdict.
+    problems = malformed(claims) if claims else ["holds no claims"]
+    if problems:
+        for p in problems:
+            print(f"{a.claims}: {p}", file=sys.stderr)
         return 2
     try:
         pool = refuters(a.running)

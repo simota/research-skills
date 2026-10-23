@@ -186,6 +186,83 @@ def bad_claims_file_is_usage(b: Bench) -> str | None:
     return None
 
 
+def unaskable_claim_is_usage(b: Bench) -> str | None:
+    """A blank claim came back STANDS and exited 0; a missing one was reported as
+    every engine failing; a missing or repeated id left verdicts nobody could
+    match. Each is malformed input, refused before any engine is paid, and the
+    refusal names the reason."""
+    no_text, bad_id, again = "no `claim` text", "an id is", "reads the same"
+    hidden = "invisible characters"
+    for label, claims, why in (
+            ("blank claim", [{"id": "A", "claim": "   "}], no_text),
+            ("zero-width claim", [{"id": "A", "claim": "​"}], no_text),
+            ("variation selector claim", [{"id": "A", "claim": "️"}], no_text),
+            ("braille blank claim", [{"id": "A", "claim": "\u2800"}], no_text),
+            ("braille blank id", [{"id": "\u2800", "claim": "x"}], bad_id),
+            ("hangul filler claim", [{"id": "A", "claim": "ㅤ ‍"}], no_text),
+            ("zero-width id", [{"id": "​️", "claim": "x"}], bad_id),
+            ("no claim", [{"id": "A", "claim": "x"}, {"id": "B"}], no_text),
+            ("claim not text", [{"id": "A", "claim": ["x"]}], no_text),
+            ("no id", [{"claim": "x"}], bad_id),
+            ("blank id", [{"id": " ", "claim": "x"}], bad_id),
+            ("id a boolean", [{"id": True, "claim": "x"}], bad_id),
+            ("id a float", [{"id": 1.0, "claim": "x"}], bad_id),
+            ("terminal escape in id", [{"id": "A", "claim": "x"},
+                                       {"id": "\x1b[0mA", "claim": "y"}], hidden),
+            ("newline in id", [{"id": "A\nB", "claim": "x"}], hidden),
+            ("line separator in id", [{"id": "A [STANDS] B", "claim": "x"}], hidden),
+            ("paragraph separator in id", [{"id": "A B", "claim": "x"}], hidden),
+            # Refused, not stripped: an override reorders what it holds, so
+            # `A\u202eBC\u202c` reads as `ACB`, and a joiner merges two glyphs.
+            ("bidi override in id", [{"id": "ACB", "claim": "x"},
+                                     {"id": "A\u202eBC\u202c", "claim": "y"}], hidden),
+            ("joiner in id", [{"id": "\U0001f469\u200d\U0001f4bb", "claim": "x"}], hidden),
+            ("repeated id", [{"id": "A", "claim": "x"}, {"id": "A", "claim": "y"}], again),
+            # Two ids in JSON, one on the page `make refute` prints.
+            ("1 and \"1\"", [{"id": 1, "claim": "x"}, {"id": "1", "claim": "y"}], again),
+            ("trailing space", [{"id": "A", "claim": "x"}, {"id": "A ", "claim": "y"}], again),
+            ("zero-width suffix", [{"id": "A", "claim": "x"}, {"id": "A​", "claim": "y"}],
+             hidden),
+            ("ignorable mark suffix", [{"id": "A", "claim": "x"}, {"id": "A᠋឴",
+                                                                   "claim": "y"}], hidden),
+            ("decomposed accent", [{"id": "é", "claim": "x"},
+                                   {"id": "é", "claim": "y"}], again),
+            ("no-break space", [{"id": "A B", "claim": "x"},
+                                {"id": "A\u00a0B", "claim": "y"}], again),
+            ("ogham space", [{"id": "A B", "claim": "x"},
+                             {"id": "A\u1680B", "claim": "y"}], again),
+            ("braille blank inside", [{"id": "A B", "claim": "x"},
+                                      {"id": "A\u2800B", "claim": "y"}], again),
+            ("full-width letter", [{"id": "C-1", "claim": "x"},
+                                   {"id": "\uff23-1", "claim": "y"}], again),
+            # The text report writes a lone surrogate as its escape.
+            ("surrogate and its escape", [{"id": "A\ud800", "claim": "x"},
+                                          {"id": "A\\ud800", "claim": "y"}], again),
+            ("no claims", [], "holds no claims")):
+        path = b.claims.with_name("unaskable.json")
+        path.write_text(json.dumps(claims), encoding="utf-8")
+        code, _, err = b.refute(claims=path)
+        if code != 2 or why not in err or "Traceback" in err or any(b.log.glob("*.json")):
+            asked = sorted(p.stem for p in b.log.glob("*.json"))
+            return f"{label}: exit {code}, engines asked {asked}: {err[-300:]}"
+    # On an ASCII stdout `²` is written `\\xb2`, as the six characters `\\xb2` are.
+    path.write_text(json.dumps([{"id": "\u00b2", "claim": "x"}, {"id": "\\xb2", "claim": "y"}]),
+                    encoding="utf-8")
+    r = subprocess.run([sys.executable, str(REFUTE), "--running", "codex", str(path)],
+                       capture_output=True, env=dict(b.env(), PYTHONIOENCODING="ascii"),
+                       timeout=60)
+    if r.returncode != 2 or b"reads the same" not in r.stderr or any(b.log.glob("*.json")):
+        return f"escaped alike on an ASCII stdout: exit {r.returncode}: {r.stderr[-300:]!r}"
+    # Seen though this Python's tables may not name them: a private-use glyph,
+    # and an unassigned code point, which is how a newer script's letter reads;
+    # and a spacing mark, which takes room of its own.
+    path.write_text(json.dumps([{"id": 1, "claim": "x"}, {"id": "C-2", "claim": ""},
+                                {"id": "\U0003fffd", "claim": "\U0003fffd"},
+                                {"id": "\u0903", "claim": "\u0903"}]), encoding="utf-8")
+    code, v, err = b.refute(claims=path)
+    return None if (code, v) == (0, ["STANDS"] * 4) else f"well-formed claims: exit {code}: {err}"
+
+
 def unreadable_engine_input_is_usage(b: Bench) -> str | None:
     prompt, schema = b.claims.with_name("p.txt"), b.claims.with_name("s.json")
     prompt.write_text("x", encoding="utf-8")
@@ -353,7 +430,8 @@ def interrupt_kills_engine(b: Bench) -> str | None:
 
 CASES = [stands_exits_zero, refuted_exits_one, extra_key_is_no_verdict, malformed_is_no_verdict,
          failed_exit_is_no_verdict, maker_is_excluded, prompt_on_stdin_tools_off,
-         claim_is_fenced, claims_on_stdin, bad_claims_file_is_usage, unknown_running_is_refused,
+         claim_is_fenced, claims_on_stdin, bad_claims_file_is_usage, unaskable_claim_is_usage,
+         unknown_running_is_refused,
          unreadable_engine_input_is_usage,
          text_that_cannot_cross_is_no_verdict, output_not_utf8_is_no_verdict,
          json_survives_an_ascii_stdout,
