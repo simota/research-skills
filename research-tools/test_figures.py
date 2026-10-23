@@ -26,6 +26,16 @@ def run(root: Path) -> tuple[int, str]:
     return r.returncode, r.stdout + r.stderr
 
 
+def mutated(mutate) -> tuple[int, str]:
+    """figures_check on a throwaway copy with one edit made."""
+    with tempfile.TemporaryDirectory() as tmp:
+        copy = Path(tmp) / "repo"
+        shutil.copytree(ROOT, copy, symlinks=True,
+                        ignore=shutil.ignore_patterns(".git", ".claude", "__pycache__"))
+        mutate(copy)
+        return run(copy)
+
+
 def sub(path: Path, old: str, new: str) -> None:
     t = path.read_text(encoding="utf-8")
     assert old in t, f"fixture text not found in {path.name}: {old[:60]!r}"
@@ -43,6 +53,39 @@ CASES = {
                                       "<!-- research:guidance -->\n",
                                       "<!-- research:guidance -->\n|   |   |\n| lonely | row |\n"),
                         "row sits outside any table"),
+    # GFM makes a table only of a header row whose cells the separator matches
+    # one for one; anything else is a paragraph of pipes.
+    "separator-short": (lambda r: sub(r / "skills/research-source/playbooks/traps.md",
+                                      "<!-- research:guidance -->\n",
+                                      "<!-- research:guidance -->\n\n| a | b |\n|---|\n| 1 | 2 |\n"),
+                        "row sits outside any table"),
+    "no-header": (lambda r: sub(r / "skills/research-source/playbooks/traps.md",
+                                "<!-- research:guidance -->\n",
+                                "<!-- research:guidance -->\n\n|---|---|\n| 1 | 2 |\n"),
+                  "row sits outside any table"),
+    "no-header-one-column": (lambda r: sub(r / "skills/research-source/playbooks/traps.md",
+                                           "<!-- research:guidance -->\n",
+                                           "<!-- research:guidance -->\n\n|---|\n| 1 |\n"),
+                             "row sits outside any table"),
+    # A line of text heads a table too, but only one of the separator's width.
+    "text-header-short": (lambda r: sub(r / "skills/research-source/playbooks/traps.md",
+                                        "<!-- research:guidance -->\n",
+                                        "<!-- research:guidance -->\n\nHeader\n|---|---|\n| a | b |\n"),
+                          "row sits outside any table"),
+    # An HTML comment, as the delivery markers are, ends a table: a row after
+    # it is a paragraph, though a line of text there would be one more row.
+    "comment-ends-table": (lambda r: sub(r / "skills/research-source/playbooks/traps.md",
+                                         "<!-- research:guidance -->\n",
+                                         "<!-- research:guidance -->\n\n| a |\n|---|\n"
+                                         "<!-- note -->\n| lonely |\n"),
+                           "row sits outside any table"),
+    # A tilde fence ends a table as a backtick one does, and what follows its
+    # close is no row of it.
+    "tilde-fence-ends-table": (lambda r: sub(r / "skills/research-source/playbooks/traps.md",
+                                             "<!-- research:guidance -->\n",
+                                             "<!-- research:guidance -->\n\n| a |\n|---|\n"
+                                             "~~~\ncode\n~~~\n| lonely |\n"),
+                               "row sits outside any table"),
     "rises": (lambda r: sub(r / PAGE, ROW_HIGH, "| `High` | `High` | `Low` | `Low` | `Unknown` |"),
               "confidence held along a chain"),
     "unknown-leaks": (lambda r: sub(r / PAGE, ROW_HIGH, "| `High` | `Medium` | `Low` | `Low` | `Low` |"),
@@ -57,6 +100,25 @@ CASES = {
 }
 
 
+# Edits that must stay green: a check that fires on a table GitHub renders is
+# as wrong as one silent on a table it does not.
+HARMLESS = {
+    # cmark-gfm makes this a one-column table whose header cell reads `---`.
+    "hyphen-header": lambda r: sub(r / "skills/research-source/playbooks/traps.md",
+                                   "<!-- research:guidance -->\n",
+                                   "<!-- research:guidance -->\n\n| --- |\n| --- |\n| x |\n"),
+    # And this one whose header is a line of text: GFM needs no pipes on it.
+    "text-header": lambda r: sub(r / "skills/research-source/playbooks/traps.md",
+                                 "<!-- research:guidance -->\n",
+                                 "<!-- research:guidance -->\n\nOne column\n|---|\n| x |\n"),
+    # Text that only looks like a block opener is one more row of the table.
+    "not-a-heading": lambda r: sub(r / "skills/research-source/playbooks/traps.md",
+                                   "<!-- research:guidance -->\n",
+                                   "<!-- research:guidance -->\n\n| a |\n|---|\n#tag\n"
+                                   "####### x\n-*-\n| b |\n"),
+}
+
+
 def main() -> int:
     code, out = run(ROOT)
     if code != 0:
@@ -64,17 +126,19 @@ def main() -> int:
         return 1
     silent = []
     for name, (mutate, says) in CASES.items():
-        with tempfile.TemporaryDirectory() as tmp:
-            copy = Path(tmp) / "repo"
-            shutil.copytree(ROOT, copy, symlinks=True,
-                            ignore=shutil.ignore_patterns(".git", ".claude", "__pycache__"))
-            mutate(copy)
-            code, out = run(copy)
+        code, out = mutated(mutate)
         if code == 0 or says not in out:
             silent.append(name)
             print(f"  {name} did not fire saying {says!r}\n{out}")
-    print(f"{len(CASES)} figure checks exercised, {len(silent)} silent")
-    return 1 if silent else 0
+    flagged = []
+    for name, mutate in HARMLESS.items():
+        code, out = mutated(mutate)
+        if code != 0:
+            flagged.append(name)
+            print(f"  harmless edit {name} was flagged\n{out}")
+    print(f"{len(CASES)} figure checks exercised, {len(silent)} silent · "
+          f"{len(HARMLESS)} harmless edits, {len(flagged)} flagged")
+    return 1 if silent or flagged else 0
 
 
 if __name__ == "__main__":

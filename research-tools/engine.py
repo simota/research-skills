@@ -47,6 +47,7 @@ import signal
 import subprocess
 import sys
 import tempfile
+import unicodedata
 
 import yaml
 
@@ -296,6 +297,20 @@ def _parse(engine: str, body: str) -> dict:
     raise EngineError(f"{engine} printed nothing that parses as an object:\n{body[:400]}")
 
 
+def printable(text: str) -> str:
+    """Engine text as one line a person can read and nothing can rewrite.
+
+    What an engine says is data, and it has read the claim under attack: a
+    line break in it printed `[STANDS] C-002` where a verdict line goes, an
+    escape could erase the real one, a bidi override reordered it. Each control,
+    format, separator or surrogate code point is written as its escape (`\\n`,
+    `\\x1b`, `\\u202e`), so every line break in a report is the report's own.
+    """
+    return "".join(ch.encode("unicode_escape").decode("ascii")
+                   if unicodedata.category(ch) in ("Cc", "Cf", "Zl", "Zp", "Cs") else ch
+                   for ch in text)
+
+
 def _tail(r: subprocess.CompletedProcess) -> str:
     return "\n".join((r.stderr or r.stdout or "").strip().splitlines()[-6:])
 
@@ -323,7 +338,7 @@ def selftest() -> int:
         try:
             got = run(engine, "Reply with ok=true and nothing else.", SELFTEST)
         except EngineError as e:
-            print(f"  {engine}: UNAVAILABLE — {e}")
+            print(f"  {engine}: UNAVAILABLE — {printable(str(e))}")
             bad += 1
             continue
         print(f"  {engine}: answered {got}")
@@ -382,7 +397,7 @@ def main() -> int:
     try:
         got = run(engine, prompt, schema)
     except EngineError as e:
-        print(f"{a.engine or 'checker'}: {e}", file=sys.stderr)
+        print(f"{a.engine or 'checker'}: {printable(str(e))}", file=sys.stderr)
         return 1
     print(json.dumps(got, ensure_ascii=False, indent=2))
     return 0

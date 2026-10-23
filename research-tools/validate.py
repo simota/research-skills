@@ -543,16 +543,23 @@ def v26_boundaries_real():
 
 
 def v27_symlinks_stay_inside():
-    """What a skill reaches must live in this repo, and must actually be there."""
-    for d in SKILL_DIRS:
-        for entry in sorted(d.iterdir()):
-            if not entry.is_symlink():
-                continue
-            target = (entry.parent / entry.readlink()).resolve()
-            if not target.exists():
-                fail("V27", f"{d.name}/{entry.name} is a broken symlink")
-            elif ROOT.resolve() not in target.parents and target != ROOT.resolve():
-                fail("V27", f"{d.name}/{entry.name} points outside the repo ({target})")
+    """What a skill reaches must live in this repo, and must actually be there.
+
+    At every depth: a reference file linked from outside the repo passed when
+    only a skill's own entries were looked at. A linked directory is checked
+    and not entered, so `_research` and `registry` are not walked twice."""
+    for d in [*SKILL_DIRS, SKILLS_ROOT / SHARED]:
+        for top, dirs, files in os.walk(d):
+            for name in sorted(dirs + files):
+                entry = Path(top) / name
+                if not entry.is_symlink():
+                    continue
+                shown = entry.relative_to(SKILLS_ROOT)
+                target = (entry.parent / entry.readlink()).resolve()
+                if not target.exists():
+                    fail("V27", f"{shown} is a broken symlink")
+                elif ROOT.resolve() not in target.parents and target != ROOT.resolve():
+                    fail("V27", f"{shown} points outside the repo ({target})")
 
 
 def v28_namespace_agrees():

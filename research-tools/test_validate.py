@@ -284,6 +284,16 @@ def _(r):
     (r / f"{S}research-source/_research").symlink_to("../_gone")
 
 
+# Below the top of a skill too: only the entries directly in it were looked at.
+@case("V27-nested")
+def _(r):
+    f = r / f"{S}research-scope/reference/question-design.md"
+    outside = r.parent / "question-design.md"
+    outside.write_text(f.read_text(encoding="utf-8"), encoding="utf-8")
+    f.unlink()
+    f.symlink_to(outside)
+
+
 @case("V28")
 def _(r): sub(r / "research-registry/harness.yaml", "set: research", "set: rsrch")
 

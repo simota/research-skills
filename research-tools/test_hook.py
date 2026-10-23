@@ -73,17 +73,45 @@ def staged_clean_tree_broken(repo: Path) -> bool:
     return git(repo, "commit", "-q", "-m", "clean").returncode == 0
 
 
+def intent_to_add_not_committed(repo: Path) -> bool:
+    """Must be refused: `git add -N` puts a path in the index that the commit
+    does not carry, and the hook used to export it, so a link to it passed."""
+    (repo / "NEWPAGE.md").write_text("# New\n", encoding="utf-8")
+    (repo / "README.md").write_text((repo / "README.md").read_text(encoding="utf-8")
+                                    + "\nSee [new](NEWPAGE.md).\n", encoding="utf-8")
+    git(repo, "add", "README.md")
+    git(repo, "add", "-N", "NEWPAGE.md")
+    r = git(repo, "commit", "-q", "-m", "links to a file it does not carry")
+    return r.returncode != 0 and "NEWPAGE.md" in r.stdout + r.stderr
+
+
+def sparse_checkout_clean(repo: Path) -> bool:
+    """Must be accepted: a path left out of a sparse checkout is still committed,
+    and the hook used to skip it, so a link to it read as broken."""
+    git(repo, "sparse-checkout", "set", "--no-cone", "/*", "!/docs/")
+    if (repo / "docs").exists():
+        return False                        # the case would not be testing anything
+    (repo / "README.md").write_text((repo / "README.md").read_text(encoding="utf-8") + "\n",
+                                    encoding="utf-8")
+    git(repo, "add", "README.md")
+    return git(repo, "commit", "-q", "-m", "clean").returncode == 0
+
+
+CASES = (staged_broken_tree_clean, staged_clean_tree_broken, intent_to_add_not_committed,
+         sparse_checkout_clean)
+
+
 def main() -> int:
     if shutil.which("git") is None:
         print("git is not installed; the hook cannot be exercised")
         return 1
     wrong = []
-    for case in (staged_broken_tree_clean, staged_clean_tree_broken):
+    for case in CASES:
         with tempfile.TemporaryDirectory() as tmp:
             if not case(fresh(Path(tmp))):
                 wrong.append(case.__name__)
                 print(f"  {case.__name__}: {case.__doc__}")
-    print(f"2 hook cases exercised, {len(wrong)} wrong")
+    print(f"{len(CASES)} hook cases exercised, {len(wrong)} wrong")
     return 1 if wrong else 0
 
 

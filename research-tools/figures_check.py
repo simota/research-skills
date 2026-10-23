@@ -40,29 +40,91 @@ def fail(where: str, msg: str) -> None:
 
 # --- every table row is inside a table -------------------------------------
 
+# Whether a line opens a block depends on what is open above it, as CommonMark
+# has it. After a blank line, any of these does: heading, quote, list item
+# (empty, or any number), HTML comment, thematic break, indented code.
+_BREAK = r"(-[ \t]*){3,}$|(\*[ \t]*){3,}$|(_[ \t]*){3,}$"
+OPENS_BLOCK = re.compile(rf"( {{4}}|\t| {{0,3}}(#{{1,6}}(\s|$)|>|[-*+](\s|$)"
+                         rf"|\d{{1,9}}[.)](\s|$)|<!--|{_BREAK}))")
+# Inside a paragraph only these do: an empty item, a list starting at any
+# number but 1, and indented code are more of the paragraph.
+INTERRUPTS = re.compile(rf" {{0,3}}(#{{1,6}}(\s|$)|>|[-*+]\s+\S|1[.)]\s+\S|<!--|{_BREAK})")
+# Inside a quote or list item's paragraph, any item starts a sibling.
+SIBLING = re.compile(rf" {{0,3}}(#{{1,6}}(\s|$)|>|[-*+](\s|$)|\d{{1,9}}[.)](\s|$)|<!--|{_BREAK})")
+# A quote or a list item with text in it: the lines that run on from it are
+# its paragraph's, though written flush left, and never head a table.
+CONTAINER = re.compile(r" {0,3}(>|[-*+]\s+\S|\d{1,9}[.)]\s+\S)")
+# A code fence, backticks or tildes, closed only by a run of the same
+# character at least as long.
+FENCE = re.compile(r" {0,3}(`{3,}|~{3,})")
+
+
+def width(row: str) -> int:
+    """Cells in a row, as GFM splits it: on every pipe no backslash precedes,
+    inside a code span too. The pipes at either end are optional."""
+    row = row[1:] if row.startswith("|") else row
+    row = row[:-1] if re.search(r"(?<!\\)\|$", row) else row
+    return len(re.split(r"(?<!\\)\|", row))
+
+
+def is_row(s: str) -> bool:
+    return s.startswith("|") and s.endswith("|") and len(s) > 1
+
+
+def step(state: str | None, raw: str) -> str | None:
+    """What is open after `raw`: a paragraph of its own ("para"), one inside a
+    quote or list item ("lazy"), or nothing a table could grow from (None)."""
+    if not raw.strip():
+        return None
+    # In a list, a sibling item starts even empty; only a paragraph of its own
+    # holds an empty item off.
+    opens = INTERRUPTS if state == "para" else OPENS_BLOCK if state is None else SIBLING
+    if not opens.match(raw):
+        return state or "para"
+    return "lazy" if CONTAINER.match(raw) and not re.fullmatch(rf" {{0,3}}({_BREAK})", raw) \
+        else None
+
+
+def heads(header: str, open_: str | None, sep: str) -> bool:
+    """A paragraph's last line and the separator under it make a table only
+    when the separator has one cell per header cell, pipes on the header or
+    none: `Header` heads a one-column table, not a two-column one, and
+    `| --- |` heads one too. A short separator, or one with no paragraph of
+    its own above it, renders as text. A pipe after any backslash is escaped,
+    as cmark-gfm splits cells (pandoc counts parity)."""
+    return open_ == "para" and SEP.match(sep) is not None \
+        and width(header.strip()) == width(sep)
+
+
 def orphan_rows(text: str) -> list[tuple[int, str]]:
     lines = text.splitlines()
-    out, in_table, fenced = [], False, False
+    out: list[tuple[int, str]] = []
+    in_table, fence, state = False, "", None
     for i, raw in enumerate(lines):
         s = raw.strip()
-        if s.startswith("```"):
-            fenced, in_table = not fenced, False
+        if fence:
+            if re.fullmatch(rf" {{0,3}}{re.escape(fence[0])}{{{len(fence)},}}[ \t]*", raw):
+                fence = ""
             continue
-        if fenced:
+        m = FENCE.match(raw)
+        if m:
+            fence, in_table, state = m.group(1), False, None
             continue
-        is_row = s.startswith("|") and s.endswith("|") and len(s) > 1
-        if not is_row:
-            if s == "" or not s.startswith("|"):
-                in_table = False
+        if in_table:
+            # A table runs on through a line without pipes, which GFM reads as
+            # one more row; a blank line or another block's opening ends it.
+            if s and not OPENS_BLOCK.match(raw):
+                continue
+            in_table, state = False, step(None, raw)
             continue
-        if SEP.match(s):
-            in_table = True
+        if i and heads(lines[i - 1], state, s):
+            in_table, state = True, None
+            if out and out[-1][0] == i:       # it was a header row after all
+                out.pop()
             continue
-        nxt = lines[i + 1].strip() if i + 1 < len(lines) else ""
-        if SEP.match(nxt):          # a header row, followed by its separator
-            continue
-        if not in_table:
+        if is_row(s):
             out.append((i + 1, s[:70]))
+        state = step(state, raw)
     return out
 
 
