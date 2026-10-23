@@ -157,11 +157,19 @@ def _blank(s: str) -> bool:
 
 
 def _shown(cid) -> str:
-    """An id as a reader of the report sees it, which is what two ids must
-    differ in: `A` and `A\\u200b`, or a precomposed `é` and `e` plus an accent,
-    print the same. Look-alike letters from other scripts are not folded."""
-    return unicodedata.normalize(
-        "NFC", "".join(ch for ch in str(cid) if not _ignorable(ch))).strip()
+    """An id as a reader of the report sees it, once `_hidden` has refused what
+    a renderer may draw as nothing or act on: a precomposed `é` and `e` plus an
+    accent print the same. Look-alike letters from other scripts are not folded."""
+    return unicodedata.normalize("NFC", str(cid)).strip()
+
+
+def _hidden(cid) -> bool:
+    """A character in the id that is not simply drawn: a control character, a
+    format character, or a default-ignorable one. Refused rather than stripped,
+    because what they do depends on context — a joiner can merge two glyphs into
+    one, a bidi override can reorder `A\\u202eBC` to read as `ACB`, an escape
+    can rewrite the terminal — so no comparison after removing them is honest."""
+    return any(_ignorable(ch) or unicodedata.category(ch) == "Cc" for ch in str(cid))
 
 
 def malformed(claims: list[dict]) -> list[str]:
@@ -178,10 +186,9 @@ def malformed(claims: list[dict]) -> list[str]:
         if isinstance(cid, bool) or not isinstance(cid, (str, int)) \
                 or _blank(str(cid)):
             out.append(f"{label} has id {cid!r}; an id is a non-blank string or an integer")
-        elif any(unicodedata.category(ch) == "Cc" for ch in str(cid)):
-            # The text report writes an id as it is, and a terminal acts on an
-            # escape sequence in it: `\x1b[0mA` is shown as `A`.
-            out.append(f"{label} has id {cid!r}; an id holds no control characters")
+        elif _hidden(cid):
+            out.append(f"{label} has id {cid!r}; an id holds no control, format or "
+                       "invisible characters")
         elif _shown(cid) in seen:
             out.append(f"{label} has id {cid!r}, which prints the same as an earlier claim's")
         else:

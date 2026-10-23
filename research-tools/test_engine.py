@@ -192,6 +192,7 @@ def unaskable_claim_is_usage(b: Bench) -> str | None:
     match. Each is malformed input, refused before any engine is paid, and the
     refusal names the reason."""
     no_text, bad_id, again = "no `claim` text", "an id is", "prints the same"
+    hidden = "invisible characters"
     for label, claims, why in (
             ("blank claim", [{"id": "A", "claim": "   "}], no_text),
             ("zero-width claim", [{"id": "A", "claim": "​"}], no_text),
@@ -205,16 +206,21 @@ def unaskable_claim_is_usage(b: Bench) -> str | None:
             ("id a boolean", [{"id": True, "claim": "x"}], bad_id),
             ("id a float", [{"id": 1.0, "claim": "x"}], bad_id),
             ("terminal escape in id", [{"id": "A", "claim": "x"},
-                                       {"id": "\x1b[0mA", "claim": "y"}], "control characters"),
-            ("newline in id", [{"id": "A\nB", "claim": "x"}], "control characters"),
+                                       {"id": "\x1b[0mA", "claim": "y"}], hidden),
+            ("newline in id", [{"id": "A\nB", "claim": "x"}], hidden),
+            # Refused, not stripped: an override reorders what it holds, so
+            # `A\u202eBC\u202c` reads as `ACB`, and a joiner merges two glyphs.
+            ("bidi override in id", [{"id": "ACB", "claim": "x"},
+                                     {"id": "A\u202eBC\u202c", "claim": "y"}], hidden),
+            ("joiner in id", [{"id": "\U0001f469\u200d\U0001f4bb", "claim": "x"}], hidden),
             ("repeated id", [{"id": "A", "claim": "x"}, {"id": "A", "claim": "y"}], again),
             # Two ids in JSON, one on the page `make refute` prints.
             ("1 and \"1\"", [{"id": 1, "claim": "x"}, {"id": "1", "claim": "y"}], again),
             ("trailing space", [{"id": "A", "claim": "x"}, {"id": "A ", "claim": "y"}], again),
             ("zero-width suffix", [{"id": "A", "claim": "x"}, {"id": "A​", "claim": "y"}],
-             again),
+             hidden),
             ("ignorable mark suffix", [{"id": "A", "claim": "x"}, {"id": "A᠋឴",
-                                                                   "claim": "y"}], again),
+                                                                   "claim": "y"}], hidden),
             ("decomposed accent", [{"id": "é", "claim": "x"},
                                    {"id": "é", "claim": "y"}], again),
             ("no claims", [], "holds no claims")):
