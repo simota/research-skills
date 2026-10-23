@@ -79,6 +79,13 @@ CASES = {
                                          "<!-- research:guidance -->\n\n| a |\n|---|\n"
                                          "<!-- note -->\n| lonely |\n"),
                            "row sits outside any table"),
+    # A tilde fence ends a table as a backtick one does, and what follows its
+    # close is no row of it.
+    "tilde-fence-ends-table": (lambda r: sub(r / "skills/research-source/playbooks/traps.md",
+                                             "<!-- research:guidance -->\n",
+                                             "<!-- research:guidance -->\n\n| a |\n|---|\n"
+                                             "~~~\ncode\n~~~\n| lonely |\n"),
+                               "row sits outside any table"),
     "rises": (lambda r: sub(r / PAGE, ROW_HIGH, "| `High` | `High` | `Low` | `Low` | `Unknown` |"),
               "confidence held along a chain"),
     "unknown-leaks": (lambda r: sub(r / PAGE, ROW_HIGH, "| `High` | `Medium` | `Low` | `Low` | `Low` |"),
@@ -104,6 +111,11 @@ HARMLESS = {
     "text-header": lambda r: sub(r / "skills/research-source/playbooks/traps.md",
                                  "<!-- research:guidance -->\n",
                                  "<!-- research:guidance -->\n\nOne column\n|---|\n| x |\n"),
+    # Text that only looks like a block opener is one more row of the table.
+    "not-a-heading": lambda r: sub(r / "skills/research-source/playbooks/traps.md",
+                                   "<!-- research:guidance -->\n",
+                                   "<!-- research:guidance -->\n\n| a |\n|---|\n#tag\n"
+                                   "####### x\n-*-\n| b |\n"),
 }
 
 
