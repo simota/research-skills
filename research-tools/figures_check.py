@@ -27,8 +27,10 @@ import sys
 import yaml
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-# At least one dash: `| |` or `|:|` is a row of empty cells, not a separator.
-SEP = re.compile(r"^\|[\s:|]*-[\s:|-]*\|$")
+# A delimiter row as cmark-gfm reads one: each cell dashes, a colon at either
+# end, the outer pipes optional but one pipe somewhere (without, `---` is a
+# heading's underline). `| |` or `|:|` is a row of empty cells, not a separator.
+SEP = re.compile(r"^(?=.*\|)\|?[ \t]*:?-+:?[ \t]*(\|[ \t]*:?-+:?[ \t]*)*\|?$")
 # Not corpus: git's store, and `.claude/`, where a worktree of this repo lives.
 NOT_CORPUS = {".git", ".claude"}
 failures: list[str] = []
@@ -51,9 +53,11 @@ OPENS_BLOCK = re.compile(rf"( {{4}}|\t| {{0,3}}(#{{1,6}}(\s|$)|>|[-*+](\s|$)"
 INTERRUPTS = re.compile(rf" {{0,3}}(#{{1,6}}(\s|$)|>|[-*+]\s+\S|1[.)]\s+\S|<!--|{_BREAK})")
 # Inside a quote or list item's paragraph, any item starts a sibling.
 SIBLING = re.compile(rf" {{0,3}}(#{{1,6}}(\s|$)|>|[-*+](\s|$)|\d{{1,9}}[.)](\s|$)|<!--|{_BREAK})")
-# A quote or a list item with text in it: the lines that run on from it are
-# its paragraph's, though written flush left, and never head a table.
-CONTAINER = re.compile(r" {0,3}(>|[-*+]\s+\S|\d{1,9}[.)]\s+\S)")
+# A quote: the lines that run on from it are its paragraph's, though written
+# flush left, and never head a table. List items are followed by column.
+CONTAINER = re.compile(r" {0,3}>")
+# A list item's marker, and the spaces after it that set its content column.
+ITEM = re.compile(r"( {0,3})([-*+]|\d{1,9}[.)])( +|$)")
 # A code fence, backticks or tildes, closed only by a run of the same
 # character at least as long.
 FENCE = re.compile(r" {0,3}(`{3,}|~{3,})")
@@ -71,9 +75,14 @@ def is_row(s: str) -> bool:
     return s.startswith("|") and s.endswith("|") and len(s) > 1
 
 
+def lead(line: str) -> int:
+    return len(line) - len(line.lstrip(" "))
+
+
 def step(state: str | None, raw: str) -> str | None:
-    """What is open after `raw`: a paragraph of its own ("para"), one inside a
-    quote or list item ("lazy"), or nothing a table could grow from (None)."""
+    """What is open after `raw`: a paragraph a table can grow from ("para"), one
+    no header can be read from ("lazy"), or nothing a table could grow from
+    (None)."""
     if not raw.strip():
         return None
     # In a list, a sibling item starts even empty; only a paragraph of its own
@@ -97,34 +106,91 @@ def heads(header: str, open_: str | None, sep: str) -> bool:
 
 
 def orphan_rows(text: str) -> list[tuple[int, str]]:
-    lines = text.splitlines()
+    """Every row GFM renders as text. A list item is followed by its content
+    column, as CommonMark has it: a line indented to it is inside the item and
+    is read from that column on, so a fence or a table inside a nested item is
+    one; a line short of it closes the item, unless it runs on lazily from the
+    item's paragraph, which keeps it text."""
+    lines = [line.expandtabs(4) for line in text.splitlines()]
     out: list[tuple[int, str]] = []
-    in_table, fence, state = False, "", None
+    in_table, fence, state, prev = False, "", None, ""
+    cols: list[int] = []      # content column of each open list item, outermost first
+    depth = 0                 # how many items the open fence or table sits in
+    empty = False             # the innermost item has had no content yet
+    tried = False             # this paragraph has failed a delimiter row
     for i, raw in enumerate(lines):
         s = raw.strip()
+        if s:
+            k, empty = 0, False
+            while k < len(cols) and lead(raw) >= cols[k]:
+                k += 1
+        else:
+            # An item begins with at most one blank line: an empty one ends
+            # here, unless the line is spaces out to its content column.
+            if empty and not fence and lead(raw) < cols[-1]:
+                cols.pop()
+                empty = False
+            k = len(cols)
+        rel = raw[cols[k - 1]:] if s and k else raw
         if fence:
-            if re.fullmatch(rf" {{0,3}}{re.escape(fence[0])}{{{len(fence)},}}[ \t]*", raw):
-                fence = ""
-            continue
-        m = FENCE.match(raw)
-        if m:
-            fence, in_table, state = m.group(1), False, None
-            continue
+            if k >= depth:
+                if re.fullmatch(rf" {{0,3}}{re.escape(fence[0])}{{{len(fence)},}}[ \t]*", rel):
+                    fence = ""
+                continue
+            fence = ""                # its item closed, and the fence with it
+        if k < len(cols):
+            # Short of the innermost item: a paragraph runs on lazily unless the
+            # line starts a block of its own; anything else closes the item.
+            if state in ("para", "lazy") and not in_table and not SIBLING.match(rel) \
+                    and not FENCE.match(rel):
+                if is_row(s):
+                    out.append((i + 1, s[:70]))
+                # cmark-gfm reads a lazy line flush left as a header, never one indented.
+                state, prev = "para" if lead(raw) == 0 else "lazy", s
+                continue
+            del cols[k:]
+            in_table, state = in_table and depth <= k, None
         if in_table:
             # A table runs on through a line without pipes, which GFM reads as
             # one more row; a blank line or another block's opening ends it.
-            if s and not OPENS_BLOCK.match(raw):
+            if s and not OPENS_BLOCK.match(rel) and not FENCE.match(rel):
                 continue
-            in_table, state = False, step(None, raw)
+            in_table, state = False, None
+        m = ITEM.match(rel) if s else None
+        if m and not re.fullmatch(rf" {{0,3}}({_BREAK})", rel) \
+                and (state != "para" or INTERRUPTS.match(rel)):
+            mark = (cols[k - 1] if k else 0) + len(m.group(1)) + len(m.group(2))
+            spaces = len(m.group(3))
+            # One space past the marker when the item is empty or starts with code.
+            cols.append(mark + 1 if spaces > 4 or not raw[mark:].strip() else mark + spaces)
+            rel, state = raw[cols[-1]:], None
+            if not rel.strip():
+                prev, empty, tried = "", True, False
+                continue
+        s2 = rel.strip()
+        f = FENCE.match(rel)
+        if f:
+            fence, depth, state = f.group(1), len(cols), None
             continue
-        if i and heads(lines[i - 1], state, s):
-            in_table, state = True, None
+        if state == "para" and re.fullmatch(r" {0,3}(-+|=+)[ \t]*", rel):
+            state, prev, tried = None, s2, False     # a setext heading's underline
+            continue
+        if state is None and s2 and lead(rel) >= 4:
+            continue                  # indented code
+        if i and not tried and lead(rel) < 4 and heads(prev, state, s2):
+            in_table, depth, state = True, len(cols), None
             if out and out[-1][0] == i:       # it was a header row after all
                 out.pop()
+            prev = s2
             continue
         if is_row(s):
             out.append((i + 1, s[:70]))
-        state = step(state, raw)
+        # A paragraph that has failed one delimiter row never becomes a table;
+        # a line indented four or more is not tried as one.
+        tried = state in ("para", "lazy") and (
+            tried or state == "para" and lead(rel) < 4 and SEP.match(s2) is not None)
+        state = step(state, rel)
+        prev = s2
     return out
 
 
