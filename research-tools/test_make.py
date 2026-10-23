@@ -94,6 +94,17 @@ def foreign_hook_is_kept(tmp: Path) -> str | None:
     ours = (repo / "research-tools/githooks/pre-commit").read_text(encoding="utf-8")
     if r.returncode != 0 or hook.read_text(encoding="utf-8") != ours:
         return f"an older copy of this hook was not updated: exit {r.returncode}: {r.stderr}"
+    # An older copy may be one somebody edited: what it held is kept beside it,
+    # and a second replacement never writes over the first one's backup.
+    backup = hook.with_name("pre-commit.before-make-hooks")
+    if "exit 0" not in (backup.read_text(encoding="utf-8") if backup.exists() else ""):
+        return "the replaced copy of this hook was not kept"
+    hook.write_text(ours + "echo my-extra-check\n", encoding="utf-8")
+    r = make(tmp, "hooks", cwd=repo)
+    if r.returncode == 0 or "my-extra-check" not in hook.read_text(encoding="utf-8") \
+            or "exit 0" not in backup.read_text(encoding="utf-8"):
+        return f"an edited copy or its backup was overwritten: exit {r.returncode}: {r.stdout}"
+    backup.unlink()
     # A link to a hook elsewhere is not this checkout's to write through: cp
     # followed it and replaced the file it pointed at, install line or not.
     shared = tmp / "shared-pre-commit"

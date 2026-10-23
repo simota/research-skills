@@ -70,17 +70,26 @@ render:
 # can move them anywhere. A pre-commit hook that is not this one belongs to
 # whoever put it there: a plain cp replaced it without a word. So does a link
 # to a hook elsewhere, which cp would write through. An older copy of this one,
-# known by its install line, is replaced, since that is how a fix to it arrives.
+# known by its install line, is replaced, since that is how a fix to it arrives;
+# it may have been edited since, so what it held is kept beside it first, and a
+# backup already there is never written over.
 hooks:
 	@hooks=$$(cd "$(REPO)" && git rev-parse --git-path hooks) && \
 		case "$$hooks" in /*) ;; *) hooks="$(REPO)/$$hooks";; esac && \
 		src="$(REPO)/research-tools/githooks/pre-commit"; dst="$$hooks/pre-commit"; \
+		bak="$$dst.before-make-hooks"; \
 		if [ "$$src" -ef "$$dst" ]; then \
 			echo "pre-commit already in force from $$hooks"; \
 		elif [ -L "$$dst" ] || { [ -e "$$dst" ] && ! grep -q '^# Install with: make hooks$$' "$$dst"; }; then \
 			echo "$$dst is another hook; move it aside, then make hooks" >&2; exit 1; \
+		elif [ -e "$$dst" ] && ! cmp -s "$$src" "$$dst" && { [ -e "$$bak" ] || [ -L "$$bak" ]; }; then \
+			echo "$$bak holds a hook replaced earlier; move it aside, then make hooks" >&2; exit 1; \
 		else \
-			mkdir -p "$$hooks" && cp "$$src" "$$dst" && chmod +x "$$dst" && \
+			mkdir -p "$$hooks" && \
+			if [ -e "$$dst" ] && ! cmp -s "$$src" "$$dst"; then \
+				cp "$$dst" "$$bak" && echo "the copy it replaces is kept as $$bak"; \
+			fi && \
+			cp "$$src" "$$dst" && chmod +x "$$dst" && \
 			echo "pre-commit installed in $$hooks"; \
 		fi
 
