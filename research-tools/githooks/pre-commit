@@ -6,9 +6,16 @@
 # directory. Checking the working tree passed a staged violation whenever the
 # file on disk had since been fixed but not re-staged, and blocked a clean
 # commit over an unstaged edit.
+#
+# The tree `git write-tree` builds is what the commit records, so that is what
+# is exported, through an index of its own. Exporting the live index wrote a
+# `git add -N` path the commit does not carry, and skipped every path a sparse
+# checkout leaves out, though the commit does carry those.
 set -e
 snap=$(mktemp -d)
 trap 'rm -rf "$snap"' EXIT
-git checkout-index --all --prefix="$snap/"
-python3 "$snap/research-tools/validate.py"
-python3 "$snap/research-tools/figures_check.py"
+tree=$(git write-tree)
+GIT_INDEX_FILE="$snap/index" git read-tree "$tree"
+GIT_INDEX_FILE="$snap/index" git checkout-index --all --prefix="$snap/tree/"
+python3 "$snap/tree/research-tools/validate.py"
+python3 "$snap/tree/research-tools/figures_check.py"
