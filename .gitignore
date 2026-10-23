@@ -1,2 +1,6 @@
 # Bytecode from importing a tool (python3 -c "import engine") is never source.
 __pycache__/
+
+# A wheel fetched to check against (pip download cmarkgfm) is a tool, not source:
+# three were committed once, alongside the change they were used to score.
+*.whl
