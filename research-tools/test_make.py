@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prove `make link` / `unlink` act on the right paths and nothing else.
+"""Prove `make link` / `unlink` / `hooks` act on the right paths and nothing else.
 
 Each case runs the real Makefile with a scratch HOME, so nothing outside a
 temporary directory is touched.
@@ -68,7 +68,46 @@ def outside_the_repo_refuses(tmp: Path) -> str | None:
     return None
 
 
-CASES = [home_with_a_space, foreign_link_is_kept, outside_the_repo_refuses]
+def git_copy(tmp: Path) -> Path:
+    """This repository's files in a fresh git repository, so `make hooks` writes
+    into a scratch `.git` and never this checkout's."""
+    repo = tmp / "repo"
+    shutil.copytree(ROOT, repo, symlinks=True,
+                    ignore=shutil.ignore_patterns(".git", ".claude", "__pycache__"))
+    env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+    subprocess.run(["git", "init", "-q", str(repo)], env=env, check=True)
+    return repo
+
+
+def foreign_hook_is_kept(tmp: Path) -> str | None:
+    """A plain cp replaced whatever pre-commit hook was there, with no word."""
+    repo = git_copy(tmp)
+    hook = repo / ".git/hooks/pre-commit"
+    hook.parent.mkdir(parents=True, exist_ok=True)
+    hook.write_text("#!/bin/sh\necho my-own-lint\n", encoding="utf-8")
+    r = make(tmp, "hooks", cwd=repo)
+    if r.returncode == 0 or "my-own-lint" not in hook.read_text(encoding="utf-8"):
+        return f"exit {r.returncode}; another hook was replaced: {r.stdout}{r.stderr}"
+    # An older copy of this set's own hook is replaced: that is how a fix to it arrives.
+    hook.write_text("#!/bin/sh\n# Install with: make hooks\nexit 0\n", encoding="utf-8")
+    r = make(tmp, "hooks", cwd=repo)
+    ours = (repo / "research-tools/githooks/pre-commit").read_text(encoding="utf-8")
+    if r.returncode != 0 or hook.read_text(encoding="utf-8") != ours:
+        return f"an older copy of this hook was not updated: exit {r.returncode}: {r.stderr}"
+    return None
+
+
+def hooks_path_already_here(tmp: Path) -> str | None:
+    """Pointed at research-tools/githooks, cp failed copying the hook onto itself."""
+    repo = git_copy(tmp)
+    subprocess.run(["git", "-C", str(repo), "config", "core.hooksPath", "research-tools/githooks"],
+                   check=True)
+    r = make(tmp, "hooks", cwd=repo)
+    return None if r.returncode == 0 else f"exit {r.returncode}: {r.stdout}{r.stderr}"
+
+
+CASES = [home_with_a_space, foreign_link_is_kept, outside_the_repo_refuses,
+         foreign_hook_is_kept, hooks_path_already_here]
 
 
 def main() -> int:

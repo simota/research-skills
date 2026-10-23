@@ -67,14 +67,22 @@ render:
 	@python3 "$(REPO)/research-tools/render.py"
 
 # git says where hooks live: `.git` is a file in a worktree, and core.hooksPath
-# can move them anywhere.
+# can move them anywhere. A pre-commit hook that is not this one belongs to
+# whoever put it there: a plain cp replaced it without a word. An older copy of
+# this one, known by its install line, is replaced, since that is how a fix to
+# it arrives.
 hooks:
 	@hooks=$$(cd "$(REPO)" && git rev-parse --git-path hooks) && \
 		case "$$hooks" in /*) ;; *) hooks="$(REPO)/$$hooks";; esac && \
-		mkdir -p "$$hooks" && \
-		cp "$(REPO)/research-tools/githooks/pre-commit" "$$hooks/pre-commit" && \
-		chmod +x "$$hooks/pre-commit" && \
-		echo "pre-commit installed in $$hooks"
+		src="$(REPO)/research-tools/githooks/pre-commit"; dst="$$hooks/pre-commit"; \
+		if [ "$$src" -ef "$$dst" ]; then \
+			echo "pre-commit already in force from $$hooks"; \
+		elif [ -e "$$dst" ] && ! grep -q '^# Install with: make hooks$$' "$$dst"; then \
+			echo "$$dst is another hook; move it aside, then make hooks" >&2; exit 1; \
+		else \
+			mkdir -p "$$hooks" && cp "$$src" "$$dst" && chmod +x "$$dst" && \
+			echo "pre-commit installed in $$hooks"; \
+		fi
 
 # A skill is a directory holding a SKILL.md, under skills/ where the plugin
 # format expects it. The prefix alone is not the test: research-registry/ and
