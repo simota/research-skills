@@ -197,6 +197,8 @@ def unaskable_claim_is_usage(b: Bench) -> str | None:
             ("blank claim", [{"id": "A", "claim": "   "}], no_text),
             ("zero-width claim", [{"id": "A", "claim": "​"}], no_text),
             ("variation selector claim", [{"id": "A", "claim": "️"}], no_text),
+            ("braille blank claim", [{"id": "A", "claim": "\u2800"}], no_text),
+            ("braille blank id", [{"id": "\u2800", "claim": "x"}], bad_id),
             ("hangul filler claim", [{"id": "A", "claim": "ㅤ ‍"}], no_text),
             ("zero-width id", [{"id": "​️", "claim": "x"}], bad_id),
             ("no claim", [{"id": "A", "claim": "x"}, {"id": "B"}], no_text),
@@ -229,6 +231,8 @@ def unaskable_claim_is_usage(b: Bench) -> str | None:
                                 {"id": "A\u00a0B", "claim": "y"}], again),
             ("ogham space", [{"id": "A B", "claim": "x"},
                              {"id": "A\u1680B", "claim": "y"}], again),
+            ("braille blank inside", [{"id": "A B", "claim": "x"},
+                                      {"id": "A\u2800B", "claim": "y"}], again),
             ("full-width letter", [{"id": "C-1", "claim": "x"},
                                    {"id": "\uff23-1", "claim": "y"}], again),
             # The text report writes a lone surrogate as its escape.

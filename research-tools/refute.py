@@ -137,6 +137,10 @@ _DEFAULT_IGNORABLE = (
     (0xE0000, 0xE0FFF))
 
 
+# A symbol by category that is drawn as an empty cell, the width of a space.
+_BLANK_SYMBOLS = {"\u2800"}            # BRAILLE PATTERN BLANK
+
+
 def _ignorable(ch: str) -> bool:
     """Drawn as nothing even next to visible text: a default-ignorable code
     point, or a format or control character that is not whitespace."""
@@ -152,7 +156,8 @@ def _blank(s: str) -> bool:
     code points count as seen: a renderer draws them as a glyph or a box, and
     a letter from a script newer than this Python's tables reads as unassigned."""
     return not any((unicodedata.category(ch)[0] in "LNPS"
-                    or unicodedata.category(ch) in ("Cn", "Co")) and not _ignorable(ch)
+                    or unicodedata.category(ch) in ("Cn", "Co"))
+                   and not _ignorable(ch) and ch not in _BLANK_SYMBOLS
                    for ch in s)
 
 
@@ -164,8 +169,9 @@ def _shown(cid) -> bytes:
     `Ａ` and `A`. So do a lone surrogate and its escape, since the report writes
     what stdout cannot carry as `\\ud800`. Look-alike letters from other
     scripts are distinct characters and are not folded. Every space separator
-    is a space, including the one NFKC leaves alone, U+1680."""
-    folded = "".join(" " if unicodedata.category(ch) == "Zs" else ch
+    is a space, including the one NFKC leaves alone, U+1680, and so is the
+    blank braille cell."""
+    folded = "".join(" " if unicodedata.category(ch) == "Zs" or ch in _BLANK_SYMBOLS else ch
                      for ch in unicodedata.normalize("NFKC", str(cid)))
     return folded.strip().encode(sys.stdout.encoding or "utf-8", "backslashreplace")
 
