@@ -165,11 +165,14 @@ def _shown(cid) -> str:
 
 def _hidden(cid) -> bool:
     """A character in the id that is not simply drawn: a control character, a
-    format character, or a default-ignorable one. Refused rather than stripped,
-    because what they do depends on context — a joiner can merge two glyphs into
-    one, a bidi override can reorder `A\\u202eBC` to read as `ACB`, an escape
-    can rewrite the terminal — so no comparison after removing them is honest."""
-    return any(_ignorable(ch) or unicodedata.category(ch) == "Cc" for ch in str(cid))
+    format character, a default-ignorable one, or a line or paragraph separator.
+    Refused rather than stripped, because what they do depends on context — a
+    joiner can merge two glyphs into one, a bidi override can reorder `A\\u202eBC`
+    to read as `ACB`, an escape can rewrite the terminal, a separator can start a
+    line that looks like another verdict — so no comparison after removing them
+    is honest."""
+    return any(_ignorable(ch) or unicodedata.category(ch) in ("Cc", "Zl", "Zp")
+               for ch in str(cid))
 
 
 def malformed(claims: list[dict]) -> list[str]:

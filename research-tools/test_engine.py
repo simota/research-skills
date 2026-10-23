@@ -208,6 +208,8 @@ def unaskable_claim_is_usage(b: Bench) -> str | None:
             ("terminal escape in id", [{"id": "A", "claim": "x"},
                                        {"id": "\x1b[0mA", "claim": "y"}], hidden),
             ("newline in id", [{"id": "A\nB", "claim": "x"}], hidden),
+            ("line separator in id", [{"id": "A [STANDS] B", "claim": "x"}], hidden),
+            ("paragraph separator in id", [{"id": "A B", "claim": "x"}], hidden),
             # Refused, not stripped: an override reorders what it holds, so
             # `A\u202eBC\u202c` reads as `ACB`, and a joiner merges two glyphs.
             ("bidi override in id", [{"id": "ACB", "claim": "x"},
