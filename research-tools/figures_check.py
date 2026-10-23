@@ -46,11 +46,15 @@ def width(row: str) -> int:
     return len(re.split(r"(?<!\\)\|", row[1:-1]))
 
 
+def is_row(s: str) -> bool:
+    return s.startswith("|") and s.endswith("|") and len(s) > 1
+
+
 def heads(header: str, sep: str) -> bool:
     """A header row and the separator under it make a table only when the
     separator has one cell per header cell. A short one, or one with no header
-    above it, renders as a paragraph of pipes."""
-    return SEP.match(sep) is not None and not SEP.match(header) \
+    row above it, renders as a paragraph of pipes."""
+    return SEP.match(sep) is not None and is_row(header) and not SEP.match(header) \
         and width(header) == width(sep)
 
 
@@ -64,8 +68,7 @@ def orphan_rows(text: str) -> list[tuple[int, str]]:
             continue
         if fenced:
             continue
-        is_row = s.startswith("|") and s.endswith("|") and len(s) > 1
-        if not is_row:
+        if not is_row(s):
             if s == "" or not s.startswith("|"):
                 in_table = False
             continue
