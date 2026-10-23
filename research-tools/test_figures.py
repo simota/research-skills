@@ -26,6 +26,16 @@ def run(root: Path) -> tuple[int, str]:
     return r.returncode, r.stdout + r.stderr
 
 
+def mutated(mutate) -> tuple[int, str]:
+    """figures_check on a throwaway copy with one edit made."""
+    with tempfile.TemporaryDirectory() as tmp:
+        copy = Path(tmp) / "repo"
+        shutil.copytree(ROOT, copy, symlinks=True,
+                        ignore=shutil.ignore_patterns(".git", ".claude", "__pycache__"))
+        mutate(copy)
+        return run(copy)
+
+
 def sub(path: Path, old: str, new: str) -> None:
     t = path.read_text(encoding="utf-8")
     assert old in t, f"fixture text not found in {path.name}: {old[:60]!r}"
@@ -71,6 +81,20 @@ CASES = {
 }
 
 
+# Edits that must stay green: a check that fires on a table GitHub renders is
+# as wrong as one silent on a table it does not.
+HARMLESS = {
+    # cmark-gfm makes this a one-column table whose header cell reads `---`.
+    "hyphen-header": lambda r: sub(r / "skills/research-source/playbooks/traps.md",
+                                   "<!-- research:guidance -->\n",
+                                   "<!-- research:guidance -->\n\n| --- |\n| --- |\n| x |\n"),
+    # And this one whose header is a line of text: GFM needs no pipes on it.
+    "text-header": lambda r: sub(r / "skills/research-source/playbooks/traps.md",
+                                 "<!-- research:guidance -->\n",
+                                 "<!-- research:guidance -->\n\nOne column\n|---|\n| x |\n"),
+}
+
+
 def main() -> int:
     code, out = run(ROOT)
     if code != 0:
@@ -78,17 +102,19 @@ def main() -> int:
         return 1
     silent = []
     for name, (mutate, says) in CASES.items():
-        with tempfile.TemporaryDirectory() as tmp:
-            copy = Path(tmp) / "repo"
-            shutil.copytree(ROOT, copy, symlinks=True,
-                            ignore=shutil.ignore_patterns(".git", ".claude", "__pycache__"))
-            mutate(copy)
-            code, out = run(copy)
+        code, out = mutated(mutate)
         if code == 0 or says not in out:
             silent.append(name)
             print(f"  {name} did not fire saying {says!r}\n{out}")
-    print(f"{len(CASES)} figure checks exercised, {len(silent)} silent")
-    return 1 if silent else 0
+    flagged = []
+    for name, mutate in HARMLESS.items():
+        code, out = mutated(mutate)
+        if code != 0:
+            flagged.append(name)
+            print(f"  harmless edit {name} was flagged\n{out}")
+    print(f"{len(CASES)} figure checks exercised, {len(silent)} silent · "
+          f"{len(HARMLESS)} harmless edits, {len(flagged)} flagged")
+    return 1 if silent or flagged else 0
 
 
 if __name__ == "__main__":

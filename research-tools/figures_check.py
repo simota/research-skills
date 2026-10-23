@@ -41,7 +41,7 @@ def fail(where: str, msg: str) -> None:
 # --- every table row is inside a table -------------------------------------
 
 def width(row: str) -> int:
-    """Cells in a row, as GFM splits it: on every pipe not escaped with `\\`,
+    """Cells in a row, as GFM splits it: on every pipe no backslash precedes,
     inside a code span too."""
     return len(re.split(r"(?<!\\)\|", row[1:-1]))
 
@@ -53,9 +53,10 @@ def is_row(s: str) -> bool:
 def heads(header: str, sep: str) -> bool:
     """A header row and the separator under it make a table only when the
     separator has one cell per header cell. A short one, or one with no header
-    row above it, renders as a paragraph of pipes."""
-    return SEP.match(sep) is not None and is_row(header) and not SEP.match(header) \
-        and width(header) == width(sep)
+    row above it, renders as a paragraph of pipes. A header may itself read
+    `| --- |`: the separator under it is what makes it one. A pipe after any
+    backslash is escaped, as cmark-gfm splits cells (pandoc counts parity)."""
+    return SEP.match(sep) is not None and is_row(header) and width(header) == width(sep)
 
 
 def orphan_rows(text: str) -> list[tuple[int, str]]:
@@ -73,7 +74,10 @@ def orphan_rows(text: str) -> list[tuple[int, str]]:
                 in_table = False
             continue
         prev = lines[i - 1].strip() if i else ""
-        if SEP.match(s) and not in_table and heads(prev, s):
+        # Under a line of text the separator may make a table too: GFM reads a
+        # paragraph's last line as a header row, pipes or none. Only a blank
+        # line or a pipe row of another width above it is certainly no header.
+        if SEP.match(s) and not in_table and (heads(prev, s) or (prev and not is_row(prev))):
             in_table = True
             continue
         nxt = lines[i + 1].strip() if i + 1 < len(lines) else ""
