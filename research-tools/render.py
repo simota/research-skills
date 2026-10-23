@@ -30,12 +30,16 @@ def render(path: Path) -> bool:
         if only not in (None, "signature"):
             raise ValueError(f"unknown delivery scope {only!r} for {key}")
         if only == "signature" and path.parent.name not in H["signature"]["required_of"]:
-            text = re.sub(rf"<!-- deliver:{key} -->.*?<!-- /deliver:{key} -->\n?",
-                          "", text, flags=re.S)
-            # A lone marker is no block to remove, and V17 refuses it all the same.
-            if f"<!-- deliver:{key} -->" in text or f"<!-- /deliver:{key} -->" in text:
+            # Only whole blocks are removed, so the markers must pair up in order
+            # first: a stray open marker above a block made the removal run from
+            # it to the block's close and take the prose between them. A lone
+            # marker is no block to remove, and V17 refuses it all the same.
+            marks = re.findall(rf"<!-- (/?)deliver:{key} -->", text)
+            if marks != ["", "/"] * (len(marks) // 2):
                 raise ValueError(f"{path.parent.name}/SKILL.md has an unmatched {key} marker "
                                  "outside its scope; repair or remove it, then render")
+            text = re.sub(rf"<!-- deliver:{key} -->.*?<!-- /deliver:{key} -->\n?",
+                          "", text, flags=re.S)
             continue
         # Blank lines are stripped at both ends, as V17 compares them: a leading
         # one otherwise rendered a block V17 could never accept.

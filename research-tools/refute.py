@@ -15,8 +15,8 @@ to default to refuted when uncertain — a claim that cannot survive a hostile
 reading is exactly what this exists to catch, and the cost of a false refutation
 is one argument while the cost of a false pass is a shipped defect.
 
-**Independence is counted by source, not by voice** (`DESIGN.md` §5.4b). Two
-verdicts from one engine are one verdict. The pool is therefore `runs_on` minus
+**Independence is counted by source, not by voice** (`skills/_research/CONTRACT.md`,
+Independence). Two verdicts from one engine are one verdict. The pool is therefore `runs_on` minus
 whichever engine is running, and the count is printed with every result: with
 three engines declared, a claim gets at most **two** independent readings.
 

@@ -546,20 +546,29 @@ def v27_symlinks_stay_inside():
     """What a skill reaches must live in this repo, and must actually be there.
 
     At every depth: a reference file linked from outside the repo passed when
-    only a skill's own entries were looked at. A linked directory is checked
-    and not entered, so `_research` and `registry` are not walked twice."""
-    for d in [*SKILL_DIRS, SKILLS_ROOT / SHARED]:
+    only a skill's own entries were looked at. A linked directory inside the
+    repo is walked once where it lives, not once per link: `registry` was
+    checked as a link and never entered, so a link out of research-registry/
+    reached every skill and passed."""
+    walk, seen = [*SKILL_DIRS, SKILLS_ROOT / SHARED], set()
+    while walk:
+        d = walk.pop(0)
+        if d.resolve() in seen:
+            continue
+        seen.add(d.resolve())
         for top, dirs, files in os.walk(d):
             for name in sorted(dirs + files):
                 entry = Path(top) / name
                 if not entry.is_symlink():
                     continue
-                shown = entry.relative_to(SKILLS_ROOT)
+                shown = entry.relative_to(ROOT)
                 target = (entry.parent / entry.readlink()).resolve()
                 if not target.exists():
                     fail("V27", f"{shown} is a broken symlink")
                 elif ROOT.resolve() not in target.parents and target != ROOT.resolve():
                     fail("V27", f"{shown} points outside the repo ({target})")
+                elif target.is_dir():
+                    walk.append(target)
 
 
 def v28_namespace_agrees():

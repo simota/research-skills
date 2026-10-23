@@ -86,6 +86,30 @@ CASES = {
                                              "<!-- research:guidance -->\n\n| a |\n|---|\n"
                                              "~~~\ncode\n~~~\n| lonely |\n"),
                                "row sits outside any table"),
+    # A list item's later paragraph runs on lazily into a table glued under it
+    # flush left: pipe soup inside the item, never a table.
+    "item-later-paragraph": (lambda r: sub(r / "skills/research-source/playbooks/traps.md",
+                                           "<!-- research:guidance -->\n",
+                                           "<!-- research:guidance -->\n\n1. Step one\n\n"
+                                           "   Details here.\n| a | b |\n|---|---|\n"),
+                             "row sits outside any table"),
+    # A paragraph that failed one delimiter row never becomes a table.
+    "failed-delimiter": (lambda r: sub(r / "skills/research-source/playbooks/traps.md",
+                                       "<!-- research:guidance -->\n",
+                                       "<!-- research:guidance -->\n\nSome text.\n"
+                                       "|---|---|\n|---|---|\n"),
+                         "row sits outside any table"),
+    # Indented four or more, a delimiter row is one more line of the paragraph.
+    "indented-delimiter": (lambda r: sub(r / "skills/research-source/playbooks/traps.md",
+                                         "<!-- research:guidance -->\n",
+                                         "<!-- research:guidance -->\n\n| a | b |\n"
+                                         "     |---|---|\n"),
+                           "row sits outside any table"),
+    # A line short of an item's column closes the item and the fence in it.
+    "after-item-fence": (lambda r: sub(r / "skills/research-source/playbooks/traps.md",
+                                       "<!-- research:guidance -->\n",
+                                       "<!-- research:guidance -->\n\n- a\n  ```\n  x\n| a |\n"),
+                         "row sits outside any table"),
     "rises": (lambda r: sub(r / PAGE, ROW_HIGH, "| `High` | `High` | `Low` | `Low` | `Unknown` |"),
               "confidence held along a chain"),
     "unknown-leaks": (lambda r: sub(r / PAGE, ROW_HIGH, "| `High` | `Medium` | `Low` | `Low` | `Low` |"),
@@ -116,6 +140,24 @@ HARMLESS = {
                                    "<!-- research:guidance -->\n",
                                    "<!-- research:guidance -->\n\n| a |\n|---|\n#tag\n"
                                    "####### x\n-*-\n| b |\n"),
+    # A fence inside a nested item sits past four spaces, and is still a fence.
+    "fence-in-nested-item": lambda r: sub(r / "skills/research-source/playbooks/traps.md",
+                                          "<!-- research:guidance -->\n",
+                                          "<!-- research:guidance -->\n\n- a\n  - b\n\n"
+                                          "    ```text\n    | x | y |\n    ```\n"),
+    # Read from the item's column on, the row on its marker's line heads a table.
+    "table-in-item": lambda r: sub(r / "skills/research-source/playbooks/traps.md",
+                                   "<!-- research:guidance -->\n",
+                                   "<!-- research:guidance -->\n\n- | a | b |\n  |---|---|\n"),
+    # GFM's delimiter row needs no outer pipes.
+    "pipeless-delimiter": lambda r: sub(r / "skills/research-source/playbooks/traps.md",
+                                        "<!-- research:guidance -->\n",
+                                        "<!-- research:guidance -->\n\na | b\n--- | ---\n"
+                                        "| c | d |\n"),
+    # Rows in indented code are code.
+    "indented-code": lambda r: sub(r / "skills/research-source/playbooks/traps.md",
+                                   "<!-- research:guidance -->\n",
+                                   "<!-- research:guidance -->\n\nText.\n\n    | a | b |\n"),
 }
 
 
