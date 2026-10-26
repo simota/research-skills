@@ -238,7 +238,31 @@ HARMLESS = {
 }
 
 
+def scans_per_quote() -> int:
+    """A quote is scanned once per run and depth, not once per line: reading
+    each prefix again took seconds on forty lines of `> > > > text`."""
+    sys.path.insert(0, str(ROOT / "research-tools"))
+    sys.dont_write_bytecode = True
+    import figures_check
+    calls, real = [0], figures_check.scan
+
+    def counted(lines):
+        calls[0] += 1
+        return real(lines)
+    figures_check.scan = counted
+    try:
+        figures_check.orphan_rows("> > > > text\n" * 40)
+    finally:
+        figures_check.scan = real
+    return calls[0]
+
+
 def main() -> int:
+    scans = scans_per_quote()
+    # Fifteen today: a few per depth. One per line or more is the rescan back.
+    if scans >= 40:
+        print(f"  forty nested quote lines took {scans} scans; a quote is read once per depth")
+        return 1
     code, out = run(ROOT)
     if code != 0:
         print("figures_check already fails on the working tree; fix that first:\n" + out)

@@ -134,8 +134,10 @@ def orphan_rows(text: str) -> list[tuple[int, str]]:
     return sorted(scan(lines)[0] + quoted_rows(lines))
 
 
-def scan(lines: list[str]) -> tuple[list[tuple[int, str]], bool]:
-    """The rows outside any table, and whether the page ends inside one."""
+def scan(lines: list[str]) -> tuple[list[tuple[int, str]], list[bool]]:
+    """The rows outside any table, and for each prefix of the page whether it
+    ends inside one: `tables[n]` is the state after the first n lines. One
+    forward pass, so no prefix depends on what follows it."""
     out: list[tuple[int, str]] = []
     in_table, fence, state, prev = False, "", None, ""
     cols: list[int] = []      # content column of each open list item, outermost first
@@ -147,7 +149,13 @@ def scan(lines: list[str]) -> tuple[list[tuple[int, str]], bool]:
     # runs on lazily, so a line under a quoted table starts a block of its own.
     quote: list[str] = []
     qtab = False
+    # The quote's text read ahead to the end of its run, scanned once: reading
+    # each prefix again cost a pass per line, and one per line per depth.
+    ahead: list[str] = []
+    ahead_tables: list[bool] = []
+    tables: list[bool] = []
     for i, raw in enumerate(lines):
+        tables.append(in_table)
         s = raw.strip()
         if s:
             k, empty = 0, False
@@ -175,7 +183,16 @@ def scan(lines: list[str]) -> tuple[list[tuple[int, str]], bool]:
             comment = False
         if CONTAINER.match(rel):
             quote.append(QUOTE.sub("", rel, count=1))
-            qtab = scan(quote)[1]
+            if ahead[:len(quote)] != quote:
+                base = cols[k - 1] if k else 0
+                rest = []
+                for nxt in lines[i + 1:]:
+                    if not CONTAINER.match(nxt[base:]):
+                        break
+                    rest.append(QUOTE.sub("", nxt[base:], count=1))
+                ahead = quote + rest
+                ahead_tables = scan(ahead)[1]
+            qtab = ahead_tables[len(quote)]
         else:
             quote, qtab = [], False
         if k < len(cols):
@@ -237,7 +254,8 @@ def scan(lines: list[str]) -> tuple[list[tuple[int, str]], bool]:
         if qtab and state == "lazy":
             state = None
         prev = s2
-    return out, in_table
+    tables.append(in_table)
+    return out, tables
 
 
 def quoted_rows(lines: list[str]) -> list[tuple[int, str]]:
