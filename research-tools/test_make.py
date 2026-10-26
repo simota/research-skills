@@ -139,6 +139,13 @@ def shared_hooks_path_refuses(tmp: Path) -> str | None:
     r = make(tmp, "hooks", cwd=repo)
     if r.returncode == 0 or (shared / "pre-commit").exists():
         return f"installed into a shared hooks directory: exit {r.returncode}: {r.stdout}"
+    # Relative, it is read where git reads it: `<repo>/../global-hooks` starts
+    # with the repository's path as text and lies outside it.
+    subprocess.run(["git", "-C", str(repo), "config", "core.hooksPath", "../global-hooks"],
+                   check=True)
+    r = make(tmp, "hooks", cwd=repo)
+    if r.returncode == 0 or (shared / "pre-commit").exists():
+        return f"installed through ../ into a shared directory: exit {r.returncode}: {r.stdout}"
     # Moved inside the repository's own git directory, it is this checkout's.
     subprocess.run(["git", "-C", str(repo), "config", "core.hooksPath", ".git/my-hooks"],
                    check=True)
@@ -148,8 +155,23 @@ def shared_hooks_path_refuses(tmp: Path) -> str | None:
     return None
 
 
+def symlinked_checkout_is_its_own(tmp: Path) -> str | None:
+    """Reached through a symlink, the checkout's own .git read as shared: make
+    knows the repository by its physical path, the config by the logical one."""
+    repo = git_copy(tmp)
+    (tmp / "via").symlink_to(repo)
+    logical = tmp / "via"
+    subprocess.run(["git", "-C", str(logical), "config", "core.hooksPath",
+                    str(logical / ".git/local-hooks")], check=True)
+    r = make(tmp, "hooks", cwd=logical)
+    if r.returncode != 0 or not (repo / ".git/local-hooks/pre-commit").exists():
+        return f"refused its own .git through a symlinked path: exit {r.returncode}: {r.stderr}"
+    return None
+
+
 CASES = [home_with_a_space, foreign_link_is_kept, outside_the_repo_refuses,
-         foreign_hook_is_kept, hooks_path_already_here, shared_hooks_path_refuses]
+         foreign_hook_is_kept, hooks_path_already_here, shared_hooks_path_refuses,
+         symlinked_checkout_is_its_own]
 
 
 def main() -> int:

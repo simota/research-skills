@@ -74,14 +74,18 @@ render:
 # it may have been edited since, so what it held is kept beside it first, and a
 # backup already there is never written over. Hooks outside this repository
 # and its git directory — a global core.hooksPath — run for every repository
-# that uses them, and this hook blocked every commit in each of those.
+# that uses them, and this hook blocked every commit in each of those. Paths
+# are compared resolved: as text, `<repo>/../../shared` read as inside it, and
+# a checkout reached through a symlink read as outside itself.
 hooks:
 	@hooks=$$(cd "$(REPO)" && git rev-parse --git-path hooks) && \
 		common=$$(cd "$(REPO)" && git rev-parse --path-format=absolute --git-common-dir) && \
 		case "$$hooks" in /*) ;; *) hooks="$(REPO)/$$hooks";; esac && \
 		src="$(REPO)/research-tools/githooks/pre-commit"; dst="$$hooks/pre-commit"; \
 		bak="$$dst.before-make-hooks"; \
-		case "$$hooks/" in "$(REPO)"/*|"$$common"/*) mine=1;; *) mine=;; esac; \
+		real() { python3 -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "$$1"; }; \
+		case "$$(real "$$hooks")/" in "$$(real "$(REPO)")"/*|"$$(real "$$common")"/*) mine=1;; \
+			*) mine=;; esac; \
 		if [ "$$src" -ef "$$dst" ]; then \
 			echo "pre-commit already in force from $$hooks"; \
 		elif [ -z "$$mine" ]; then \
