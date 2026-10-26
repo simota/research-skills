@@ -951,10 +951,10 @@ def v37_source_pins_the_rot():
 
 
 # `KEY: A | B | C` in a schema, or a bare `A | B | C` on a line of its own —
-# upper-case words, underscores allowed (`LOOP_BACK`), joined by pipes. Parenthesised forms are not
-# matched, so this is a floor.
-ENUM_RE = re.compile(r"(?:^|:\s*)((?:[A-Z][A-Z_-]*(?: [A-Z][A-Z_-]*)*)"
-                     r"(?:\s*\|\s*(?:[A-Z][A-Z_-]*(?: [A-Z][A-Z_-]*)*))+)\s*(?:#.*)?$")
+# upper-case words, underscores and digits allowed (`LOOP_BACK`, `P1`), joined by
+# pipes. Parenthesised forms are not matched, so this is a floor.
+ENUM_RE = re.compile(r"(?:^|:\s*)((?:[A-Z][A-Z0-9_-]*(?: [A-Z][A-Z0-9_-]*)*)"
+                     r"(?:\s*\|\s*(?:[A-Z][A-Z0-9_-]*(?: [A-Z][A-Z0-9_-]*)*))+)\s*(?:#.*)?$")
 
 
 def v38_enumerations_declared():

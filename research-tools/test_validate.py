@@ -516,6 +516,14 @@ def _(r): sub(r / f"{S}research-source/playbooks/traps.md", "<!-- research:guida
               "<!-- research:guidance -->\nverdict: KEEP | DROP\n")
 
 
+@case("V38-digits", says="switches on P6")
+def _(r):
+    """The evidence ladder is the vocabulary with digits in it, and a word with
+    a digit ended the match, so no listing of it was ever read."""
+    sub(r / f"{S}research-source/playbooks/traps.md", "<!-- research:guidance -->\n",
+        "<!-- research:guidance -->\ntier: P1 | P2 | P6\n")
+
+
 @case("V37")
 def _(r):
     """Neither a source nor the admission that there is none."""
