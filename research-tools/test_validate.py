@@ -9,6 +9,7 @@ Run: make test
 """
 from __future__ import annotations
 
+import os
 import re
 import shutil
 import subprocess
@@ -20,6 +21,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.dont_write_bytecode = True                     # no __pycache__ in the tools dir
 import validate                                    # noqa: E402  — for RULES only
+from validate import copy_ignore                   # noqa: E402
 
 
 def run(root: Path) -> tuple[int, str]:
@@ -340,6 +342,26 @@ def _(r): sub(r / "research-registry/harness.yaml", "set: research", "set: rsrch
 def _(r): (r / "registry").mkdir()
 
 
+def git_init(r: Path) -> None:
+    env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+    subprocess.run(["git", "init", "-q", str(r)], env=env, check=True)
+
+
+# Ignored by git is what excuses a directory, not merely being untracked.
+@case("V28-untracked-dir", says="stray/ carries no set name")
+def _(r): git_init(r); (r / "stray").mkdir()
+
+
+@quiet("ignored .venv at the top")
+def _(r):
+    """A virtualenv made to install pyyaml is not a directory this set owns,
+    and the markdown pip vendors into it is not a page of the corpus."""
+    git_init(r)
+    lic = r / ".venv/lib/python3/site-packages/pip-x.dist-info/LICENSE.md"
+    lic.parent.mkdir(parents=True)
+    lic.write_text("x\n" * 6000, encoding="utf-8")
+
+
 @case("V29")
 def _(r):
     f = r / f"{S}research-source/reference/channel-map.md"
@@ -571,6 +593,15 @@ def _(r):
     p.write_text(re.sub(r"<!-- deliver:reach -->.*?<!-- /deliver:reach -->", "", p.read_text(), flags=re.S))
 
 
+# A blank line inside the markers is drift render removes; V17 passed it, so
+# the hook was green over a file CI's "Delivered blocks are current" fails.
+@case("V17-blank-inside", says="values block differs")
+def _(r):
+    p = r / f"{S}research-scope/SKILL.md"
+    sub(p, "<!-- deliver:values -->\n", "<!-- deliver:values -->\n\n")
+    sub(p, "\n<!-- /deliver:values -->", "\n\n<!-- /deliver:values -->")
+
+
 @case("V17-duplicate", says="reach delivery block more than once")
 def _(r):
     p = r / f"{S}research-source/SKILL.md"
@@ -592,7 +623,7 @@ def main() -> int:
         with tempfile.TemporaryDirectory() as tmp:
             copy = Path(tmp) / "repo"
             shutil.copytree(ROOT, copy, symlinks=True,
-                            ignore=shutil.ignore_patterns(".git", ".claude", "__pycache__"))
+                            ignore=copy_ignore(ROOT))
             mutate(copy)
             return run(copy)
 

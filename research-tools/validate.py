@@ -65,15 +65,46 @@ def read(p: Path) -> str:
     return p.read_text(encoding="utf-8")
 
 
-# Not corpus: git's own store, and `.claude/` — where a git worktree of this
-# very repo lives, which a bare rglob counted as a second copy of every page.
-# Judged on the path below ROOT, so a checkout that itself sits in one is fine.
+def git_ignored(root: Path) -> set[str]:
+    """The top-level directories git ignores here. A `.venv` made to install
+    pyyaml is the reader's, neither a directory this set owns nor a page of it:
+    V28 failed on it and the scans read pip's vendored licences. Empty outside
+    a checkout, where there is nothing untracked to ignore."""
+    import subprocess
+    names = [d.name for d in root.iterdir() if d.is_dir()]
+    try:
+        r = subprocess.run(["git", "check-ignore", "--stdin"], cwd=root, input="\n".join(names),
+                           capture_output=True, text=True)
+    except OSError:
+        return set()
+    return {n.rstrip("/") for n in r.stdout.splitlines()} & set(names)
+
+
+# Not corpus: git's own store, `.claude/` — where a git worktree of this very
+# repo lives, which a bare rglob counted as a second copy of every page — and
+# whatever git ignores at the top. Judged on the path below ROOT, so a
+# checkout that itself sits in one is fine.
+IGNORED = git_ignored(ROOT)
+
+
+def copy_ignore(src: Path):
+    """What the tests leave out when they copy `src` to mutate: git's store,
+    worktrees, bytecode, and what git ignores at the top. A copy is no
+    checkout, so a `.venv` carried into one is read as the set's own."""
+    top = git_ignored(src)
+
+    def ignore(d: str, names: list[str]) -> set[str]:
+        skip = {".git", ".claude", "__pycache__"} & set(names)
+        return skip | (top & set(names) if Path(d) == src else set())
+    return ignore
 NOT_CORPUS = {".git", ".claude"}
 
 
 def corpus_md(base: Path = ROOT):
     for f in sorted(base.rglob("*.md")):
-        if not NOT_CORPUS & set(f.relative_to(ROOT).parts):
+        parts = f.relative_to(ROOT).parts
+        # Ignored at the top only: `build/` there says nothing of a skill's own.
+        if not NOT_CORPUS & set(parts) and parts[0] not in IGNORED:
             yield f
 
 
@@ -353,8 +384,11 @@ def v17_delivery():
                 fail("V17", f"{d.name}/SKILL.md carries the {key} delivery block "
                             "more than once")
                 continue
-            got = text.split(open_m, 1)[1].split(close_m, 1)[0].strip("\n")
-            if got != want:
+            # Compared as render writes it, one newline inside each marker: a
+            # blank line there passed here, and render then rewrote the file, so
+            # make check and the hook were green over a block CI calls stale.
+            got = text.split(open_m, 1)[1].split(close_m, 1)[0]
+            if got != f"\n{want}\n":
                 fail("V17", f"{d.name}/SKILL.md {key} block differs from "
                             f"research-registry/delivered/{key}.md (run: make render)")
             body = sections(text).get(spec["section"], "")
@@ -602,7 +636,7 @@ def v28_namespace_agrees():
     # and a sibling set's install line (`cp -R research-* _common <skills dir>`)
     # is what that judgement looks like when it is wrong.
     for d in sorted(list(ROOT.iterdir()) + list(SKILLS_ROOT.iterdir() if SKILLS_ROOT != ROOT else [])):
-        if not d.is_dir() or d.name in PLATFORM_DIRS:
+        if not d.is_dir() or d.name in PLATFORM_DIRS or d.parent == ROOT and d.name in IGNORED:
             continue
         if not (d.name.startswith(PREFIX) or d.name == SHARED):
             fail("V28", f"{d.name}/ carries no set name; a directory this set owns "

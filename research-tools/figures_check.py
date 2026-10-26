@@ -22,6 +22,7 @@ Two checks today:
 import itertools
 import pathlib
 import re
+import subprocess
 import sys
 
 import yaml
@@ -31,8 +32,23 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 # end, the outer pipes optional but one pipe somewhere (without, `---` is a
 # heading's underline). `| |` or `|:|` is a row of empty cells, not a separator.
 SEP = re.compile(r"^(?=.*\|)\|?[ \t]*:?-+:?[ \t]*(\|[ \t]*:?-+:?[ \t]*)*\|?$")
-# Not corpus: git's store, and `.claude/`, where a worktree of this repo lives.
+
+
+def git_ignored(root: pathlib.Path) -> set[str]:
+    """The top-level directories git ignores, as validate.py reads them."""
+    names = [d.name for d in root.iterdir() if d.is_dir()]
+    try:
+        r = subprocess.run(["git", "check-ignore", "--stdin"], cwd=root, input="\n".join(names),
+                           capture_output=True, text=True)
+    except OSError:
+        return set()
+    return {n.rstrip("/") for n in r.stdout.splitlines()} & set(names)
+
+
+# Not corpus: git's store, `.claude/`, where a worktree of this repo lives, and
+# what git ignores at the top — a `.venv` holding pip's own markdown.
 NOT_CORPUS = {".git", ".claude"}
+IGNORED = git_ignored(ROOT)
 failures: list[str] = []
 
 
@@ -61,6 +77,7 @@ ITEM = re.compile(r"( {0,3})([-*+]|\d{1,9}[.)])( +|$)")
 # A code fence, backticks or tildes, closed only by a run of the same
 # character at least as long.
 FENCE = re.compile(r" {0,3}(`{3,}|~{3,})")
+QUOTE = re.compile(r" {0,3}> ?")
 
 
 def width(row: str) -> int:
@@ -114,13 +131,31 @@ def orphan_rows(text: str) -> list[tuple[int, str]]:
     one; a line short of it closes the item, unless it runs on lazily from the
     item's paragraph, which keeps it text."""
     lines = [line.expandtabs(4) for line in text.splitlines()]
+    return sorted(scan(lines)[0] + quoted_rows(lines))
+
+
+def scan(lines: list[str]) -> tuple[list[tuple[int, str]], list[bool]]:
+    """The rows outside any table, and for each prefix of the page whether it
+    ends inside one: `tables[n]` is the state after the first n lines. One
+    forward pass, so no prefix depends on what follows it."""
     out: list[tuple[int, str]] = []
     in_table, fence, state, prev = False, "", None, ""
     cols: list[int] = []      # content column of each open list item, outermost first
     depth = 0                 # how many items the open fence or table sits in
     empty = False             # the innermost item has had no content yet
     tried = False             # this paragraph has failed a delimiter row
+    comment = False           # inside an HTML comment, which renders nothing
+    # The quote's own text so far, read as a page of its own: only a paragraph
+    # runs on lazily, so a line under a quoted table starts a block of its own.
+    quote: list[str] = []
+    qtab = False
+    # The quote's text read ahead to the end of its run, scanned once: reading
+    # each prefix again cost a pass per line, and one per line per depth.
+    ahead: list[str] = []
+    ahead_tables: list[bool] = []
+    tables: list[bool] = []
     for i, raw in enumerate(lines):
+        tables.append(in_table)
         s = raw.strip()
         if s:
             k, empty = 0, False
@@ -140,6 +175,26 @@ def orphan_rows(text: str) -> list[tuple[int, str]]:
                     fence = ""
                 continue
             fence = ""                # its item closed, and the fence with it
+        if comment:
+            # An HTML block ends on the line holding `-->`, or when its item closes.
+            if k >= depth:
+                comment = "-->" not in rel
+                continue
+            comment = False
+        if CONTAINER.match(rel):
+            quote.append(QUOTE.sub("", rel, count=1))
+            if ahead[:len(quote)] != quote:
+                base = cols[k - 1] if k else 0
+                rest = []
+                for nxt in lines[i + 1:]:
+                    if not CONTAINER.match(nxt[base:]):
+                        break
+                    rest.append(QUOTE.sub("", nxt[base:], count=1))
+                ahead = quote + rest
+                ahead_tables = scan(ahead)[1]
+            qtab = ahead_tables[len(quote)]
+        else:
+            quote, qtab = [], False
         if k < len(cols):
             # Short of the innermost item: a paragraph runs on lazily unless the
             # line starts a block of its own; anything else closes the item.
@@ -174,6 +229,12 @@ def orphan_rows(text: str) -> list[tuple[int, str]]:
         if f:
             fence, depth, state = f.group(1), len(cols), None
             continue
+        if re.match(r" {0,3}<!--", rel):
+            # The opener's own dashes may close it: `<!-->` and `<!--->` are whole.
+            comment = rel.find("-->", rel.find("<!--") + 2) < 0
+            depth, state = len(cols), None
+            prev = ""
+            continue
         if state == "para" and re.fullmatch(r" {0,3}(-+|=+)[ \t]*", rel):
             state, prev, tried = None, s2, False     # a setext heading's underline
             continue
@@ -192,11 +253,11 @@ def orphan_rows(text: str) -> list[tuple[int, str]]:
         tried = state in ("para", "lazy") and (
             tried or state == "para" and lead(rel) < 4 and SEP.match(s2) is not None)
         state = step(state, rel)
+        if qtab and state == "lazy":
+            state = None
         prev = s2
-    return sorted(out + quoted_rows(lines))
-
-
-QUOTE = re.compile(r" {0,3}> ?")
+    tables.append(in_table)
+    return out, tables
 
 
 def quoted_rows(lines: list[str]) -> list[tuple[int, str]]:
@@ -227,7 +288,8 @@ def quoted_rows(lines: list[str]) -> list[tuple[int, str]]:
 def check_tables() -> int:
     n = 0
     for f in sorted(ROOT.rglob("*.md")):
-        if NOT_CORPUS & set(f.relative_to(ROOT).parts):
+        parts = f.relative_to(ROOT).parts
+        if NOT_CORPUS & set(parts) or parts[0] in IGNORED:
             continue
         n += 1
         for line, text in orphan_rows(f.read_text(encoding="utf-8")):

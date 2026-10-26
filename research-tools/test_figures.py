@@ -9,6 +9,7 @@ Run: make test
 """
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 import sys
@@ -16,6 +17,9 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.dont_write_bytecode = True
+from validate import copy_ignore                   # noqa: E402
 PAGE = "skills/research-synthesize/reference/confidence-calibration.md"
 ROW_HIGH = "| `High` | `Medium` | `Low` | `Low` | `Unknown` |"
 
@@ -31,7 +35,7 @@ def mutated(mutate) -> tuple[int, str]:
     with tempfile.TemporaryDirectory() as tmp:
         copy = Path(tmp) / "repo"
         shutil.copytree(ROOT, copy, symlinks=True,
-                        ignore=shutil.ignore_patterns(".git", ".claude", "__pycache__"))
+                        ignore=copy_ignore(ROOT))
         mutate(copy)
         return run(copy)
 
@@ -132,6 +136,31 @@ CASES = {
                                            "<!-- research:guidance -->\n\n> | a | b |\n> |---|---|\n"
                                            "> | 1 | 2 |\n>\n> | lonely | row |\n"),
                              "row sits outside any table — | lonely | row |"),
+    # A comment ends on the line holding `-->`; a row after it is text again.
+    "row-after-comment": (lambda r: sub(r / "skills/research-source/playbooks/traps.md",
+                                        "<!-- research:guidance -->\n",
+                                        "<!-- research:guidance -->\n\n<!-- held back:\n"
+                                        "| a | b |\n-->\n| lonely | row |\n"),
+                          "row sits outside any table — | lonely | row |"),
+    # `<!-->` is a whole comment, as cmark-gfm reads it: the row after it is text.
+    "empty-comment": (lambda r: sub(r / "skills/research-source/playbooks/traps.md",
+                                    "<!-- research:guidance -->\n",
+                                    "<!-- research:guidance -->\n\n<!-->\n| lonely | row |\n"),
+                      "row sits outside any table — | lonely | row |"),
+    # A comment opened in a list item closes with it, and leaves the row as text.
+    "comment-closes-with-item": (lambda r: sub(r / "skills/research-source/playbooks/traps.md",
+                                               "<!-- research:guidance -->\n",
+                                               "<!-- research:guidance -->\n\n- item\n"
+                                               "  <!-- x\n| lonely | row |\n  -->\n"),
+                                 "row sits outside any table — | lonely | row |"),
+    # Ignored at the top excuses the top only: a skill's own build/ is corpus.
+    "ignored-name-nested": (lambda r: (
+        subprocess.run(["git", "init", "-q", str(r)], check=True,
+                       env={k: v for k, v in os.environ.items() if not k.startswith("GIT_")}),
+        sub(r / ".gitignore", ".venv/\n", ".venv/\nbuild/\n"), (r / "build").mkdir(),
+        (r / "skills/research-source/build").mkdir(),
+        (r / "skills/research-source/build/x.md").write_text("Text.\n| lonely |\n", encoding="utf-8")),
+        "build/x.md:2: row sits outside any table"),
     "rises": (lambda r: sub(r / PAGE, ROW_HIGH, "| `High` | `High` | `Low` | `Low` | `Unknown` |"),
               "confidence held along a chain"),
     "unknown-leaks": (lambda r: sub(r / PAGE, ROW_HIGH, "| `High` | `Medium` | `Low` | `Low` | `Low` |"),
@@ -196,10 +225,52 @@ HARMLESS = {
                                     "<!-- research:guidance -->\n",
                                     "<!-- research:guidance -->\n\n> | a | b |\n> |---|---|\n"
                                     "> | 1 | 2 |\n\n```\n> | lonely |\n```\n"),
+    # What git ignores is not corpus: pip vendors markdown into a `.venv`.
+    "ignored-venv": lambda r: (
+        subprocess.run(["git", "init", "-q", str(r)], check=True,
+                       env={k: v for k, v in os.environ.items() if not k.startswith("GIT_")}),
+        (r / ".venv/lib").mkdir(parents=True, exist_ok=True),
+        (r / ".venv/lib/LICENSE.md").write_text("Text.\n| lonely | row |\n", encoding="utf-8")),
+    # Rows inside a multi-line HTML comment are not drawn at all.
+    "rows-in-comment": lambda r: sub(r / "skills/research-source/playbooks/traps.md",
+                                     "<!-- research:guidance -->\n",
+                                     "<!-- research:guidance -->\n\nText.\n<!-- held back:\n"
+                                     "| P3 trade press | one-hop |\n-->\n"),
+    # A table is no paragraph, so nothing runs on lazily from a quoted one: the
+    # table under it is a table of its own.
+    "table-under-quoted-table": lambda r: sub(r / "skills/research-source/playbooks/traps.md",
+                                              "<!-- research:guidance -->\n",
+                                              "<!-- research:guidance -->\n\n> | a | b |\n"
+                                              "> |---|---|\n> | 1 | 2 |\n| c | d |\n"
+                                              "|---|---|\n| 3 | 4 |\n"),
 }
 
 
+def scans_per_quote() -> int:
+    """A quote is scanned once per run and depth, not once per line: reading
+    each prefix again took seconds on forty lines of `> > > > text`."""
+    sys.path.insert(0, str(ROOT / "research-tools"))
+    sys.dont_write_bytecode = True
+    import figures_check
+    calls, real = [0], figures_check.scan
+
+    def counted(lines):
+        calls[0] += 1
+        return real(lines)
+    figures_check.scan = counted
+    try:
+        figures_check.orphan_rows("> > > > text\n" * 40)
+    finally:
+        figures_check.scan = real
+    return calls[0]
+
+
 def main() -> int:
+    scans = scans_per_quote()
+    # Fifteen today: a few per depth. One per line or more is the rescan back.
+    if scans >= 40:
+        print(f"  forty nested quote lines took {scans} scans; a quote is read once per depth")
+        return 1
     code, out = run(ROOT)
     if code != 0:
         print("figures_check already fails on the working tree; fix that first:\n" + out)

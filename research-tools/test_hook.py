@@ -18,6 +18,9 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.dont_write_bytecode = True
+from validate import copy_ignore                   # noqa: E402
 TARGET = "skills/research-source/playbooks/traps.md"
 BREAK = "\n| lonely | row |\n"          # a row outside any table: figures_check fails
 
@@ -36,7 +39,7 @@ def git(repo: Path, *args: str) -> subprocess.CompletedProcess:
 def fresh(tmp: Path) -> Path:
     repo = tmp / "repo"
     shutil.copytree(ROOT, repo, symlinks=True,
-                    ignore=shutil.ignore_patterns(".git", ".claude", "__pycache__"))
+                    ignore=copy_ignore(ROOT))
     git(repo, "init", "-q")
     git(repo, "config", "user.email", "hook@test")
     git(repo, "config", "user.name", "hook test")

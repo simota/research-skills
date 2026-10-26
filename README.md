@@ -197,12 +197,18 @@ shared link silently removes every binding contract with no error**.
 - **No rule checks that a tier was honestly assigned, or that a label matches its
   ledger row.** The contract says both; whether the run honoured them is read by
   a person
+- **Nothing here notices when the published overview is behind.** Its check
+  lives with its generator, in another repository; this repository's CI never
+  runs it, and `pages.yml` publishes a stale page as readily as a current one
 
 ## The published overview
 
 [`docs/index.html`](docs/index.html) is a generated page — every figure on it is
-read off this repository, the way `make figures` recomputes what the reference
-layer states. **Do not edit it by hand**: `tools/pages.py` in the `agent-toolkit`
-repository writes it, `tools/pages.py --check` fails when it is behind, and
-`.github/workflows/pages.yml` here only publishes what is committed.
+read off this repository as it stood when the page was generated, the way
+`make figures` recomputes what the reference layer states. **Do not edit it by
+hand**: `tools/pages.py` in the `agent-toolkit` repository writes it, and
+`tools/pages.py --check`, run there, fails when it is behind.
+`.github/workflows/pages.yml` here only publishes what is committed, so after a
+change to `research-registry/` or a `SKILL.md` description the page says what
+the set used to say until someone regenerates it.
 
