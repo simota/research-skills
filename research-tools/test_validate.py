@@ -571,6 +571,15 @@ def _(r):
     p.write_text(re.sub(r"<!-- deliver:reach -->.*?<!-- /deliver:reach -->", "", p.read_text(), flags=re.S))
 
 
+# A blank line inside the markers is drift render removes; V17 passed it, so
+# the hook was green over a file CI's "Delivered blocks are current" fails.
+@case("V17-blank-inside", says="values block differs")
+def _(r):
+    p = r / f"{S}research-scope/SKILL.md"
+    sub(p, "<!-- deliver:values -->\n", "<!-- deliver:values -->\n\n")
+    sub(p, "\n<!-- /deliver:values -->", "\n\n<!-- /deliver:values -->")
+
+
 @case("V17-duplicate", says="reach delivery block more than once")
 def _(r):
     p = r / f"{S}research-source/SKILL.md"

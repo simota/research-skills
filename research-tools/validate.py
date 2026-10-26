@@ -353,8 +353,11 @@ def v17_delivery():
                 fail("V17", f"{d.name}/SKILL.md carries the {key} delivery block "
                             "more than once")
                 continue
-            got = text.split(open_m, 1)[1].split(close_m, 1)[0].strip("\n")
-            if got != want:
+            # Compared as render writes it, one newline inside each marker: a
+            # blank line there passed here, and render then rewrote the file, so
+            # make check and the hook were green over a block CI calls stale.
+            got = text.split(open_m, 1)[1].split(close_m, 1)[0]
+            if got != f"\n{want}\n":
                 fail("V17", f"{d.name}/SKILL.md {key} block differs from "
                             f"research-registry/delivered/{key}.md (run: make render)")
             body = sections(text).get(spec["section"], "")
