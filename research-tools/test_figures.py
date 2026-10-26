@@ -42,9 +42,25 @@ def sub(path: Path, old: str, new: str) -> None:
     path.write_text(t.replace(old, new, 1), encoding="utf-8")
 
 
-# name -> (mutation, text the failure must contain). Monotonicity has no case of
-# its own: with strict decay every pair but `High . High` is forced to `Low`, so
-# no four-label table breaks monotonicity without first breaking decay.
+def five_labels(r: Path) -> None:
+    """With strict decay every four-label pair but `High . High` is forced, so no
+    four-label table breaks monotonicity without first breaking decay. A fifth
+    label leaves room: this table passes every other property, and weakening
+    its second argument raises the result."""
+    sub(r / "research-registry/harness.yaml", "confidence_labels: [Unknown, Low, Medium, High]",
+        "confidence_labels: [Unknown, Low, Medium, High, VeryHigh]")
+    p = r / PAGE
+    t = p.read_text(encoding="utf-8")
+    start = t.index("| ∘ |")
+    end = t.index("\n\n", start)
+    rows = ["| ∘ | `VeryHigh` | `High` | `Medium` | `Low` | `Unknown` |", "|---|---|---|---|---|---|",
+            "| `VeryHigh` | `Low` | `Medium` | `Low` | `Low` | `Unknown` |"]
+    rows += [f"| `{x}` | `Low` | `Low` | `Low` | `Low` | `Unknown` |" for x in ("High", "Medium", "Low")]
+    rows += ["| `Unknown` |" + " `Unknown` |" * 5]
+    p.write_text(t[:start] + "\n".join(rows) + t[end:], encoding="utf-8")
+
+
+# name -> (mutation, text the failure must contain).
 CASES = {
     "split-table": (lambda r: sub(r / "skills/_research/CONTRACT.md",
                                   "| `Low` | Directionally", "\nA sentence.\n| `Low` | Directionally"),
@@ -110,6 +126,12 @@ CASES = {
                                        "<!-- research:guidance -->\n",
                                        "<!-- research:guidance -->\n\n- a\n  ```\n  x\n| a |\n"),
                          "row sits outside any table"),
+    # Inside a quote a row starts with `>`, and was never read as a row at all.
+    "split-table-in-quote": (lambda r: sub(r / "skills/research-source/playbooks/traps.md",
+                                           "<!-- research:guidance -->\n",
+                                           "<!-- research:guidance -->\n\n> | a | b |\n> |---|---|\n"
+                                           "> | 1 | 2 |\n>\n> | lonely | row |\n"),
+                             "row sits outside any table — | lonely | row |"),
     "rises": (lambda r: sub(r / PAGE, ROW_HIGH, "| `High` | `High` | `Low` | `Low` | `Unknown` |"),
               "confidence held along a chain"),
     "unknown-leaks": (lambda r: sub(r / PAGE, ROW_HIGH, "| `High` | `Medium` | `Low` | `Low` | `Low` |"),
@@ -121,6 +143,12 @@ CASES = {
     "duplicate-header": (lambda r: sub(r / PAGE, "| ∘ | `High` | `Medium` |", "| ∘ | `High` | `High` |"),
                          "header repeats a label"),
     "missing-page": (lambda r: (r / PAGE).unlink(), "missing — the checker has stopped"),
+    # A row the ladder does not have was counted as checked and checked by nothing.
+    "label-outside-ladder": (lambda r: sub(r / PAGE, "| `Unknown` | `Unknown` | `Unknown` | `Unknown` | `Unknown` |",
+                                           "| `Unknown` | `Unknown` | `Unknown` | `Unknown` | `Unknown` |\n"
+                                           "| `Certain` | `High` | `High` | `High` | `High` |"),
+                             "rows or columns outside the vocabulary: ['Certain']"),
+    "second-argument": (five_labels, "weakening VeryHigh to High after VeryHigh"),
 }
 
 
@@ -158,6 +186,16 @@ HARMLESS = {
     "indented-code": lambda r: sub(r / "skills/research-source/playbooks/traps.md",
                                    "<!-- research:guidance -->\n",
                                    "<!-- research:guidance -->\n\nText.\n\n    | a | b |\n"),
+    # A bare `>` closes the quote's paragraph: the table below it is one.
+    "table-after-quote": lambda r: sub(r / "skills/research-source/playbooks/traps.md",
+                                       "<!-- research:guidance -->\n",
+                                       "<!-- research:guidance -->\n\n> Note.\n>\n| a | b |\n"
+                                       "|---|---|\n| 1 | 2 |\n"),
+    # A table inside a quote is a table, and a fenced quote is code.
+    "table-in-quote": lambda r: sub(r / "skills/research-source/playbooks/traps.md",
+                                    "<!-- research:guidance -->\n",
+                                    "<!-- research:guidance -->\n\n> | a | b |\n> |---|---|\n"
+                                    "> | 1 | 2 |\n\n```\n> | lonely |\n```\n"),
 }
 
 

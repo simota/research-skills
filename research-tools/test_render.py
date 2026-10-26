@@ -9,6 +9,7 @@ Run: make test
 """
 from __future__ import annotations
 
+import re
 import shutil
 import subprocess
 import sys
@@ -125,11 +126,25 @@ def missing_section_is_refused(r: Path) -> str | None:
         else f"exit {code}: {out}"
 
 
+def block_outside_its_section_is_refused(r: Path) -> str | None:
+    """Rewritten where it stood, render said 0 changed and V17 then refused it."""
+    f = r / SCOPE
+    t = f.read_text(encoding="utf-8")
+    block = re.search(r"<!-- deliver:values -->.*?<!-- /deliver:values -->\n", t, re.S).group()
+    t = t.replace(block, "", 1)
+    f.write_text(t.replace("## Owns\n", "## Owns\n" + block, 1), encoding="utf-8")
+    before = f.read_text(encoding="utf-8")
+    code, out = run(r, "render.py")
+    if code == 0 or "has its values block outside 'Decide first'" not in out:
+        return f"exit {code}: {out}"
+    return None if f.read_text(encoding="utf-8") == before else "the refused file was changed"
+
+
 CASES = [clean_is_idempotent, unmatched_marker_is_refused, stray_marker_out_of_scope_is_refused,
          stray_open_marker_out_of_scope_keeps_prose,
          leading_blank_line_agrees,
          heading_with_trailing_space_renders, empty_section_keeps_its_block,
-         missing_section_is_refused]
+         missing_section_is_refused, block_outside_its_section_is_refused]
 
 
 def main() -> int:

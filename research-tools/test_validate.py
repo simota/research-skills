@@ -92,6 +92,11 @@ def _(r): sub(r / f"{S}research-source/SKILL.md", "Building the corpus",
               "INSTEAD OF guessing. Building the corpus")
 
 
+@case("V2-name-case", says="research-source description names research-appraise")
+def _(r): sub(r / f"{S}research-source/SKILL.md", "Building the corpus",
+              "Feeds Research-Appraise. Building the corpus")
+
+
 @case("V4-resolved", says="playbooks/traps.md is not linked")
 def _(r):
     """Same file name, other directory: a bare-name match counted it as linked."""
@@ -233,6 +238,14 @@ def _(r):
 def _(r): sub(r / f"{S}_research/CONTRACT.md", "`_research/SOURCE_HYGIENE.md`", "`SOURCE_HYGIENE.md`")
 
 
+@case("V19-shared-one-skill", says="'playbooks/grading.md', which does not resolve from research-report/")
+def _(r):
+    """Resolves from research-appraise, the one skill shared pages were checked
+    against, and from no other skill that reads the contract."""
+    sub(r / f"{S}_research/CONTRACT.md", "`_research/SOURCE_HYGIENE.md`",
+        "`_research/SOURCE_HYGIENE.md` (grade with `playbooks/grading.md`)")
+
+
 @case("V20")
 def _(r):
     """The definition row becomes a mention; the word is still on the page."""
@@ -307,6 +320,18 @@ def _(r):
 def _(r): (r / "research-registry/delivered/gone.md").symlink_to("../nowhere.md")
 
 
+@case("V27-skill-dir", says="skills/research-report points outside the repo")
+def _(r):
+    """The skill directory itself linked in from elsewhere: only what sat inside
+    it was walked, and its links back into the repo all resolved."""
+    outside = r.parent / "research-report"
+    (r / f"{S}research-report").rename(outside)
+    for name, target in (("_research", r / f"{S}_research"), ("registry", r / "research-registry")):
+        (outside / name).unlink()
+        (outside / name).symlink_to(target)
+    (r / f"{S}research-report").symlink_to(outside)
+
+
 @case("V28")
 def _(r): sub(r / "research-registry/harness.yaml", "set: research", "set: rsrch")
 
@@ -319,6 +344,13 @@ def _(r): (r / "registry").mkdir()
 def _(r):
     f = r / f"{S}research-source/reference/channel-map.md"
     f.write_text(f.read_text(encoding="utf-8").replace("Verified:", "Checked:"), encoding="utf-8")
+
+
+@case("V29-not-at-line-start", says="channel-map.md has no 'Verified:'")
+def _(r):
+    """`**Verified:**` passed here, and V31 and V37, which read the header from
+    the start of a line, skipped the page as one V29 had already reported."""
+    sub(r / f"{S}research-source/reference/channel-map.md", "Verified:", "**Verified:**")
 
 
 @case("V30")
@@ -441,6 +473,12 @@ def _(r): sub(r / "research-registry/harness.yaml",
 def _(r): sub(r / "research-registry/harness.yaml", "linked_tools:", "unlinked_tools:")
 
 
+@quiet("linked_tools names one skill bare")
+def _(r):
+    """`set()` of a bare name split it into letters, each reported as no skill."""
+    sub(r / "research-registry/harness.yaml", "refute.py: all", "refute.py: research-appraise")
+
+
 @case("V35")
 def _(r): sub(r / f"{S}research-report/SKILL.md", "an unopened record and an opened one",
               "a second-hand record and a first-hand one")
@@ -487,6 +525,14 @@ def _(r): sub(r / f"{S}_research/HANDOFF.md", "| `STOP` |", "| STOP |")
 @case("V38")
 def _(r): sub(r / f"{S}research-source/playbooks/traps.md", "<!-- research:guidance -->\n",
               "<!-- research:guidance -->\nverdict: KEEP | DROP\n")
+
+
+@case("V38-digits", says="switches on P6")
+def _(r):
+    """The evidence ladder is the vocabulary with digits in it, and a word with
+    a digit ended the match, so no listing of it was ever read."""
+    sub(r / f"{S}research-source/playbooks/traps.md", "<!-- research:guidance -->\n",
+        "<!-- research:guidance -->\ntier: P1 | P2 | P6\n")
 
 
 @case("V37")

@@ -171,8 +171,9 @@ def v2_description_terms():
             if _norm(term) in _norm(desc):
                 fail("V2", f"{d.name} description contains {term!r}; "
                            "boundaries belong in capabilities.yaml `not:`")
+        # Folded as the forbidden terms are: `Research-Appraise` names it too.
         for name in others - {d.name}:
-            if name in desc:
+            if _norm(name) in _norm(desc):
                 fail("V2", f"{d.name} description names {name}")
 
 
@@ -376,9 +377,10 @@ def v19_paths_resolve():
     A skill is handed its own directory as the base, and paths are normalised
     lexically, so `..` never travels back through the install symlink. That
     applies to the shared contracts too — they are read *by* a skill, so a
-    sibling-relative path in them points at nothing once installed.
+    sibling-relative path in them points at nothing once installed. Every
+    skill reads them, so they resolve from every skill directory: checked
+    against one, a contract could name a playbook only that skill carries.
     """
-    probe = SKILL_DIRS[0]
     shared = sorted((SKILLS_ROOT / SHARED).glob("*.md"))
     for d in SKILL_DIRS:
         # reference/ is read by the skill as much as a playbook is.
@@ -386,8 +388,12 @@ def v19_paths_resolve():
             + sorted((d / "reference").glob("*.md"))
         for f in readable:
             _check_paths(f, d, f.parent.relative_to(d), f"{d.name}/{f.relative_to(d)}")
-    for f in shared:                      # checked once, against one skill dir
-        _check_paths(f, probe, Path(SHARED), f"{SHARED}/{f.name}")
+    for f in shared:
+        before = len(FAILURES)
+        for d in SKILL_DIRS:
+            _check_paths(f, d, Path(SHARED), f"{SHARED}/{f.name}")
+        # A `..` reads the same from every skill; say it once.
+        FAILURES[before:] = list(dict.fromkeys(FAILURES[before:]))
 
 
 # A backticked path is a reference to this set only if it names a file or sits
@@ -422,7 +428,7 @@ def _check_paths(f: Path, base: Path, where: Path, label: str) -> None:
             # On disk the link may resolve (V8 is quiet); read from inside an
             # installed skill, `_research/../x` is `<skill>/x`, which may not.
             fail("V19", f"{label} links to {t!r}, which a skill reads as {norm!r}; "
-                        "that does not resolve from a skill directory")
+                        f"that does not resolve from {base.name}/")
     for p in TICK_PATH_RE.findall(text):
         if p.startswith(("http", "~", "/")) or " " in p or not _is_own_reference(p):
             continue
@@ -430,8 +436,8 @@ def _check_paths(f: Path, base: Path, where: Path, label: str) -> None:
             fail("V19", f"{label} references {p!r}; paths are normalised lexically, "
                         "so `..` does not traverse the install symlink")
         elif not (base / p).exists():
-            fail("V19", f"{label} references {p!r}, which does not resolve from a "
-                        "skill directory")
+            fail("V19", f"{label} references {p!r}, which does not resolve from "
+                        f"{base.name}/")
 
 
 # A definition, as against a mention: a table row or a heading that opens with
@@ -551,6 +557,13 @@ def v27_symlinks_stay_inside():
     checked as a link and never entered, so a link out of research-registry/
     reached every skill and passed."""
     walk, seen = [*SKILL_DIRS, SKILLS_ROOT / SHARED], set()
+    # The starting points too: a skill directory that is itself a link out of
+    # the repo carried its whole skill in from elsewhere, and only what sat
+    # inside it was looked at.
+    for d in list(walk):
+        if d.is_symlink() and ROOT.resolve() not in d.resolve().parents:
+            fail("V27", f"{d.relative_to(ROOT)} points outside the repo ({d.resolve()})")
+            walk.remove(d)
     while walk:
         d = walk.pop(0)
         if d.resolve() in seen:
@@ -608,7 +621,9 @@ def v29_reference_headers():
         for f in sorted((d / "reference").glob("*.md")) if (d / "reference").exists() else []:
             head = "\n".join(read(f).splitlines()[:12])
             for header in want:
-                if header not in head:
+                # At the start of a line, where V31 and V37 look for it: a
+                # `**Verified:**` passed here and was read by neither.
+                if not re.search(rf"^{re.escape(header)}", head, re.M):
                     fail("V29", f"{f.relative_to(ROOT)} has no {header!r} in its first "
                                 "12 lines; the deferred layer states what it claims "
                                 "and when anyone last checked")
@@ -743,7 +758,8 @@ def v34_tools_reachable():
         if not source.exists():
             fail("V34", f"linked_tools names {tool}, which is not in {SET}-tools/")
             continue
-        wanted = set(SKILLS) if who == "all" else set(who)
+        # One skill may be written bare; set() of the string split it into letters.
+        wanted = set(SKILLS) if who == "all" else {who} if isinstance(who, str) else set(who)
         unknown = wanted - set(SKILLS)
         if unknown:
             fail("V34", f"linked_tools[{tool}] names {sorted(unknown)}, "
@@ -937,10 +953,10 @@ def v37_source_pins_the_rot():
 
 
 # `KEY: A | B | C` in a schema, or a bare `A | B | C` on a line of its own —
-# upper-case words, underscores allowed (`LOOP_BACK`), joined by pipes. Parenthesised forms are not
-# matched, so this is a floor.
-ENUM_RE = re.compile(r"(?:^|:\s*)((?:[A-Z][A-Z_-]*(?: [A-Z][A-Z_-]*)*)"
-                     r"(?:\s*\|\s*(?:[A-Z][A-Z_-]*(?: [A-Z][A-Z_-]*)*))+)\s*(?:#.*)?$")
+# upper-case words, underscores and digits allowed (`LOOP_BACK`, `P1`), joined by
+# pipes. Parenthesised forms are not matched, so this is a floor.
+ENUM_RE = re.compile(r"(?:^|:\s*)((?:[A-Z][A-Z0-9_-]*(?: [A-Z][A-Z0-9_-]*)*)"
+                     r"(?:\s*\|\s*(?:[A-Z][A-Z0-9_-]*(?: [A-Z][A-Z0-9_-]*)*))+)\s*(?:#.*)?$")
 
 
 def v38_enumerations_declared():
