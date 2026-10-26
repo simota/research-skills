@@ -233,6 +233,14 @@ def _(r):
 def _(r): sub(r / f"{S}_research/CONTRACT.md", "`_research/SOURCE_HYGIENE.md`", "`SOURCE_HYGIENE.md`")
 
 
+@case("V19-shared-one-skill", says="'playbooks/grading.md', which does not resolve from research-report/")
+def _(r):
+    """Resolves from research-appraise, the one skill shared pages were checked
+    against, and from no other skill that reads the contract."""
+    sub(r / f"{S}_research/CONTRACT.md", "`_research/SOURCE_HYGIENE.md`",
+        "`_research/SOURCE_HYGIENE.md` (grade with `playbooks/grading.md`)")
+
+
 @case("V20")
 def _(r):
     """The definition row becomes a mention; the word is still on the page."""

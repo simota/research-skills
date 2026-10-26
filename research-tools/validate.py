@@ -376,9 +376,10 @@ def v19_paths_resolve():
     A skill is handed its own directory as the base, and paths are normalised
     lexically, so `..` never travels back through the install symlink. That
     applies to the shared contracts too — they are read *by* a skill, so a
-    sibling-relative path in them points at nothing once installed.
+    sibling-relative path in them points at nothing once installed. Every
+    skill reads them, so they resolve from every skill directory: checked
+    against one, a contract could name a playbook only that skill carries.
     """
-    probe = SKILL_DIRS[0]
     shared = sorted((SKILLS_ROOT / SHARED).glob("*.md"))
     for d in SKILL_DIRS:
         # reference/ is read by the skill as much as a playbook is.
@@ -386,8 +387,12 @@ def v19_paths_resolve():
             + sorted((d / "reference").glob("*.md"))
         for f in readable:
             _check_paths(f, d, f.parent.relative_to(d), f"{d.name}/{f.relative_to(d)}")
-    for f in shared:                      # checked once, against one skill dir
-        _check_paths(f, probe, Path(SHARED), f"{SHARED}/{f.name}")
+    for f in shared:
+        before = len(FAILURES)
+        for d in SKILL_DIRS:
+            _check_paths(f, d, Path(SHARED), f"{SHARED}/{f.name}")
+        # A `..` reads the same from every skill; say it once.
+        FAILURES[before:] = list(dict.fromkeys(FAILURES[before:]))
 
 
 # A backticked path is a reference to this set only if it names a file or sits
@@ -422,7 +427,7 @@ def _check_paths(f: Path, base: Path, where: Path, label: str) -> None:
             # On disk the link may resolve (V8 is quiet); read from inside an
             # installed skill, `_research/../x` is `<skill>/x`, which may not.
             fail("V19", f"{label} links to {t!r}, which a skill reads as {norm!r}; "
-                        "that does not resolve from a skill directory")
+                        f"that does not resolve from {base.name}/")
     for p in TICK_PATH_RE.findall(text):
         if p.startswith(("http", "~", "/")) or " " in p or not _is_own_reference(p):
             continue
@@ -430,8 +435,8 @@ def _check_paths(f: Path, base: Path, where: Path, label: str) -> None:
             fail("V19", f"{label} references {p!r}; paths are normalised lexically, "
                         "so `..` does not traverse the install symlink")
         elif not (base / p).exists():
-            fail("V19", f"{label} references {p!r}, which does not resolve from a "
-                        "skill directory")
+            fail("V19", f"{label} references {p!r}, which does not resolve from "
+                        f"{base.name}/")
 
 
 # A definition, as against a mention: a table row or a heading that opens with
