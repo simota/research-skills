@@ -329,6 +329,13 @@ def _(r):
     f.write_text(f.read_text(encoding="utf-8").replace("Verified:", "Checked:"), encoding="utf-8")
 
 
+@case("V29-not-at-line-start", says="channel-map.md has no 'Verified:'")
+def _(r):
+    """`**Verified:**` passed here, and V31 and V37, which read the header from
+    the start of a line, skipped the page as one V29 had already reported."""
+    sub(r / f"{S}research-source/reference/channel-map.md", "Verified:", "**Verified:**")
+
+
 @case("V30")
 def _(r): (r / f"{S}research-source/reference/orphan.md").write_text(
     "<!-- research:deferred -->\n# Orphan\n\nPurpose: x\nRead when: y\nVerified: 2026-08-21\n")

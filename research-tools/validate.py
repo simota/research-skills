@@ -613,7 +613,9 @@ def v29_reference_headers():
         for f in sorted((d / "reference").glob("*.md")) if (d / "reference").exists() else []:
             head = "\n".join(read(f).splitlines()[:12])
             for header in want:
-                if header not in head:
+                # At the start of a line, where V31 and V37 look for it: a
+                # `**Verified:**` passed here and was read by neither.
+                if not re.search(rf"^{re.escape(header)}", head, re.M):
                     fail("V29", f"{f.relative_to(ROOT)} has no {header!r} in its first "
                                 "12 lines; the deferred layer states what it claims "
                                 "and when anyone last checked")
