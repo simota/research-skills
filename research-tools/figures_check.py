@@ -293,6 +293,12 @@ def check_composition() -> int:
     if missing:
         fail("composition", f"undefined pairs: {missing}")
         return len(t)
+    # A row or column the ladder does not have is never put through a property
+    # below, and the run reports its cells as checked.
+    extra = sorted({x for k in t for x in k} - set(LABELS))
+    if extra:
+        fail("composition", f"rows or columns outside the vocabulary: {extra}")
+        return len(t)
     bad = [v for v in t.values() if v not in RANK]
     if bad:
         fail("composition", f"cells naming labels outside the vocabulary: {sorted(set(bad))}")
@@ -310,6 +316,10 @@ def check_composition() -> int:
             if RANK[weaker] <= RANK[a] and RANK[c(weaker, b)] > RANK[c(a, b)]:
                 fail("composition", f"weakening {a} to {weaker} against {b} "
                                     f"raised the result to {c(weaker, b)}")
+            # In either argument: the table need not commute.
+            if RANK[weaker] <= RANK[b] and RANK[c(a, weaker)] > RANK[c(a, b)]:
+                fail("composition", f"weakening {b} to {weaker} after {a} "
+                                    f"raised the result to {c(a, weaker)}")
     for a, b, x in itertools.product(LABELS, repeat=3):
         if c(c(a, b), x) != c(a, c(b, x)):
             fail("composition", f"not associative: ({a}.{b}).{x} = {c(c(a, b), x)} "
