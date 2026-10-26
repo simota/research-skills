@@ -132,6 +132,18 @@ CASES = {
                                            "<!-- research:guidance -->\n\n> | a | b |\n> |---|---|\n"
                                            "> | 1 | 2 |\n>\n> | lonely | row |\n"),
                              "row sits outside any table — | lonely | row |"),
+    # A comment ends on the line holding `-->`; a row after it is text again.
+    "row-after-comment": (lambda r: sub(r / "skills/research-source/playbooks/traps.md",
+                                        "<!-- research:guidance -->\n",
+                                        "<!-- research:guidance -->\n\n<!-- held back:\n"
+                                        "| a | b |\n-->\n| lonely | row |\n"),
+                          "row sits outside any table — | lonely | row |"),
+    # A comment opened in a list item closes with it, and leaves the row as text.
+    "comment-closes-with-item": (lambda r: sub(r / "skills/research-source/playbooks/traps.md",
+                                               "<!-- research:guidance -->\n",
+                                               "<!-- research:guidance -->\n\n- item\n"
+                                               "  <!-- x\n| lonely | row |\n  -->\n"),
+                                 "row sits outside any table — | lonely | row |"),
     "rises": (lambda r: sub(r / PAGE, ROW_HIGH, "| `High` | `High` | `Low` | `Low` | `Unknown` |"),
               "confidence held along a chain"),
     "unknown-leaks": (lambda r: sub(r / PAGE, ROW_HIGH, "| `High` | `Medium` | `Low` | `Low` | `Low` |"),
@@ -196,6 +208,18 @@ HARMLESS = {
                                     "<!-- research:guidance -->\n",
                                     "<!-- research:guidance -->\n\n> | a | b |\n> |---|---|\n"
                                     "> | 1 | 2 |\n\n```\n> | lonely |\n```\n"),
+    # Rows inside a multi-line HTML comment are not drawn at all.
+    "rows-in-comment": lambda r: sub(r / "skills/research-source/playbooks/traps.md",
+                                     "<!-- research:guidance -->\n",
+                                     "<!-- research:guidance -->\n\nText.\n<!-- held back:\n"
+                                     "| P3 trade press | one-hop |\n-->\n"),
+    # A table is no paragraph, so nothing runs on lazily from a quoted one: the
+    # table under it is a table of its own.
+    "table-under-quoted-table": lambda r: sub(r / "skills/research-source/playbooks/traps.md",
+                                              "<!-- research:guidance -->\n",
+                                              "<!-- research:guidance -->\n\n> | a | b |\n"
+                                              "> |---|---|\n> | 1 | 2 |\n| c | d |\n"
+                                              "|---|---|\n| 3 | 4 |\n"),
 }
 
 

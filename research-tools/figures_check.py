@@ -61,6 +61,7 @@ ITEM = re.compile(r"( {0,3})([-*+]|\d{1,9}[.)])( +|$)")
 # A code fence, backticks or tildes, closed only by a run of the same
 # character at least as long.
 FENCE = re.compile(r" {0,3}(`{3,}|~{3,})")
+QUOTE = re.compile(r" {0,3}> ?")
 
 
 def width(row: str) -> int:
@@ -114,12 +115,22 @@ def orphan_rows(text: str) -> list[tuple[int, str]]:
     one; a line short of it closes the item, unless it runs on lazily from the
     item's paragraph, which keeps it text."""
     lines = [line.expandtabs(4) for line in text.splitlines()]
+    return sorted(scan(lines)[0] + quoted_rows(lines))
+
+
+def scan(lines: list[str]) -> tuple[list[tuple[int, str]], bool]:
+    """The rows outside any table, and whether the page ends inside one."""
     out: list[tuple[int, str]] = []
     in_table, fence, state, prev = False, "", None, ""
     cols: list[int] = []      # content column of each open list item, outermost first
     depth = 0                 # how many items the open fence or table sits in
     empty = False             # the innermost item has had no content yet
     tried = False             # this paragraph has failed a delimiter row
+    comment = False           # inside an HTML comment, which renders nothing
+    # The quote's own text so far, read as a page of its own: only a paragraph
+    # runs on lazily, so a line under a quoted table starts a block of its own.
+    quote: list[str] = []
+    qtab = False
     for i, raw in enumerate(lines):
         s = raw.strip()
         if s:
@@ -140,6 +151,17 @@ def orphan_rows(text: str) -> list[tuple[int, str]]:
                     fence = ""
                 continue
             fence = ""                # its item closed, and the fence with it
+        if comment:
+            # An HTML block ends on the line holding `-->`, or when its item closes.
+            if k >= depth:
+                comment = "-->" not in rel
+                continue
+            comment = False
+        if CONTAINER.match(rel):
+            quote.append(QUOTE.sub("", rel, count=1))
+            qtab = scan(quote)[1]
+        else:
+            quote, qtab = [], False
         if k < len(cols):
             # Short of the innermost item: a paragraph runs on lazily unless the
             # line starts a block of its own; anything else closes the item.
@@ -174,6 +196,10 @@ def orphan_rows(text: str) -> list[tuple[int, str]]:
         if f:
             fence, depth, state = f.group(1), len(cols), None
             continue
+        if re.match(r" {0,3}<!--", rel):
+            comment, depth, state = "-->" not in rel.split("<!--", 1)[1], len(cols), None
+            prev = ""
+            continue
         if state == "para" and re.fullmatch(r" {0,3}(-+|=+)[ \t]*", rel):
             state, prev, tried = None, s2, False     # a setext heading's underline
             continue
@@ -192,11 +218,10 @@ def orphan_rows(text: str) -> list[tuple[int, str]]:
         tried = state in ("para", "lazy") and (
             tried or state == "para" and lead(rel) < 4 and SEP.match(s2) is not None)
         state = step(state, rel)
+        if qtab and state == "lazy":
+            state = None
         prev = s2
-    return sorted(out + quoted_rows(lines))
-
-
-QUOTE = re.compile(r" {0,3}> ?")
+    return out, in_table
 
 
 def quoted_rows(lines: list[str]) -> list[tuple[int, str]]:
