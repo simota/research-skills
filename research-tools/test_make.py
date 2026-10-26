@@ -127,8 +127,26 @@ def hooks_path_already_here(tmp: Path) -> str | None:
     return None if r.returncode == 0 else f"exit {r.returncode}: {r.stdout}{r.stderr}"
 
 
+def shared_hooks_path_refuses(tmp: Path) -> str | None:
+    """A global core.hooksPath runs for every repository on the machine; this
+    hook installed there blocked commits in all of them."""
+    repo, shared = git_copy(tmp), tmp / "global-hooks"
+    shared.mkdir()
+    subprocess.run(["git", "-C", str(repo), "config", "core.hooksPath", str(shared)], check=True)
+    r = make(tmp, "hooks", cwd=repo)
+    if r.returncode == 0 or (shared / "pre-commit").exists():
+        return f"installed into a shared hooks directory: exit {r.returncode}: {r.stdout}"
+    # Moved inside the repository's own git directory, it is this checkout's.
+    subprocess.run(["git", "-C", str(repo), "config", "core.hooksPath", ".git/my-hooks"],
+                   check=True)
+    r = make(tmp, "hooks", cwd=repo)
+    if r.returncode != 0 or not (repo / ".git/my-hooks/pre-commit").exists():
+        return f"refused a hooks path inside .git: exit {r.returncode}: {r.stderr}"
+    return None
+
+
 CASES = [home_with_a_space, foreign_link_is_kept, outside_the_repo_refuses,
-         foreign_hook_is_kept, hooks_path_already_here]
+         foreign_hook_is_kept, hooks_path_already_here, shared_hooks_path_refuses]
 
 
 def main() -> int:

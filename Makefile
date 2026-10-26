@@ -72,14 +72,22 @@ render:
 # to a hook elsewhere, which cp would write through. An older copy of this one,
 # known by its install line, is replaced, since that is how a fix to it arrives;
 # it may have been edited since, so what it held is kept beside it first, and a
-# backup already there is never written over.
+# backup already there is never written over. Hooks outside this repository
+# and its git directory — a global core.hooksPath — run for every repository
+# that uses them, and this hook blocked every commit in each of those.
 hooks:
 	@hooks=$$(cd "$(REPO)" && git rev-parse --git-path hooks) && \
+		common=$$(cd "$(REPO)" && git rev-parse --path-format=absolute --git-common-dir) && \
 		case "$$hooks" in /*) ;; *) hooks="$(REPO)/$$hooks";; esac && \
 		src="$(REPO)/research-tools/githooks/pre-commit"; dst="$$hooks/pre-commit"; \
 		bak="$$dst.before-make-hooks"; \
+		case "$$hooks/" in "$(REPO)"/*|"$$common"/*) mine=1;; *) mine=;; esac; \
 		if [ "$$src" -ef "$$dst" ]; then \
 			echo "pre-commit already in force from $$hooks"; \
+		elif [ -z "$$mine" ]; then \
+			echo "$$hooks is shared beyond this repository (core.hooksPath); this hook" \
+				"would run in every repository using it. Install it there by hand if" \
+				"that is meant" >&2; exit 1; \
 		elif [ -L "$$dst" ] || { [ -e "$$dst" ] && ! grep -q '^# Install with: make hooks$$' "$$dst"; }; then \
 			echo "$$dst is another hook; move it aside, then make hooks" >&2; exit 1; \
 		elif [ -e "$$dst" ] && ! cmp -s "$$src" "$$dst" && { [ -e "$$bak" ] || [ -L "$$bak" ]; }; then \
