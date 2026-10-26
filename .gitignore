@@ -4,3 +4,6 @@ __pycache__/
 # A wheel fetched to check against (pip download cmarkgfm) is a tool, not source:
 # three were committed once, alongside the change they were used to score.
 *.whl
+
+# A virtualenv made to install pyyaml is the reader's, not this set's.
+.venv/

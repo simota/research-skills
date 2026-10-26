@@ -9,6 +9,7 @@ Run: make test
 """
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 import sys
@@ -208,6 +209,12 @@ HARMLESS = {
                                     "<!-- research:guidance -->\n",
                                     "<!-- research:guidance -->\n\n> | a | b |\n> |---|---|\n"
                                     "> | 1 | 2 |\n\n```\n> | lonely |\n```\n"),
+    # What git ignores is not corpus: pip vendors markdown into a `.venv`.
+    "ignored-venv": lambda r: (
+        subprocess.run(["git", "init", "-q", str(r)], check=True,
+                       env={k: v for k, v in os.environ.items() if not k.startswith("GIT_")}),
+        (r / ".venv/lib").mkdir(parents=True),
+        (r / ".venv/lib/LICENSE.md").write_text("Text.\n| lonely | row |\n", encoding="utf-8")),
     # Rows inside a multi-line HTML comment are not drawn at all.
     "rows-in-comment": lambda r: sub(r / "skills/research-source/playbooks/traps.md",
                                      "<!-- research:guidance -->\n",

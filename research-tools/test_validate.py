@@ -9,6 +9,7 @@ Run: make test
 """
 from __future__ import annotations
 
+import os
 import re
 import shutil
 import subprocess
@@ -338,6 +339,26 @@ def _(r): sub(r / "research-registry/harness.yaml", "set: research", "set: rsrch
 
 @case("V28-generic-dir")
 def _(r): (r / "registry").mkdir()
+
+
+def git_init(r: Path) -> None:
+    env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+    subprocess.run(["git", "init", "-q", str(r)], env=env, check=True)
+
+
+# Ignored by git is what excuses a directory, not merely being untracked.
+@case("V28-untracked-dir", says="stray/ carries no set name")
+def _(r): git_init(r); (r / "stray").mkdir()
+
+
+@quiet("ignored .venv at the top")
+def _(r):
+    """A virtualenv made to install pyyaml is not a directory this set owns,
+    and the markdown pip vendors into it is not a page of the corpus."""
+    git_init(r)
+    lic = r / ".venv/lib/python3/site-packages/pip-x.dist-info/LICENSE.md"
+    lic.parent.mkdir(parents=True)
+    lic.write_text("x\n" * 6000, encoding="utf-8")
 
 
 @case("V29")

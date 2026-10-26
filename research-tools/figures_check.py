@@ -22,6 +22,7 @@ Two checks today:
 import itertools
 import pathlib
 import re
+import subprocess
 import sys
 
 import yaml
@@ -31,8 +32,22 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 # end, the outer pipes optional but one pipe somewhere (without, `---` is a
 # heading's underline). `| |` or `|:|` is a row of empty cells, not a separator.
 SEP = re.compile(r"^(?=.*\|)\|?[ \t]*:?-+:?[ \t]*(\|[ \t]*:?-+:?[ \t]*)*\|?$")
-# Not corpus: git's store, and `.claude/`, where a worktree of this repo lives.
-NOT_CORPUS = {".git", ".claude"}
+
+
+def git_ignored(root: pathlib.Path) -> set[str]:
+    """The top-level directories git ignores, as validate.py reads them."""
+    names = [d.name for d in root.iterdir() if d.is_dir()]
+    try:
+        r = subprocess.run(["git", "check-ignore", "--stdin"], cwd=root, input="\n".join(names),
+                           capture_output=True, text=True)
+    except OSError:
+        return set()
+    return {n.rstrip("/") for n in r.stdout.splitlines()} & set(names)
+
+
+# Not corpus: git's store, `.claude/`, where a worktree of this repo lives, and
+# what git ignores at the top — a `.venv` holding pip's own markdown.
+NOT_CORPUS = {".git", ".claude"} | git_ignored(ROOT)
 failures: list[str] = []
 
 

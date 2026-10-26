@@ -65,10 +65,27 @@ def read(p: Path) -> str:
     return p.read_text(encoding="utf-8")
 
 
-# Not corpus: git's own store, and `.claude/` — where a git worktree of this
-# very repo lives, which a bare rglob counted as a second copy of every page.
-# Judged on the path below ROOT, so a checkout that itself sits in one is fine.
-NOT_CORPUS = {".git", ".claude"}
+def git_ignored(root: Path) -> set[str]:
+    """The top-level directories git ignores here. A `.venv` made to install
+    pyyaml is the reader's, neither a directory this set owns nor a page of it:
+    V28 failed on it and the scans read pip's vendored licences. Empty outside
+    a checkout, where there is nothing untracked to ignore."""
+    import subprocess
+    names = [d.name for d in root.iterdir() if d.is_dir()]
+    try:
+        r = subprocess.run(["git", "check-ignore", "--stdin"], cwd=root, input="\n".join(names),
+                           capture_output=True, text=True)
+    except OSError:
+        return set()
+    return {n.rstrip("/") for n in r.stdout.splitlines()} & set(names)
+
+
+# Not corpus: git's own store, `.claude/` — where a git worktree of this very
+# repo lives, which a bare rglob counted as a second copy of every page — and
+# whatever git ignores at the top. Judged on the path below ROOT, so a
+# checkout that itself sits in one is fine.
+IGNORED = git_ignored(ROOT)
+NOT_CORPUS = {".git", ".claude"} | IGNORED
 
 
 def corpus_md(base: Path = ROOT):
@@ -605,7 +622,7 @@ def v28_namespace_agrees():
     # and a sibling set's install line (`cp -R research-* _common <skills dir>`)
     # is what that judgement looks like when it is wrong.
     for d in sorted(list(ROOT.iterdir()) + list(SKILLS_ROOT.iterdir() if SKILLS_ROOT != ROOT else [])):
-        if not d.is_dir() or d.name in PLATFORM_DIRS:
+        if not d.is_dir() or d.name in PLATFORM_DIRS or d.parent == ROOT and d.name in IGNORED:
             continue
         if not (d.name.startswith(PREFIX) or d.name == SHARED):
             fail("V28", f"{d.name}/ carries no set name; a directory this set owns "
