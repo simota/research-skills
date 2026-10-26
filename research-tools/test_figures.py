@@ -145,6 +145,14 @@ CASES = {
                                                "<!-- research:guidance -->\n\n- item\n"
                                                "  <!-- x\n| lonely | row |\n  -->\n"),
                                  "row sits outside any table — | lonely | row |"),
+    # Ignored at the top excuses the top only: a skill's own build/ is corpus.
+    "ignored-name-nested": (lambda r: (
+        subprocess.run(["git", "init", "-q", str(r)], check=True,
+                       env={k: v for k, v in os.environ.items() if not k.startswith("GIT_")}),
+        sub(r / ".gitignore", ".venv/\n", ".venv/\nbuild/\n"), (r / "build").mkdir(),
+        (r / "skills/research-source/build").mkdir(),
+        (r / "skills/research-source/build/x.md").write_text("Text.\n| lonely |\n", encoding="utf-8")),
+        "build/x.md:2: row sits outside any table"),
     "rises": (lambda r: sub(r / PAGE, ROW_HIGH, "| `High` | `High` | `Low` | `Low` | `Unknown` |"),
               "confidence held along a chain"),
     "unknown-leaks": (lambda r: sub(r / PAGE, ROW_HIGH, "| `High` | `Medium` | `Low` | `Low` | `Low` |"),
