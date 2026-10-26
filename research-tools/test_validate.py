@@ -92,6 +92,11 @@ def _(r): sub(r / f"{S}research-source/SKILL.md", "Building the corpus",
               "INSTEAD OF guessing. Building the corpus")
 
 
+@case("V2-name-case", says="research-source description names research-appraise")
+def _(r): sub(r / f"{S}research-source/SKILL.md", "Building the corpus",
+              "Feeds Research-Appraise. Building the corpus")
+
+
 @case("V4-resolved", says="playbooks/traps.md is not linked")
 def _(r):
     """Same file name, other directory: a bare-name match counted it as linked."""

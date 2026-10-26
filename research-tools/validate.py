@@ -171,8 +171,9 @@ def v2_description_terms():
             if _norm(term) in _norm(desc):
                 fail("V2", f"{d.name} description contains {term!r}; "
                            "boundaries belong in capabilities.yaml `not:`")
+        # Folded as the forbidden terms are: `Research-Appraise` names it too.
         for name in others - {d.name}:
-            if name in desc:
+            if _norm(name) in _norm(desc):
                 fail("V2", f"{d.name} description names {name}")
 
 
