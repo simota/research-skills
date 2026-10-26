@@ -21,6 +21,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.dont_write_bytecode = True                     # no __pycache__ in the tools dir
 import validate                                    # noqa: E402  — for RULES only
+from validate import copy_ignore                   # noqa: E402
 
 
 def run(root: Path) -> tuple[int, str]:
@@ -622,7 +623,7 @@ def main() -> int:
         with tempfile.TemporaryDirectory() as tmp:
             copy = Path(tmp) / "repo"
             shutil.copytree(ROOT, copy, symlinks=True,
-                            ignore=shutil.ignore_patterns(".git", ".claude", "__pycache__"))
+                            ignore=copy_ignore(ROOT))
             mutate(copy)
             return run(copy)
 

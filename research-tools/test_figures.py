@@ -17,6 +17,9 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.dont_write_bytecode = True
+from validate import copy_ignore                   # noqa: E402
 PAGE = "skills/research-synthesize/reference/confidence-calibration.md"
 ROW_HIGH = "| `High` | `Medium` | `Low` | `Low` | `Unknown` |"
 
@@ -32,7 +35,7 @@ def mutated(mutate) -> tuple[int, str]:
     with tempfile.TemporaryDirectory() as tmp:
         copy = Path(tmp) / "repo"
         shutil.copytree(ROOT, copy, symlinks=True,
-                        ignore=shutil.ignore_patterns(".git", ".claude", "__pycache__"))
+                        ignore=copy_ignore(ROOT))
         mutate(copy)
         return run(copy)
 
@@ -139,6 +142,11 @@ CASES = {
                                         "<!-- research:guidance -->\n\n<!-- held back:\n"
                                         "| a | b |\n-->\n| lonely | row |\n"),
                           "row sits outside any table — | lonely | row |"),
+    # `<!-->` is a whole comment, as cmark-gfm reads it: the row after it is text.
+    "empty-comment": (lambda r: sub(r / "skills/research-source/playbooks/traps.md",
+                                    "<!-- research:guidance -->\n",
+                                    "<!-- research:guidance -->\n\n<!-->\n| lonely | row |\n"),
+                      "row sits outside any table — | lonely | row |"),
     # A comment opened in a list item closes with it, and leaves the row as text.
     "comment-closes-with-item": (lambda r: sub(r / "skills/research-source/playbooks/traps.md",
                                                "<!-- research:guidance -->\n",
@@ -221,7 +229,7 @@ HARMLESS = {
     "ignored-venv": lambda r: (
         subprocess.run(["git", "init", "-q", str(r)], check=True,
                        env={k: v for k, v in os.environ.items() if not k.startswith("GIT_")}),
-        (r / ".venv/lib").mkdir(parents=True),
+        (r / ".venv/lib").mkdir(parents=True, exist_ok=True),
         (r / ".venv/lib/LICENSE.md").write_text("Text.\n| lonely | row |\n", encoding="utf-8")),
     # Rows inside a multi-line HTML comment are not drawn at all.
     "rows-in-comment": lambda r: sub(r / "skills/research-source/playbooks/traps.md",

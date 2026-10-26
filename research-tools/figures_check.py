@@ -230,7 +230,9 @@ def scan(lines: list[str]) -> tuple[list[tuple[int, str]], list[bool]]:
             fence, depth, state = f.group(1), len(cols), None
             continue
         if re.match(r" {0,3}<!--", rel):
-            comment, depth, state = "-->" not in rel.split("<!--", 1)[1], len(cols), None
+            # The opener's own dashes may close it: `<!-->` and `<!--->` are whole.
+            comment = rel.find("-->", rel.find("<!--") + 2) < 0
+            depth, state = len(cols), None
             prev = ""
             continue
         if state == "para" and re.fullmatch(r" {0,3}(-+|=+)[ \t]*", rel):

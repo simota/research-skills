@@ -16,6 +16,9 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.dont_write_bytecode = True
+from validate import copy_ignore                   # noqa: E402
 SKILLS = sorted(p.parent.name for p in (ROOT / "skills").glob("research-*/SKILL.md"))
 
 
@@ -73,7 +76,7 @@ def git_copy(tmp: Path) -> Path:
     into a scratch `.git` and never this checkout's."""
     repo = tmp / "repo"
     shutil.copytree(ROOT, repo, symlinks=True,
-                    ignore=shutil.ignore_patterns(".git", ".claude", "__pycache__"))
+                    ignore=copy_ignore(ROOT))
     env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
     subprocess.run(["git", "init", "-q", str(repo)], env=env, check=True)
     return repo

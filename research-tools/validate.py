@@ -85,6 +85,18 @@ def git_ignored(root: Path) -> set[str]:
 # whatever git ignores at the top. Judged on the path below ROOT, so a
 # checkout that itself sits in one is fine.
 IGNORED = git_ignored(ROOT)
+
+
+def copy_ignore(src: Path):
+    """What the tests leave out when they copy `src` to mutate: git's store,
+    worktrees, bytecode, and what git ignores at the top. A copy is no
+    checkout, so a `.venv` carried into one is read as the set's own."""
+    top = git_ignored(src)
+
+    def ignore(d: str, names: list[str]) -> set[str]:
+        skip = {".git", ".claude", "__pycache__"} & set(names)
+        return skip | (top & set(names) if Path(d) == src else set())
+    return ignore
 NOT_CORPUS = {".git", ".claude"}
 
 

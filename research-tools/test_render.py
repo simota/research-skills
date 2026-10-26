@@ -17,6 +17,9 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.dont_write_bytecode = True
+from validate import copy_ignore                   # noqa: E402
 SCOPE = "skills/research-scope/SKILL.md"
 
 
@@ -153,7 +156,7 @@ def main() -> int:
         with tempfile.TemporaryDirectory() as tmp:
             copy = Path(tmp) / "repo"
             shutil.copytree(ROOT, copy, symlinks=True,
-                            ignore=shutil.ignore_patterns(".git", ".claude", "__pycache__"))
+                            ignore=copy_ignore(ROOT))
             why = case(copy)
         if why:
             wrong += 1
