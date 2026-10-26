@@ -47,7 +47,8 @@ def git_ignored(root: pathlib.Path) -> set[str]:
 
 # Not corpus: git's store, `.claude/`, where a worktree of this repo lives, and
 # what git ignores at the top — a `.venv` holding pip's own markdown.
-NOT_CORPUS = {".git", ".claude"} | git_ignored(ROOT)
+NOT_CORPUS = {".git", ".claude"}
+IGNORED = git_ignored(ROOT)
 failures: list[str] = []
 
 
@@ -267,7 +268,8 @@ def quoted_rows(lines: list[str]) -> list[tuple[int, str]]:
 def check_tables() -> int:
     n = 0
     for f in sorted(ROOT.rglob("*.md")):
-        if NOT_CORPUS & set(f.relative_to(ROOT).parts):
+        parts = f.relative_to(ROOT).parts
+        if NOT_CORPUS & set(parts) or parts[0] in IGNORED:
             continue
         n += 1
         for line, text in orphan_rows(f.read_text(encoding="utf-8")):

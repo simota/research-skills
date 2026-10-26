@@ -85,12 +85,14 @@ def git_ignored(root: Path) -> set[str]:
 # whatever git ignores at the top. Judged on the path below ROOT, so a
 # checkout that itself sits in one is fine.
 IGNORED = git_ignored(ROOT)
-NOT_CORPUS = {".git", ".claude"} | IGNORED
+NOT_CORPUS = {".git", ".claude"}
 
 
 def corpus_md(base: Path = ROOT):
     for f in sorted(base.rglob("*.md")):
-        if not NOT_CORPUS & set(f.relative_to(ROOT).parts):
+        parts = f.relative_to(ROOT).parts
+        # Ignored at the top only: `build/` there says nothing of a skill's own.
+        if not NOT_CORPUS & set(parts) and parts[0] not in IGNORED:
             yield f
 
 
