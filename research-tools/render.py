@@ -59,6 +59,13 @@ def render(path: Path) -> bool:
             raise ValueError(f"{path.parent.name}/SKILL.md has an unmatched {key} marker; "
                              "repair or remove it, then render")
         if open_m in text:
+            # Rewritten where it stands, a block under another heading rendered
+            # clean and V17 then refused it; where it belongs is a person's call.
+            sec = re.search(rf"^## {re.escape(spec['section'])}[ \t]*\n(.*?)(?=^## |\Z)",
+                            text, re.M | re.S)
+            if not sec or open_m not in sec.group(1):
+                raise ValueError(f"{path.parent.name}/SKILL.md has its {key} block outside "
+                                 f"{spec['section']!r}; move it there, then render")
             head, rest = text.split(open_m, 1)
             _, tail = rest.split(close_m, 1)
             text = head + payload + tail
