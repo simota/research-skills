@@ -110,6 +110,12 @@ CASES = {
                                        "<!-- research:guidance -->\n",
                                        "<!-- research:guidance -->\n\n- a\n  ```\n  x\n| a |\n"),
                          "row sits outside any table"),
+    # Inside a quote a row starts with `>`, and was never read as a row at all.
+    "split-table-in-quote": (lambda r: sub(r / "skills/research-source/playbooks/traps.md",
+                                           "<!-- research:guidance -->\n",
+                                           "<!-- research:guidance -->\n\n> | a | b |\n> |---|---|\n"
+                                           "> | 1 | 2 |\n>\n> | lonely | row |\n"),
+                             "row sits outside any table — | lonely | row |"),
     "rises": (lambda r: sub(r / PAGE, ROW_HIGH, "| `High` | `High` | `Low` | `Low` | `Unknown` |"),
               "confidence held along a chain"),
     "unknown-leaks": (lambda r: sub(r / PAGE, ROW_HIGH, "| `High` | `Medium` | `Low` | `Low` | `Low` |"),
@@ -158,6 +164,16 @@ HARMLESS = {
     "indented-code": lambda r: sub(r / "skills/research-source/playbooks/traps.md",
                                    "<!-- research:guidance -->\n",
                                    "<!-- research:guidance -->\n\nText.\n\n    | a | b |\n"),
+    # A bare `>` closes the quote's paragraph: the table below it is one.
+    "table-after-quote": lambda r: sub(r / "skills/research-source/playbooks/traps.md",
+                                       "<!-- research:guidance -->\n",
+                                       "<!-- research:guidance -->\n\n> Note.\n>\n| a | b |\n"
+                                       "|---|---|\n| 1 | 2 |\n"),
+    # A table inside a quote is a table, and a fenced quote is code.
+    "table-in-quote": lambda r: sub(r / "skills/research-source/playbooks/traps.md",
+                                    "<!-- research:guidance -->\n",
+                                    "<!-- research:guidance -->\n\n> | a | b |\n> |---|---|\n"
+                                    "> | 1 | 2 |\n\n```\n> | lonely |\n```\n"),
 }
 
 

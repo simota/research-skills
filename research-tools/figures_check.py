@@ -90,8 +90,10 @@ def step(state: str | None, raw: str) -> str | None:
     opens = INTERRUPTS if state == "para" else OPENS_BLOCK if state is None else SIBLING
     if not opens.match(raw):
         return state or "para"
-    return "lazy" if CONTAINER.match(raw) and not re.fullmatch(rf" {{0,3}}({_BREAK})", raw) \
-        else None
+    # A quote line with nothing after its `>` closes the quote's paragraph, so
+    # nothing below runs on from it and a table may start there.
+    return "lazy" if CONTAINER.match(raw) and raw.lstrip(" >") \
+        and not re.fullmatch(rf" {{0,3}}({_BREAK})", raw) else None
 
 
 def heads(header: str, open_: str | None, sep: str) -> bool:
@@ -191,6 +193,34 @@ def orphan_rows(text: str) -> list[tuple[int, str]]:
             tried or state == "para" and lead(rel) < 4 and SEP.match(s2) is not None)
         state = step(state, rel)
         prev = s2
+    return sorted(out + quoted_rows(lines))
+
+
+QUOTE = re.compile(r" {0,3}> ?")
+
+
+def quoted_rows(lines: list[str]) -> list[tuple[int, str]]:
+    """Rows inside a quote, read as the quote's own text. `> | a |` never starts
+    with a pipe, so a table split inside a callout was never looked at. Each run
+    of quoted lines outside a fence is stripped of one `>` and read as a page of
+    its own, which reaches a quote inside it too. A quote indented into a list
+    item past three spaces is not followed."""
+    out: list[tuple[int, str]] = []
+    fence, run, start = "", [], 0
+    for i, raw in enumerate(lines + [""]):
+        m = None if fence else QUOTE.match(raw)
+        if m:
+            start = start if run else i
+            run.append(raw[m.end():])
+            continue
+        if run:
+            out += [(start + n, row) for n, row in orphan_rows("\n".join(run))]
+            run = []
+        if fence:
+            if re.fullmatch(rf" {{0,3}}{re.escape(fence[0])}{{{len(fence)},}}[ \t]*", raw):
+                fence = ""
+        elif f := FENCE.match(raw):
+            fence = f.group(1)
     return out
 
 
