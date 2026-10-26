@@ -315,6 +315,18 @@ def _(r):
 def _(r): (r / "research-registry/delivered/gone.md").symlink_to("../nowhere.md")
 
 
+@case("V27-skill-dir", says="skills/research-report points outside the repo")
+def _(r):
+    """The skill directory itself linked in from elsewhere: only what sat inside
+    it was walked, and its links back into the repo all resolved."""
+    outside = r.parent / "research-report"
+    (r / f"{S}research-report").rename(outside)
+    for name, target in (("_research", r / f"{S}_research"), ("registry", r / "research-registry")):
+        (outside / name).unlink()
+        (outside / name).symlink_to(target)
+    (r / f"{S}research-report").symlink_to(outside)
+
+
 @case("V28")
 def _(r): sub(r / "research-registry/harness.yaml", "set: research", "set: rsrch")
 

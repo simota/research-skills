@@ -556,6 +556,13 @@ def v27_symlinks_stay_inside():
     checked as a link and never entered, so a link out of research-registry/
     reached every skill and passed."""
     walk, seen = [*SKILL_DIRS, SKILLS_ROOT / SHARED], set()
+    # The starting points too: a skill directory that is itself a link out of
+    # the repo carried its whole skill in from elsewhere, and only what sat
+    # inside it was looked at.
+    for d in list(walk):
+        if d.is_symlink() and ROOT.resolve() not in d.resolve().parents:
+            fail("V27", f"{d.relative_to(ROOT)} points outside the repo ({d.resolve()})")
+            walk.remove(d)
     while walk:
         d = walk.pop(0)
         if d.resolve() in seen:
