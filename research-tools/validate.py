@@ -758,7 +758,8 @@ def v34_tools_reachable():
         if not source.exists():
             fail("V34", f"linked_tools names {tool}, which is not in {SET}-tools/")
             continue
-        wanted = set(SKILLS) if who == "all" else set(who)
+        # One skill may be written bare; set() of the string split it into letters.
+        wanted = set(SKILLS) if who == "all" else {who} if isinstance(who, str) else set(who)
         unknown = wanted - set(SKILLS)
         if unknown:
             fail("V34", f"linked_tools[{tool}] names {sorted(unknown)}, "

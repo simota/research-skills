@@ -473,6 +473,12 @@ def _(r): sub(r / "research-registry/harness.yaml",
 def _(r): sub(r / "research-registry/harness.yaml", "linked_tools:", "unlinked_tools:")
 
 
+@quiet("linked_tools names one skill bare")
+def _(r):
+    """`set()` of a bare name split it into letters, each reported as no skill."""
+    sub(r / "research-registry/harness.yaml", "refute.py: all", "refute.py: research-appraise")
+
+
 @case("V35")
 def _(r): sub(r / f"{S}research-report/SKILL.md", "an unopened record and an opened one",
               "a second-hand record and a first-hand one")
